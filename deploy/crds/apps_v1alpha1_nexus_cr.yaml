@@ -7,7 +7,7 @@ spec:
   replicas: 1
   # Here you can specify the image version to fullfil your needs
   image: "docker.io/sonatype/nexus3:latest"
-  # Set the resources requests and limits for Nexus pods
+  # Set the resources requests and limits for Nexus pods. See: https://help.sonatype.com/repomanager3/system-requirements
   resources:
     cpuRequest: 1
     cpuLimit: 2
