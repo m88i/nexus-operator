@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github.com/m88i/nexus-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: github.com/m88i/nexus-operator
+  template:
+    metadata:
+      labels:
+        name: github.com/m88i/nexus-operator
+    spec:
+      serviceAccountName: github.com/m88i/nexus-operator
+      containers:
+        - name: github.com/m88i/nexus-operator
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - github.com/m88i/nexus-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "github.com/m88i/nexus-operator"
