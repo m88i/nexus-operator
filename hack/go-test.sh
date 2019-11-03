@@ -8,4 +8,4 @@ if [[ -z ${CI} ]]; then
     ./hack/go-lint.sh
 fi
 setGoModEnv
-go test -mod=vendor ./pkg/... ./cmd/... -count=1
+go test -mod=vendor ./pkg/... -count=1

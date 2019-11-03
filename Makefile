@@ -26,10 +26,6 @@ format:
 go-generate: mod
 	$(Q)go generate ./...
 
-.PHONY: sdk-generate
-sdk-generate: mod
-	operator-sdk generate k8s
-
 .PHONY: vet
 vet:
 	./hack/go-vet.sh
