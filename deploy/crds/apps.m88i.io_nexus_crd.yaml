@@ -14,6 +14,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
+      description: Nexus is the Schema for the nexus API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -28,8 +29,11 @@ spec:
         metadata:
           type: object
         spec:
+          description: NexusSpec defines the desired state of Nexus
           properties:
             credentials:
+              description: NexusCredentials is the credentials for the administrator
+                user in the Nexus web console
               properties:
                 password:
                   minLength: 5
@@ -38,14 +42,15 @@ spec:
                   minLength: 5
                   type: string
               required:
-              - user
               - password
+              - user
               type: object
             image:
               description: Image is the full image tag name for this specific deployment
               minLength: 5
               type: string
             persistence:
+              description: NexusPersistence is the structure for the data persistent
               properties:
                 persistent:
                   type: boolean
@@ -58,8 +63,10 @@ spec:
               description: Replicas is a number of Nexus pod replicas
               maximum: 100
               minimum: 1
-              type: int16
+              type: integer
             resources:
+              description: NexusResources is the request and limit definitions for
+                the deployed pods
               properties:
                 cpuLimit:
                   type: string
@@ -71,12 +78,13 @@ spec:
                   type: string
               type: object
           required:
-          - replicas
-          - image
           - credentials
+          - image
           - persistence
+          - replicas
           type: object
         status:
+          description: NexusStatus defines the observed state of Nexus
           properties:
             adminUser:
               description: AdminUser is the administrator username
@@ -89,6 +97,7 @@ spec:
               description: Host is Nexus Web Console URL
               type: string
           type: object
+      type: object
   version: v1alpha1
   versions:
   - name: v1alpha1
