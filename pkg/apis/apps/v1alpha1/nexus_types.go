@@ -1,73 +1,98 @@
+//     Copyright 2019 Nexus Operator and/or its authors
+//
+//     This file is part of Nexus Operator.
+//
+//     Nexus Operator is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+//
+//     Nexus Operator is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+//
+//     You should have received a copy of the GNU General Public License
+//     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
+
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NexusSpec defines the desired state of Nexus
 // +k8s:openapi-gen=true
+// +kubebuilder:resource:path=nexus,scope=Namespaced
 type NexusSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
+	// Number of pods replicas desired
+	// Default: 1
 	// +kubebuilder:validation:Maximum=100
 	// +kubebuilder:validation:Minimum=1
-	// Replicas is a number of Nexus pod replicas
-	Replicas int16 `json:"replicas"`
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Replicas"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Replicas"
+	Replicas int32 `json:"replicas"`
 
-	// +kubebuilder:validation:MinLength=5
-	// Image is the full image tag name for this specific deployment
-	Image string `json:"image"`
-
+	// Full image tag name for this specific deployment
+	// Default: docker.io/sonatype/nexus3:latest
 	// +optional
-	Resources NexusResources `json:"resources,omitempty"`
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Image"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Image"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes:image"
+	Image string `json:"image,omitempty"`
 
-	Credentials NexusCredentials `json:"credentials"`
+	// Defined Resources for the Nexus instance
+	// +optional
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Resources"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Resources"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
+	// Persistence definition
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Persistence"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Persistence"
 	Persistence NexusPersistence `json:"persistence"`
-}
 
-// NexusResources is the request and limit definitions for the deployed pods
-// +k8s:openapi-gen=true
-type NexusResources struct {
+	// If you have access to Red Hat Container Catalog, turn this to true to use the certified image provided by Sonatype
+	// Default: false
 	// +optional
-	CPURequest string `json:"cpuRequest,omitempty"`
-	// +optional
-	CPULimit string `json:"cpuLimit,omitempty"`
-	// +optional
-	MemoryRequest string `json:"memoryRequest,omitempty"`
-	// +optional
-	MemoryLimit string `json:"memoryLimit,omitempty"`
-}
-
-// NexusCredentials is the credentials for the administrator user in the Nexus web console
-// +k8s:openapi-gen=true
-type NexusCredentials struct {
-	// +kubebuilder:validation:MinLength=5
-	User string `json:"user"`
-	// +kubebuilder:validation:MinLength=5
-	Password string `json:"password"`
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Use Red Hat Image"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Use Red Hat Image"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+	UseRedHatImage bool `json:"useRedHatImage,omitempty"`
 }
 
 // NexusPersistence is the structure for the data persistent
 // +k8s:openapi-gen=true
 type NexusPersistence struct {
-	Persistent bool   `json:"persistent"`
+	// Flag to indicate if this instance will be persistent or not
+	Persistent bool `json:"persistent"`
+	// If persistent, the size of the Volume.
+	// Defaults: 10Gi
 	VolumeSize string `json:"volumeSize,omitempty"`
 }
 
 // NexusStatus defines the observed state of Nexus
 // +k8s:openapi-gen=true
 type NexusStatus struct {
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-
-	// Condition is the general condition status for the Nexus deployment
-	Condition string `json:"condition,omitempty"`
-	// Host is Nexus Web Console URL
-	Host string `json:"host,omitempty"`
-	// AdminUser is the administrator username
-	AdminUser string `json:"adminUser,omitempty"`
+	// Condition status for the Nexus deployment
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="appsv1.DeploymentStatus"
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.description="appsv1.DeploymentStatus"
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
+	DeploymentStatus v1.DeploymentStatus `json:"deploymentStatus,omitempty"`
+	// Will be "OK" when all objects are created successfully
+	NexusStatus string `json:"nexusStatus,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -76,6 +101,10 @@ type NexusStatus struct {
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=nexus,scope=Namespaced
+// +operator-sdk:gen-csv:customresourcedefinitions.displayName="Nexus"
+// +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"A Kubernetes Deployment\""
+// +operator-sdk:gen-csv:customresourcedefinitions.resources="Service,v1,\"A Kubernetes Service\""
+// +operator-sdk:gen-csv:customresourcedefinitions.resources="PersistentVolumeClaim,v1,\"A Kubernetes PersistentVolumeClaim\""
 type Nexus struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

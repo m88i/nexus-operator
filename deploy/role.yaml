@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
-  name: github.com/m88i/nexus-operator
+  name: nexus-operator
 rules:
 - apiGroups:
   - ""
@@ -35,7 +35,7 @@ rules:
 - apiGroups:
   - apps
   resourceNames:
-  - github.com/m88i/nexus-operator
+  - nexus-operator
   resources:
   - deployments/finalizers
   verbs:

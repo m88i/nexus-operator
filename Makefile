@@ -46,3 +46,15 @@ build:
 .PHONY: clean
 clean:
 	rm -rf build/_output
+
+.PHONY: addheaders
+addheaders:
+	./hack/addheaders.sh
+
+.PHONY: install
+install:
+	./hack/install.sh
+
+.PHONY: uninstall
+uninstall:
+	./hack/uninstall.sh

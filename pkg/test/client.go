@@ -15,10 +15,24 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-// +build tools
-
-package tools
+package test
 
 import (
-	_ "sigs.k8s.io/controller-tools/pkg/crd/generator"
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+// NewFakeClient will create a new fake client with all needed schemas
+func NewFakeClient(initObjs ...runtime.Object) client.Client {
+	return fake.NewFakeClientWithScheme(GetSchema(), initObjs...)
+}
+
+// GetSchema gets the needed schema for fake tests
+func GetSchema() *runtime.Scheme {
+	s := scheme.Scheme
+	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Nexus{})
+	return s
+}

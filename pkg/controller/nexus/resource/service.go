@@ -15,10 +15,38 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-// +build tools
-
-package tools
+package resource
 
 import (
-	_ "sigs.k8s.io/controller-tools/pkg/crd/generator"
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+func newService(nexus *v1alpha1.Nexus) *v1.Service {
+	svc := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nexus.Name,
+			Namespace: nexus.Namespace,
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Name:     "http",
+					Protocol: v1.ProtocolTCP,
+					Port:     nexusServicePort,
+					TargetPort: intstr.IntOrString{
+						IntVal: nexusServicePort,
+					},
+				},
+			},
+			Selector:        generateLabels(nexus),
+			SessionAffinity: v1.ServiceAffinityNone,
+		},
+	}
+
+	applyLabels(nexus, &svc.ObjectMeta)
+
+	return svc
+}

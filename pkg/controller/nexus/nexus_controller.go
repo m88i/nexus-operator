@@ -1,17 +1,41 @@
+//     Copyright 2019 Nexus Operator and/or its authors
+//
+//     This file is part of Nexus Operator.
+//
+//     Nexus Operator is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+//
+//     Nexus Operator is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+//
+//     You should have received a copy of the GNU General Public License
+//     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
+
 package nexus
 
 import (
 	"context"
+	"fmt"
+	"k8s.io/apimachinery/pkg/types"
+	"reflect"
+
+	utilres "github.com/RHsyseng/operator-utils/pkg/resource"
+	"github.com/RHsyseng/operator-utils/pkg/resource/write"
 
 	appsv1alpha1 "github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
+
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -51,14 +75,20 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create that are owned by the primary resource
-	// Watch for changes to secondary resource Pods and requeue the owner Nexus
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+	watchOwnedObjects := []runtime.Object{
+		&appsv1.Deployment{},
+		&corev1.Service{},
+		&corev1.PersistentVolumeClaim{},
+	}
+	ownerHandler := &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &appsv1alpha1.Nexus{},
-	})
-	if err != nil {
-		return err
+	}
+	for _, watchObject := range watchOwnedObjects {
+		err = c.Watch(&source.Kind{Type: watchObject}, ownerHandler)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -77,77 +107,101 @@ type ReconcileNexus struct {
 
 // Reconcile reads that state of the cluster for a Nexus object and makes changes based on the state read
 // and what is in the Nexus.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileNexus) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.Result, err error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Nexus")
+	result = reconcile.Result{}
 
 	// Fetch the Nexus instance
 	instance := &appsv1alpha1.Nexus{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	err = r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			return reconcile.Result{}, nil
+			return result, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
+		return result, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
+	deployedRes := make(map[reflect.Type][]utilres.KubernetesResource)
 
-	// Set Nexus instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-		return reconcile.Result{}, err
+	// In case of any errors from here, we should update the application status
+	defer r.updateNexusStatus(instance, &result, &err)
+
+	// Create the objects as desired by the Nexus instance
+	requestedRes := resource.CreateRequiredResources(instance)
+	// Get the actual deployed objects
+	deployedRes, err = resource.GetDeployedResources(instance, r.client)
+	if err != nil {
+		return
 	}
 
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
-		if err != nil {
-			return reconcile.Result{}, err
+	comparator := resource.GetComparator()
+	deltas := comparator.Compare(deployedRes, requestedRes)
+
+	writer := write.New(r.client).WithOwnerController(instance, r.scheme)
+	for resourceType, delta := range deltas {
+		if !delta.HasChanges() {
+			continue
 		}
-
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
-	} else if err != nil {
-		return reconcile.Result{}, err
+		log.Info("Will ",
+			"create", len(delta.Added),
+			"update", len(delta.Updated),
+			"delete", len(delta.Removed),
+			"instances of", resourceType)
+		_, err = writer.AddResources(delta.Added)
+		if err != nil {
+			return
+		}
+		_, err = writer.UpdateResources(deployedRes[resourceType], delta.Updated)
+		if err != nil {
+			return
+		}
+		_, err = writer.RemoveResources(delta.Removed)
+		if err != nil {
+			return
+		}
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
-	return reconcile.Result{}, nil
+	return
 }
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *appsv1alpha1.Nexus) *corev1.Pod {
-	labels := map[string]string{
-		"app": cr.Name,
+func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, result *reconcile.Result, err *error) {
+	log.Info("Updating application status before leaving")
+
+	if *err != nil {
+		nexus.Status.NexusStatus = fmt.Sprintf("Failed to deploy Nexus: %s", *err)
+	} else {
+		nexus.Status.NexusStatus = "OK"
 	}
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
-			Namespace: cr.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
-			},
-		},
+
+	if statusErr := r.updateNexusDeploymentStatus(nexus); statusErr != nil {
+		log.Error(statusErr, "Error while fetching Nexus Deployment status")
+		err = &statusErr
 	}
+
+	if updateErr := r.client.Status().Update(context.TODO(), nexus); updateErr != nil {
+		log.Error(updateErr, "Error while updating Nexus status")
+		err = &updateErr
+	}
+
+	log.Info("Controller finished reconciliation")
+}
+
+func (r *ReconcileNexus) updateNexusDeploymentStatus(nexus *appsv1alpha1.Nexus) error {
+	log.Info("Checking Deployment Status")
+	deployment := &appsv1.Deployment{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name}, deployment); err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	}
+	nexus.Status.DeploymentStatus = deployment.Status
+	return nil
 }

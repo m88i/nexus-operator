@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #     Copyright 2019 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
@@ -17,11 +17,19 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 
-. ./hack/go-mod-env.sh
+NAMESPACE=nexus
 
-echo Resetting vendor directory
+echo "....... Uninstalling ......."
+echo "....... Deleting CRDs......."
+kubectl delete -f deploy/crds/apps.m88i.io_nexus_crd.yaml
 
-setGoModEnv
+echo "....... Deleting Rules and Service Account ......."
+kubectl delete -f deploy/role.yaml -n ${NAMESPACE}
+kubectl delete -f deploy/role_binding.yaml -n ${NAMESPACE}
+kubectl delete -f deploy/service_account.yaml -n ${NAMESPACE}
 
-go mod tidy
-go mod vendor
+echo "....... Deleting Operator ......."
+kubectl delete -f deploy/operator.yaml -n ${NAMESPACE}
+
+echo "....... Deleting namespace ${NAMESPACE}......."
+kubectl delete namespace ${NAMESPACE}
