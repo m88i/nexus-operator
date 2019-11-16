@@ -1,30 +1,27 @@
 apiVersion: apps.m88i.io/v1alpha1
 kind: Nexus
 metadata:
-  name: my-nexus
+  name: nexus3
 spec:
   # Number of Nexus pod replicas (can't be increased after creation)
   replicas: 1
-  # Here you can specify the image version to fullfil your needs
-  image: "docker.io/sonatype/nexus3:latest"
+  # Here you can specify the image version to fulfill your needs. Defaults to docker.io/sonatype/nexus3:latest if useRedHatImage is set to false
+  #image: "docker.io/sonatype/nexus3:latest"
+  # let's use the centOS image since we do not have access to Red Hat Catalog
+  useRedHatImage: false
   # Set the resources requests and limits for Nexus pods. See: https://help.sonatype.com/repomanager3/system-requirements
   resources:
-    cpuRequest: 1
-    cpuLimit: 2
-    # Request memory will be set to the JVM args in runtime
-    memoryRequest: 2Gi
-    memoryLimit: 2Gi
-  # Administrator credentials that will be kept into a Secret attached to the Nexus pod
-  credentials:
-    # Username for the Admin
-    user: admin
-    # Password (will be masked after Secret creation)
-    password: admin123
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+    requests:
+      cpu: "1"
+      memory: "2Gi"
   # Data persistence details
   persistence:
-    # Should we persist Nexus libraries? Yes, please. (turn this to false only if you're evaluating this resource)
+    # Should we persist Nexus data? Yes, please. (turn this to false only if you're evaluating this resource)
     persistent: true
     # Size of the volume reserved for the pods. Be aware that if replicas greater then 1, a RWX Persistent Volume will be created, hence
-    # make sure that your cluster has support for this configuration. Ignored if persistent is set to false
+    # make sure that your cluster has support for this configuration. Ignored if persistent is set to false. Defaults to 10Gi
     volumeSize: 10Gi
   

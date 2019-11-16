@@ -1,11 +1,11 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: github.com/m88i/nexus-operator
+  name: nexus-operator
 subjects:
 - kind: ServiceAccount
-  name: github.com/m88i/nexus-operator
+  name: nexus-operator
 roleRef:
   kind: Role
-  name: github.com/m88i/nexus-operator
+  name: nexus-operator
   apiGroup: rbac.authorization.k8s.io

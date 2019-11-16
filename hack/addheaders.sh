@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #     Copyright 2019 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
@@ -17,11 +17,11 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 
-. ./hack/go-mod-env.sh
+if ! hash addlicense 2>/dev/null; then
+  go get -u github.com/google/addlicense
+fi
 
-echo Resetting vendor directory
+# https://github.com/google/addlicense
+# https://www.gnu.org/licenses/gpl-howto.en.html
 
-setGoModEnv
-
-go mod tidy
-go mod vendor
+addlicense -c "Nexus Operator and/or its authors" -f LICENSE_NOTICE cmd hack pkg version tools.go

@@ -1,24 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: github.com/m88i/nexus-operator
+  name: nexus-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: github.com/m88i/nexus-operator
+      name: nexus-operator
   template:
     metadata:
       labels:
-        name: github.com/m88i/nexus-operator
+        name: nexus-operator
     spec:
-      serviceAccountName: github.com/m88i/nexus-operator
+      serviceAccountName: nexus-operator
       containers:
-        - name: github.com/m88i/nexus-operator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
+        - name: nexus-operator
+          image: quay.io/m88i/nexus-operator:0.1.0-cr1
           command:
-          - github.com/m88i/nexus-operator
+          - nexus-operator
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -30,4 +29,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "github.com/m88i/nexus-operator"
+              value: "nexus-operator"
