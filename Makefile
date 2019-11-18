@@ -58,3 +58,8 @@ install:
 .PHONY: uninstall
 uninstall:
 	./hack/uninstall.sh
+
+.PHONY: prepare-olm
+version = ""
+prepare-olm:
+	./hack/pr-operatorhub.sh $(version)
