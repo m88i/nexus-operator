@@ -35,3 +35,54 @@ If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/r
 **You'll have to set your Red Hat credentials** in the namespace where Nexus is deployed to be able to pull the image. 
 
 [In future versions](https://github.com/m88i/nexus-operator/issues/14) the Operator will handle this step for you.
+
+## Development
+
+### Publish to OpenShift 4.x Marketplace
+
+1. Run `make prepare-olm version=0.1.0`
+
+2. Grab [Quay credentials](https://github.com/operator-framework/operator-courier/#authentication) with:
+
+```
+$ export QUAY_USERNAME=youruser
+$ export QUAY_PASSWORD=yourpass
+
+$ AUTH_TOKEN=$(curl -sH "Content-Type: application/json" -XPOST https://quay.io/cnr/api/v1/users/login -d '
+{
+    "user": {
+        "username": "'"${QUAY_USERNAME}"'",
+        "password": "'"${QUAY_PASSWORD}"'"
+    }
+}' | jq -r '.token')
+``` 
+
+3. Set courier variables:
+
+```
+$ export OPERATOR_DIR=build/_output/operatorhub/
+$ export QUAY_NAMESPACE=m88i # should be different for you ;)
+$ export PACKAGE_NAME=nexus-operator-hub
+$ export PACKAGE_VERSION=0.1.0
+$ export TOKEN=$AUTH_TOKEN
+```
+
+4. Run `operator-courier` to publish the operator application to Quay:
+
+```
+operator-courier push "$OPERATOR_DIR" "$QUAY_NAMESPACE" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$TOKEN"
+```
+
+5. Check if the application was pushed successfuly in Quay.io. Bear in mind that the application should be **public**.
+ 
+6. Publish the operator source there:
+
+```
+$ oc create -f deploy/olm-catalog/nexus-operator/nexus-operator-operatorsource.yaml
+```
+
+7. Wait a few minutes and the Nexus Operator should be available in the Marketplace. To check it's availability, run:
+
+```
+$ oc describe operatorsource.operators.coreos.com/nexus-operator-hub -n openshift-marketplace
+```
