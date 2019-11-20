@@ -34,4 +34,4 @@ echo "....... Applying Nexus Operator ......."
 kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
 
 echo "....... Creating the Nexus 3.x Server ......."
-kubectl apply -f deploy/crds/apps.m88i.io_v1alpha1_nexus_cr.yaml -n ${NAMESPACE}
+kubectl apply -f deploy/examples/nexus3-centos.yaml -n ${NAMESPACE}

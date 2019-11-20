@@ -15,15 +15,34 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package apis
+package openshift
 
 import (
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	routev1 "github.com/openshift/api/route/v1"
-	ingressv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/client-go/discovery"
+	"strings"
 )
 
-func init() {
-	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
-	AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme, routev1.Install, ingressv1beta1.AddToScheme)
+const (
+	openshiftGroup = "openshift.io"
+)
+
+// IsOpenShift verify if the operator is running on OpenShift
+func IsOpenShift(discovery discovery.DiscoveryInterface) (bool, error) {
+	return hasGroup(openshiftGroup, discovery)
+}
+
+// hasGroup check if the given group name is available in the cluster
+func hasGroup(group string, discovery discovery.DiscoveryInterface) (bool, error) {
+	if discovery != nil {
+		groups, err := discovery.ServerGroups()
+		if err != nil {
+			return false, err
+		}
+		for _, g := range groups.Groups {
+			if strings.Contains(g.Name, group) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }

@@ -25,10 +25,6 @@ import (
 )
 
 func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
-	if !nexus.Spec.Persistence.Persistent {
-		return nil
-	}
-
 	if len(nexus.Spec.Persistence.VolumeSize) == 0 {
 		nexus.Spec.Persistence.VolumeSize = nexusVolumeSize
 	}

@@ -27,7 +27,7 @@ import (
 const kindService = "Service"
 
 func newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *v1.Route {
-	return &v1.Route{
+	route := &v1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nexus.Name,
 			Namespace: nexus.Namespace,
@@ -42,4 +42,8 @@ func newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *v1.Route {
 			},
 		},
 	}
+
+	applyLabels(nexus, &route.ObjectMeta)
+
+	return route
 }

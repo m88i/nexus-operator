@@ -15,15 +15,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package apis
+package util
 
-import (
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	routev1 "github.com/openshift/api/route/v1"
-	ingressv1beta1 "k8s.io/api/extensions/v1beta1"
+const (
+	// HTTPPrefixSchema ...
+	HTTPPrefixSchema = "http://"
+	// HTTPSPrefixSchema ...
+	HTTPSPrefixSchema = "https://"
 )
-
-func init() {
-	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
-	AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme, routev1.Install, ingressv1beta1.AddToScheme)
-}

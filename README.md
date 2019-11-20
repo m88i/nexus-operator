@@ -30,10 +30,66 @@ make uninstall
 ```
 ## Networking
 
+There are three flavours for exposing the Nexus server deployed with the Nexus Operator: `NodePort`, `Route` (for OpenShift) and `Ingress` (for Kubernetes).
+
+In the future, we plan to give more options to this feature like adding custom certificates.
+
+### NodePort
+
+You can expose the Nexus server via [`NodePort`](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport) by setting the following parameters in the CR:
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  (...)
+  networking:
+    expose: true
+    exposeAs: "NodePort"
+    nodePort: 31031
+```
+
+It's not the recommended approach, but fits whatever Kubernetes flavour you have.
+
 ### OpenShift
 
-On OpenShift, the Nexus server is automatically exposed via [Routes](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html), you shouldn't have to do anything. 
-In the future, we plan to give more options to this feature like adding custom certificates. 
+On OpenShift, the Nexus server can be exposed via [Routes](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html).
+Set the following parameters in the CR:
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  (...)
+  networking:
+    expose: true
+``` 
+
+### Kubernetes
+
+On Kubernetes, we leverage from an [`Ingress`](https://kubernetes.io/docs/concepts/services-networking/ingress/) to expose the Nexus service:
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  (...)
+  networking:
+    expose: true
+    exposeAs: "Ingress"
+    host: "nexus.example.com"
+```
+
+Please note that `host` is a required parameter when exposing via `Ingress`. 
+Just make sure that that the host resolves to your cluster. 
+
+If you're running on Minikube, take a look in the article ["Set up Ingress on Minikube with the NGINX Ingress Controller"](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/) 
 
 ## Red Hat Certified Images
 

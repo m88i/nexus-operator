@@ -46,6 +46,12 @@ func newService(nexus *v1alpha1.Nexus) *v1.Service {
 		},
 	}
 
+	if nexus.Spec.Networking.ExposeAs == v1alpha1.NodePortExposeType {
+		svc.Spec.Type = v1.ServiceTypeNodePort
+		svc.Spec.Ports[0].NodePort = nexus.Spec.Networking.NodePort
+		svc.Spec.ExternalTrafficPolicy = v1.ServiceExternalTrafficPolicyTypeCluster
+	}
+
 	applyLabels(nexus, &svc.ObjectMeta)
 
 	return svc

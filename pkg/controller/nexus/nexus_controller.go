@@ -20,7 +20,8 @@ package nexus
 import (
 	"context"
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/openshift"
+	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
+	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
@@ -50,6 +51,8 @@ import (
 var log = logf.Log.WithName("controller_nexus")
 
 var resourceMgr resource.NexusResourceManager
+
+const okStatus = "OK"
 
 // Add creates a new Nexus Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -155,6 +158,11 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	// In case of any errors from here, we should update the application status
 	defer r.updateNexusStatus(instance, &result, &err)
 
+	// default networking parameters
+	if err = r.setDefaultNetworking(instance); err != nil {
+		return
+	}
+
 	// Create the objects as desired by the Nexus instance
 	requestedRes, err := r.resourceManager.CreateRequiredResources(instance)
 	if err != nil {
@@ -196,34 +204,76 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	return
 }
 
+// setDefaultNetworking verify given CR parameters for networking and set defaults
+func (r *ReconcileNexus) setDefaultNetworking(nexus *appsv1alpha1.Nexus) (err error) {
+	if !nexus.Spec.Networking.Expose {
+		return nil
+	}
+
+	ocp := false
+	if ocp, err = openshift.IsOpenShift(r.discoveryClient); err != nil {
+		return err
+	}
+
+	if ocp {
+		if nexus.Spec.Networking.ExposeAs == appsv1alpha1.IngressExposeType {
+			return fmt.Errorf("Ingress is only available on Kubernetes. Try '%s' as the expose type ", appsv1alpha1.RouteExposeType)
+		}
+		if len(nexus.Spec.Networking.ExposeAs) == 0 {
+			nexus.Spec.Networking.ExposeAs = appsv1alpha1.RouteExposeType
+		}
+	} else {
+		if nexus.Spec.Networking.ExposeAs == appsv1alpha1.RouteExposeType {
+			return fmt.Errorf("Routes is only available on OpenShift. Try '%s' as the expose type ", appsv1alpha1.IngressExposeType)
+		}
+		if len(nexus.Spec.Networking.ExposeAs) == 0 {
+			nexus.Spec.Networking.ExposeAs = appsv1alpha1.IngressExposeType
+		}
+	}
+
+	if nexus.Spec.Networking.ExposeAs == appsv1alpha1.NodePortExposeType && nexus.Spec.Networking.NodePort == 0 {
+		return fmt.Errorf("NodePort networking requires a port. Check Nexus resource 'spec.networking.nodePort' parameter ")
+	}
+
+	if nexus.Spec.Networking.ExposeAs == appsv1alpha1.IngressExposeType && len(nexus.Spec.Networking.Host) == 0 {
+		return fmt.Errorf("Ingress networking requires a host. Check Nexus resource 'spec.networking.host' parameter ")
+	}
+
+	return nil
+}
+
 func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, result *reconcile.Result, err *error) {
 	log.Info("Updating application status before leaving")
+	cache := nexus.DeepCopy()
 
 	if *err != nil {
 		nexus.Status.NexusStatus = fmt.Sprintf("Failed to deploy Nexus: %s", *err)
 	} else {
-		nexus.Status.NexusStatus = "OK"
+		nexus.Status.NexusStatus = okStatus
 	}
 
-	if statusErr := r.updateNexusDeploymentStatus(nexus); statusErr != nil {
+	if statusErr := r.getNexusDeploymentStatus(nexus); statusErr != nil {
 		log.Error(statusErr, "Error while fetching Nexus Deployment status")
 		err = &statusErr
 	}
 
-	if routeErr := r.updateNexusRouteStatus(nexus); routeErr != nil {
-		log.Error(routeErr, "Error while fetching Nexus Route status")
-		err = &routeErr
+	if urlErr := r.getNexusURL(nexus); urlErr != nil {
+		log.Error(urlErr, "Error while fetching Nexus URL status")
+		err = &urlErr
 	}
 
-	if updateErr := r.client.Status().Update(context.TODO(), nexus); updateErr != nil {
-		log.Error(updateErr, "Error while updating Nexus status")
-		err = &updateErr
+	if !reflect.DeepEqual(cache, nexus) {
+		log.Info("Updating nexus status")
+		if updateErr := r.client.Update(context.TODO(), nexus); updateErr != nil {
+			log.Error(updateErr, "Error while updating Nexus status")
+			err = &updateErr
+		}
 	}
 
 	log.Info("Controller finished reconciliation")
 }
 
-func (r *ReconcileNexus) updateNexusDeploymentStatus(nexus *appsv1alpha1.Nexus) error {
+func (r *ReconcileNexus) getNexusDeploymentStatus(nexus *appsv1alpha1.Nexus) error {
 	log.Info("Checking Deployment Status")
 	deployment := &appsv1.Deployment{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name}, deployment); err != nil {
@@ -235,12 +285,21 @@ func (r *ReconcileNexus) updateNexusDeploymentStatus(nexus *appsv1alpha1.Nexus) 
 	return nil
 }
 
-func (r *ReconcileNexus) updateNexusRouteStatus(nexus *appsv1alpha1.Nexus) error {
-	log.Info("Checking Route Status")
-	uri, err := openshift.GetRouteURI(r.client, r.discoveryClient, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
-	if err != nil {
-		return err
+func (r *ReconcileNexus) getNexusURL(nexus *appsv1alpha1.Nexus) error {
+	if nexus.Spec.Networking.Expose {
+		var err error
+		uri := ""
+		if nexus.Spec.Networking.ExposeAs == appsv1alpha1.RouteExposeType {
+			log.Info("Checking Route Status")
+			uri, err = openshift.GetRouteURI(r.client, r.discoveryClient, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
+		} else if nexus.Spec.Networking.ExposeAs == appsv1alpha1.IngressExposeType {
+			log.Info("Checking Ingress Status")
+			uri, err = kubernetes.GetIngressURI(r.client, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
+		}
+		if err != nil {
+			return err
+		}
+		nexus.Status.NexusRoute = uri
 	}
-	nexus.Status.NexusRoute = uri
 	return nil
 }

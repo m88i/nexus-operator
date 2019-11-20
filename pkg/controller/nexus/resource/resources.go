@@ -19,8 +19,9 @@ package resource
 
 import (
 	"github.com/RHsyseng/operator-utils/pkg/resource/read"
-	"github.com/m88i/nexus-operator/pkg/openshift"
+	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
+	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/discovery"
 	"reflect"
 
@@ -66,9 +67,9 @@ func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (reso
 	if routeAvailable, routeErr := openshift.IsRouteAvailable(r.discoveryClient); routeErr != nil {
 		return nil, routeErr
 	} else if routeAvailable {
-		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &routev1.RouteList{})
+		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &v1beta1.IngressList{}, &routev1.RouteList{})
 	} else {
-		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{})
+		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &v1beta1.IngressList{})
 	}
 
 	if err != nil {
@@ -85,22 +86,33 @@ func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (reso
 func (r *nexusResourceManager) CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
 	logger := log.WithValues("Nexus.Namespace", nexus.Namespace, "Nexus.Name", nexus.Name)
 	logger.Info("Creating resources structures")
+	var pvc *v1.PersistentVolumeClaim
 	resources = make(map[reflect.Type][]resource.KubernetesResource)
-
 	service := newService(nexus)
-	pvc := newPVC(nexus)
-	if pvc != nil {
+
+	if nexus.Spec.Persistence.Persistent {
+		pvc = newPVC(nexus)
 		resources[reflect.TypeOf(v1.PersistentVolumeClaim{})] = []resource.KubernetesResource{pvc}
 	}
-	resources[reflect.TypeOf(appsv1.Deployment{})] = []resource.KubernetesResource{newDeployment(nexus, pvc)}
-	resources[reflect.TypeOf(v1.Service{})] = []resource.KubernetesResource{service}
-
-	if available, err := openshift.IsRouteAvailable(r.discoveryClient); err != nil {
-		return nil, err
-	} else if available {
-		route := newRoute(nexus, service)
-		resources[reflect.TypeOf(routev1.Route{})] = []resource.KubernetesResource{route}
+	if nexus.Spec.Networking.Expose {
+		switch nexus.Spec.Networking.ExposeAs {
+		case v1alpha1.RouteExposeType:
+			if available, err := openshift.IsRouteAvailable(r.discoveryClient); err != nil {
+				return nil, err
+			} else if available {
+				route := newRoute(nexus, service)
+				resources[reflect.TypeOf(routev1.Route{})] = []resource.KubernetesResource{route}
+			}
+		case v1alpha1.IngressExposeType:
+			ingress, err := newIngress(nexus, service)
+			if err != nil {
+				return nil, err
+			}
+			resources[reflect.TypeOf(v1beta1.Ingress{})] = []resource.KubernetesResource{ingress}
+		}
 	}
 
+	resources[reflect.TypeOf(appsv1.Deployment{})] = []resource.KubernetesResource{newDeployment(nexus, pvc)}
+	resources[reflect.TypeOf(v1.Service{})] = []resource.KubernetesResource{service}
 	return resources, nil
 }
