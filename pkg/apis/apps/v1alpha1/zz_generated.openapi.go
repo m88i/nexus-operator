@@ -176,6 +176,13 @@ func schema_pkg_apis_apps_v1alpha1_NexusStatus(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"nexusRoute": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Route for external service access",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

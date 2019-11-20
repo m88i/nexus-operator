@@ -89,10 +89,11 @@ type NexusStatus struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="appsv1.DeploymentStatus"
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.description="appsv1.DeploymentStatus"
-	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:podStatuses"
 	DeploymentStatus v1.DeploymentStatus `json:"deploymentStatus,omitempty"`
 	// Will be "OK" when all objects are created successfully
 	NexusStatus string `json:"nexusStatus,omitempty"`
+	// Route for external service access
+	NexusRoute string `json:"nexusRoute,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

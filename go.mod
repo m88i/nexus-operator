@@ -3,7 +3,7 @@ module github.com/m88i/nexus-operator
 require (
 	github.com/RHsyseng/operator-utils v0.0.0-20191024171429-aada4a416142
 	github.com/go-openapi/spec v0.19.0
-	github.com/openshift/api v3.9.0+incompatible // indirect
+	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/operator-sdk v0.11.0
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0

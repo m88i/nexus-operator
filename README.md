@@ -28,6 +28,12 @@ Considering that you ran the install command above, to remove the operator compl
 ```bash
 make uninstall
 ```
+## Networking
+
+### OpenShift
+
+On OpenShift, the Nexus server is automatically exposed via [Routes](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html), you shouldn't have to do anything. 
+In the future, we plan to give more options to this feature like adding custom certificates. 
 
 ## Red Hat Certified Images
 

@@ -20,7 +20,11 @@ package nexus
 import (
 	"context"
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/openshift"
+	routev1 "github.com/openshift/api/route/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
 	"reflect"
 
 	utilres "github.com/RHsyseng/operator-utils/pkg/resource"
@@ -45,10 +49,7 @@ import (
 
 var log = logf.Log.WithName("controller_nexus")
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
+var resourceMgr resource.NexusResourceManager
 
 // Add creates a new Nexus Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -58,7 +59,13 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileNexus{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	reconcileNexus := &ReconcileNexus{
+		client:          mgr.GetClient(),
+		discoveryClient: discovery.NewDiscoveryClientForConfigOrDie(mgr.GetConfig()),
+		scheme:          mgr.GetScheme(),
+	}
+	reconcileNexus.resourceManager = resource.New(reconcileNexus.client, reconcileNexus.discoveryClient)
+	return reconcileNexus
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -79,6 +86,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&appsv1.Deployment{},
 		&corev1.Service{},
 		&corev1.PersistentVolumeClaim{},
+		&routev1.Route{},
 	}
 	ownerHandler := &handler.EnqueueRequestForOwner{
 		IsController: true,
@@ -87,11 +95,22 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	for _, watchObject := range watchOwnedObjects {
 		err = c.Watch(&source.Kind{Type: watchObject}, ownerHandler)
 		if err != nil {
+			if isNoKindMatchError(routev1.GroupVersion.Group, err) {
+				// ignore if Route API is not found
+				continue
+			}
 			return err
 		}
 	}
-
 	return nil
+}
+
+// isNoKindMatchError verify if the given error is NoKindMatchError for the given group
+func isNoKindMatchError(group string, err error) bool {
+	if kindErr, ok := err.(*meta.NoKindMatchError); ok {
+		return kindErr.GroupKind.Group == group
+	}
+	return false
 }
 
 // blank assignment to verify that ReconcileNexus implements reconcile.Reconciler
@@ -101,8 +120,10 @@ var _ reconcile.Reconciler = &ReconcileNexus{}
 type ReconcileNexus struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client          client.Client
+	scheme          *runtime.Scheme
+	discoveryClient discovery.DiscoveryInterface
+	resourceManager resource.NexusResourceManager
 }
 
 // Reconcile reads that state of the cluster for a Nexus object and makes changes based on the state read
@@ -135,9 +156,12 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	defer r.updateNexusStatus(instance, &result, &err)
 
 	// Create the objects as desired by the Nexus instance
-	requestedRes := resource.CreateRequiredResources(instance)
+	requestedRes, err := r.resourceManager.CreateRequiredResources(instance)
+	if err != nil {
+		return
+	}
 	// Get the actual deployed objects
-	deployedRes, err = resource.GetDeployedResources(instance, r.client)
+	deployedRes, err = r.resourceManager.GetDeployedResources(instance)
 	if err != nil {
 		return
 	}
@@ -186,6 +210,11 @@ func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, result *re
 		err = &statusErr
 	}
 
+	if routeErr := r.updateNexusRouteStatus(nexus); routeErr != nil {
+		log.Error(routeErr, "Error while fetching Nexus Route status")
+		err = &routeErr
+	}
+
 	if updateErr := r.client.Status().Update(context.TODO(), nexus); updateErr != nil {
 		log.Error(updateErr, "Error while updating Nexus status")
 		err = &updateErr
@@ -203,5 +232,15 @@ func (r *ReconcileNexus) updateNexusDeploymentStatus(nexus *appsv1alpha1.Nexus) 
 		}
 	}
 	nexus.Status.DeploymentStatus = deployment.Status
+	return nil
+}
+
+func (r *ReconcileNexus) updateNexusRouteStatus(nexus *appsv1alpha1.Nexus) error {
+	log.Info("Checking Route Status")
+	uri, err := openshift.GetRouteURI(r.client, r.discoveryClient, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
+	if err != nil {
+		return err
+	}
+	nexus.Status.NexusRoute = uri
 	return nil
 }

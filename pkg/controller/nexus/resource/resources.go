@@ -19,6 +19,9 @@ package resource
 
 import (
 	"github.com/RHsyseng/operator-utils/pkg/resource/read"
+	"github.com/m88i/nexus-operator/pkg/openshift"
+	routev1 "github.com/openshift/api/route/v1"
+	"k8s.io/client-go/discovery"
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
@@ -34,10 +37,40 @@ import (
 
 var log = logf.Log.WithName("controller_nexus")
 
-// GetDeployedResources will fetch for the resources managed by the Nexus instance deployed in the cluster
-func GetDeployedResources(nexus *v1alpha1.Nexus, client client.Client) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
-	reader := read.New(client).WithNamespace(nexus.Namespace).WithOwnerObject(nexus)
-	resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{})
+// NexusResourceManager is the resources manager for the Nexus CR.
+// Handles the creation of every single resource needed to deploy a Nexus server instance on Kubernetes
+type NexusResourceManager interface {
+	// GetDeployedResources will fetch for the resources managed by the Nexus instance deployed in the cluster
+	GetDeployedResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error)
+	// CreateRequiredResources will create the requests resources as it's supposed to be
+	CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error)
+}
+
+type nexusResourceManager struct {
+	NexusResourceManager
+	client          client.Client
+	discoveryClient discovery.DiscoveryInterface
+}
+
+// New creates a new resource manager for Nexus CR
+func New(client client.Client, discoveryClient discovery.DiscoveryInterface) NexusResourceManager {
+	return &nexusResourceManager{
+		client:          client,
+		discoveryClient: discoveryClient,
+	}
+}
+
+func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
+	reader := read.New(r.client).WithNamespace(nexus.Namespace).WithOwnerObject(nexus)
+
+	if routeAvailable, routeErr := openshift.IsRouteAvailable(r.discoveryClient); routeErr != nil {
+		return nil, routeErr
+	} else if routeAvailable {
+		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &routev1.RouteList{})
+	} else {
+		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{})
+	}
+
 	if err != nil {
 		log.Error(err, "Failed to fetch deployed Nexus resources")
 		return nil, err
@@ -49,18 +82,25 @@ func GetDeployedResources(nexus *v1alpha1.Nexus, client client.Client) (resource
 	return resources, nil
 }
 
-// CreateRequiredResources will create the requests resources as it's supposed to be
-func CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource) {
+func (r *nexusResourceManager) CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
 	logger := log.WithValues("Nexus.Namespace", nexus.Namespace, "Nexus.Name", nexus.Name)
 	logger.Info("Creating resources structures")
 	resources = make(map[reflect.Type][]resource.KubernetesResource)
 
+	service := newService(nexus)
 	pvc := newPVC(nexus)
 	if pvc != nil {
 		resources[reflect.TypeOf(v1.PersistentVolumeClaim{})] = []resource.KubernetesResource{pvc}
 	}
 	resources[reflect.TypeOf(appsv1.Deployment{})] = []resource.KubernetesResource{newDeployment(nexus, pvc)}
-	resources[reflect.TypeOf(v1.Service{})] = []resource.KubernetesResource{newService(nexus)}
+	resources[reflect.TypeOf(v1.Service{})] = []resource.KubernetesResource{service}
 
-	return resources
+	if available, err := openshift.IsRouteAvailable(r.discoveryClient); err != nil {
+		return nil, err
+	} else if available {
+		route := newRoute(nexus, service)
+		resources[reflect.TypeOf(routev1.Route{})] = []resource.KubernetesResource{route}
+	}
+
+	return resources, nil
 }
