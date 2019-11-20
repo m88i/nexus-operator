@@ -160,6 +160,9 @@ spec:
                   format: int32
                   type: integer
               type: object
+            nexusRoute:
+              description: Route for external service access
+              type: string
             nexusStatus:
               description: Will be "OK" when all objects are created successfully
               type: string

@@ -15,14 +15,31 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package apis
+package resource
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	routev1 "github.com/openshift/api/route/v1"
+	v1 "github.com/openshift/api/route/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func init() {
-	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
-	AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme, routev1.Install)
+const kindService = "Service"
+
+func newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *v1.Route {
+	return &v1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nexus.Name,
+			Namespace: nexus.Namespace,
+		},
+		Spec: v1.RouteSpec{
+			To: v1.RouteTargetReference{
+				Kind: kindService,
+				Name: service.Name,
+			},
+			Port: &v1.RoutePort{
+				TargetPort: service.Spec.Ports[0].TargetPort,
+			},
+		},
+	}
 }

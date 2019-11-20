@@ -20,7 +20,9 @@ package nexus
 import (
 	"context"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
 	"github.com/m88i/nexus-operator/pkg/test"
+	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +30,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery/fake"
+	clienttesting "k8s.io/client-go/testing"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"testing"
 )
@@ -47,7 +52,7 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 
 	// create objects to run reconcile
 	cl := test.NewFakeClient(nexus)
-	r := &ReconcileNexus{client: cl, scheme: test.GetSchema()}
+	r := newFakeReconcileNexus(cl)
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
 		Namespace: ns,
 		Name:      appName,
@@ -67,6 +72,12 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 	err = r.client.Get(context.TODO(), req.NamespacedName, pvc)
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
+	// we have routes \o/
+	route := &routev1.Route{}
+	err = r.client.Get(context.TODO(), req.NamespacedName, route)
+	assert.NoError(t, err)
+	assert.Nil(t, route.Spec.TLS)
+	assert.Equal(t, route.Spec.Port.TargetPort.IntVal, dep.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort)
 }
 
 func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
@@ -84,7 +95,8 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 
 	// create objects to run reconcile
 	cl := test.NewFakeClient(nexus)
-	r := &ReconcileNexus{client: cl, scheme: test.GetSchema()}
+	r := newFakeReconcileNexus(cl)
+
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
 		Namespace: ns,
 		Name:      appName,
@@ -99,4 +111,13 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 	err = r.client.Get(context.TODO(), req.NamespacedName, pvc)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.MustParse("10Gi"), pvc.Spec.Resources.Requests[corev1.ResourceStorage])
+}
+
+func newFakeReconcileNexus(cl client.Client) ReconcileNexus {
+	r := ReconcileNexus{client: cl, scheme: test.GetSchema(),
+		discoveryClient: &fake.FakeDiscovery{Fake: &clienttesting.Fake{Resources: []*v1.APIResourceList{
+			{GroupVersion: routev1.GroupVersion.String()},
+		}}}}
+	r.resourceManager = nexusres.New(r.client, r.discoveryClient)
+	return r
 }

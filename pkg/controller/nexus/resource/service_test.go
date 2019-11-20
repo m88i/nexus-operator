@@ -38,7 +38,6 @@ func Test_newService(t *testing.T) {
 			},
 		},
 	}
-
 	svc := newService(nexus)
 
 	assert.Len(t, svc.Spec.Ports, 1)

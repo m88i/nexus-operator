@@ -92,10 +92,15 @@ spec:
         displayName: Deployment Conditions
         path: deploymentStatus.conditions
         x-descriptors:
-          - 'urn:alm:descriptor:io.kubernetes.conditions'
+        - urn:alm:descriptor:io.kubernetes.conditions
       - description: Nexus Operator Status
         displayName: Nexus Operator Status
         path: nexusStatus
+      - description: External Route
+        displayName: External Route
+        path: nexusRoute
+        x-descriptors:
+        - urn:alm:descriptor:org.w3:link
       version: v1alpha1
   description: |-
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:

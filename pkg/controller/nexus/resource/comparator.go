@@ -20,6 +20,7 @@ package resource
 import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
+	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"reflect"
@@ -32,10 +33,12 @@ func GetComparator() compare.MapComparator {
 
 	pvcType := reflect.TypeOf(v1.PersistentVolumeClaim{})
 	svcType := reflect.TypeOf(v1.Service{})
+	routeType := reflect.TypeOf(routev1.Route{})
 
 	resourceComparator.SetComparator(pvcType, resourceComparator.GetDefaultComparator())
 	resourceComparator.SetComparator(svcType, resourceComparator.GetComparator(svcType))
 	resourceComparator.SetComparator(getDeploymentComparator(resourceComparator))
+	resourceComparator.SetComparator(routeType, resourceComparator.GetComparator(routeType))
 
 	return compare.MapComparator{Comparator: resourceComparator}
 }
