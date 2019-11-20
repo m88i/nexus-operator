@@ -147,12 +147,18 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 							Format:      "",
 						},
 					},
+					"networking": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Networking definition",
+							Ref:         ref("github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1.NexusNetworking"),
+						},
+					},
 				},
 				Required: []string{"replicas", "persistence"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1.NexusPersistence", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1.NexusNetworking", "github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1.NexusPersistence", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 

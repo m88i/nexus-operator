@@ -70,6 +70,12 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Use Red Hat Image"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
 	UseRedHatImage bool `json:"useRedHatImage,omitempty"`
+
+	// Networking definition
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Networking"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Networking"
+	Networking NexusNetworking `json:"networking,omitempty"`
 }
 
 // NexusPersistence is the structure for the data persistent
@@ -80,6 +86,31 @@ type NexusPersistence struct {
 	// If persistent, the size of the Volume.
 	// Defaults: 10Gi
 	VolumeSize string `json:"volumeSize,omitempty"`
+}
+
+// NexusNetworkingExposeType defines how to expose Nexus service
+type NexusNetworkingExposeType string
+
+const (
+	// NodePortExposeType The service is exposed via NodePort
+	NodePortExposeType NexusNetworkingExposeType = "NodePort"
+	// RouteExposeType On OpenShift, the service is exposed via a custom Route
+	RouteExposeType NexusNetworkingExposeType = "Route"
+	// IngressExposeType Supported on Kubernetes only, the service is exposed via NGINX Ingress
+	IngressExposeType NexusNetworkingExposeType = "Ingress"
+)
+
+// NexusNetworking is the base structure for Nexus networking information
+type NexusNetworking struct {
+	// Set to `true` to expose the Nexus application. Default to false.
+	Expose bool `json:"expose,omitempty"`
+	// Type of networking exposure: NodePort, Route or Ingress. Default to Route on OpenShift and Ingress on Kubernetes.
+	// +kubebuilder:validation:Enum=NodePort;Route;Ingress
+	ExposeAs NexusNetworkingExposeType `json:"exposeAs,omitempty"`
+	// Host where the Nexus service is exposed. This attribute is required if the service is exposed via Ingress.
+	Host string `json:"host,omitempty"`
+	// NodePort defined in the exposed service. Required if exposed via NodePort.
+	NodePort int32 `json:"nodePort,omitempty"`
 }
 
 // NexusStatus defines the observed state of Nexus
@@ -100,7 +131,6 @@ type NexusStatus struct {
 
 // Nexus is the Schema for the nexus API
 // +k8s:openapi-gen=true
-// +kubebuilder:subresource:status
 // +kubebuilder:resource:path=nexus,scope=Namespaced
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Nexus"
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"A Kubernetes Deployment\""

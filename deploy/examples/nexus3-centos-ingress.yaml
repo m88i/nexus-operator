@@ -24,6 +24,11 @@ spec:
     # Size of the volume reserved for the pods. Be aware that if replicas greater then 1, a RWX Persistent Volume will be created, hence
     # make sure that your cluster has support for this configuration. Ignored if persistent is set to false. Defaults to 10Gi
     volumeSize: 10Gi
+  # details regarding networking
   networking:
-    # let the operator expose the Nexus server for you (the method will be the one that fits better for your cluster)
+    # expose please
     expose: true
+    # How do you want to expose the Nexus server? In this case, we're using Ingress. Only available on Kubernetes
+    exposeAs: "Ingress"
+    # The host is required when using Ingress, needs to resolve to your cluster
+    host: "nexus.example.com"

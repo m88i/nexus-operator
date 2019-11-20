@@ -29,7 +29,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/fake"
 	clienttesting "k8s.io/client-go/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,12 +49,15 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: false,
 			},
+			Networking: v1alpha1.NexusNetworking{
+				Expose: true,
+			},
 		},
 	}
 
 	// create objects to run reconcile
 	cl := test.NewFakeClient(nexus)
-	r := newFakeReconcileNexus(cl)
+	r := newFakeReconcileNexus(cl, true)
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
 		Namespace: ns,
 		Name:      appName,
@@ -95,7 +100,7 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 
 	// create objects to run reconcile
 	cl := test.NewFakeClient(nexus)
-	r := newFakeReconcileNexus(cl)
+	r := newFakeReconcileNexus(cl, false)
 
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
 		Namespace: ns,
@@ -111,13 +116,114 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 	err = r.client.Get(context.TODO(), req.NamespacedName, pvc)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.MustParse("10Gi"), pvc.Spec.Resources.Requests[corev1.ResourceStorage])
+	// networking is disabled
+	route := &routev1.Route{}
+	err = r.client.Get(context.TODO(), req.NamespacedName, route)
+	assert.Error(t, err)
+	assert.True(t, errors.IsNotFound(err))
 }
 
-func newFakeReconcileNexus(cl client.Client) ReconcileNexus {
-	r := ReconcileNexus{client: cl, scheme: test.GetSchema(),
-		discoveryClient: &fake.FakeDiscovery{Fake: &clienttesting.Fake{Resources: []*v1.APIResourceList{
-			{GroupVersion: routev1.GroupVersion.String()},
-		}}}}
+func newFakeReconcileNexus(cl client.Client, ocp bool) ReconcileNexus {
+	r := ReconcileNexus{client: cl, scheme: test.GetSchema()}
+	r.discoveryClient = newFakeDiscovery(ocp)
 	r.resourceManager = nexusres.New(r.client, r.discoveryClient)
 	return r
+}
+
+func newFakeDiscovery(ocp bool) discovery.DiscoveryInterface {
+	if ocp {
+		return &fake.FakeDiscovery{
+			Fake: &clienttesting.Fake{
+				Resources: []*v1.APIResourceList{
+					{GroupVersion: routev1.GroupVersion.String()},
+				},
+			},
+		}
+	}
+	return &fake.FakeDiscovery{Fake: &clienttesting.Fake{}}
+}
+
+func TestReconcileNexus_setDefaultNetworking(t *testing.T) {
+	type fields struct {
+		client          client.Client
+		scheme          *runtime.Scheme
+		discoveryClient discovery.DiscoveryInterface
+		resourceManager nexusres.NexusResourceManager
+	}
+	type args struct {
+		nexus *v1alpha1.Nexus
+	}
+
+	cli := test.NewFakeClient()
+	reconcileOcp := newFakeReconcileNexus(cli, true)
+	reconcileK8s := newFakeReconcileNexus(cli, false)
+	fieldOCP := fields{
+		client:          cli,
+		scheme:          test.GetSchema(),
+		discoveryClient: reconcileOcp.discoveryClient,
+		resourceManager: reconcileOcp.resourceManager,
+	}
+	fieldK8s := fields{
+		client:          cli,
+		scheme:          test.GetSchema(),
+		discoveryClient: reconcileK8s.discoveryClient,
+		resourceManager: reconcileK8s.resourceManager,
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			"Expose Route on OpenShift",
+			fieldOCP,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{ExposeAs: v1alpha1.RouteExposeType, Expose: true}}}},
+			false,
+		},
+		{
+			"Expose Ingress on OpenShift",
+			fieldOCP,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{ExposeAs: v1alpha1.IngressExposeType, Expose: true, Host: "nexus.com"}}}},
+			true,
+		},
+		{
+			"Expose Ingress on Kubernetes",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{ExposeAs: v1alpha1.IngressExposeType, Expose: true, Host: "nexus.com"}}}},
+			false,
+		},
+		{
+			"Expose Route on Kubernetes",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{ExposeAs: v1alpha1.RouteExposeType, Expose: true}}}},
+			true,
+		},
+		{
+			"NodePort without port :/",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{ExposeAs: v1alpha1.NodePortExposeType, Expose: true}}}},
+			true,
+		},
+		{
+			"NodePort with port :)",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{ExposeAs: v1alpha1.NodePortExposeType, Expose: true, NodePort: 31031}}}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ReconcileNexus{
+				client:          tt.fields.client,
+				scheme:          tt.fields.scheme,
+				discoveryClient: tt.fields.discoveryClient,
+				resourceManager: tt.fields.resourceManager,
+			}
+			if err := r.setDefaultNetworking(tt.args.nexus); (err != nil) != tt.wantErr {
+				t.Errorf("setDefaultNetworking() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

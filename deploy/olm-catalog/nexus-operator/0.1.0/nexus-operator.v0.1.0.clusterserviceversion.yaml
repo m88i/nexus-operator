@@ -82,11 +82,19 @@ spec:
         path: persistence.volumeSize
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:label
-      - description: Indicates if will use a Red Hat certifed image or not
+      - description: Indicates if is using a Red Hat certifed image or not
         displayName: Use Red Hat Image
         path: useRedHatImage
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: Indicates if Nexus service should be exposed
+        displayName: Expose
+        path: networking.expose
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+      - description: Networking expose method
+        displayName: Expose As
+        path: networking.exposeAs
       statusDescriptors:
       - description: Nexus server deployment conditions
         displayName: Deployment Conditions
@@ -106,7 +114,7 @@ spec:
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:
 
     * Deploys a new Nexus 3.x server based on either Community or Red Hat images
-    * Creates an [Ingress controller based on NGINX](https://github.com/kubernetes/ingress-nginx) in Kubernetes environments to expose the application to the world
+    * Creates an [Ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes environments to expose the application to the world
     * On OpenShift, creates a Route to expose the service outside the cluster
 
     After installing it, you will have to grab the `admin` user password from the deployed container. There's a file auto generated in `/nexus-data/admin.password`.

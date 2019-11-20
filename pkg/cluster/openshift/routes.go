@@ -20,34 +20,21 @@ package openshift
 import (
 	"context"
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/util"
 	v1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 const (
-	routesGroup       = "route.openshift.io"
-	httpPrefixSchema  = "http://"
-	httpsPrefixSchema = "https://"
+	routesGroup = "route.openshift.io"
 )
 
 // IsRouteAvailable verifies if the current cluster has the Route API from OpenShift available
 func IsRouteAvailable(discovery discovery.DiscoveryInterface) (bool, error) {
-	if discovery != nil {
-		groups, err := discovery.ServerGroups()
-		if err != nil {
-			return false, err
-		}
-		for _, group := range groups.Groups {
-			if strings.Contains(group.Name, routesGroup) {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
+	return hasGroup(routesGroup, discovery)
 }
 
 // GetRouteURI will discover the route scheme based on the given namespaced name for the route
@@ -65,9 +52,9 @@ func GetRouteURI(client client.Client, discovery discovery.DiscoveryInterface, r
 		}
 		if len(route.Spec.Host) > 0 {
 			if nil == route.Spec.TLS {
-				return fmt.Sprintf("%s%s", httpPrefixSchema, route.Spec.Host), nil
+				return fmt.Sprintf("%s%s", util.HTTPPrefixSchema, route.Spec.Host), nil
 			}
-			return fmt.Sprintf("%s%s", httpsPrefixSchema, route.Spec.Host), nil
+			return fmt.Sprintf("%s%s", util.HTTPSPrefixSchema, route.Spec.Host), nil
 		}
 	}
 	return "", nil
