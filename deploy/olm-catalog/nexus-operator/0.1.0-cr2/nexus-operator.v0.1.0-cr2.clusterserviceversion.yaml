@@ -33,7 +33,7 @@ metadata:
     capabilities: Basic Install
     categories: Developer Tools
     certified: "false"
-    containerImage: quay.io/m88i/nexus-operator:0.1.0-cr1
+    containerImage: quay.io/m88i/nexus-operator:0.1.0-cr2
     createdAt: "2019-11-16T13:12:22Z"
     description: Nexus Operator to deploy and manage Nexus 3.x servers
     repository: https://github.com/m88i/nexus-operator
@@ -41,7 +41,7 @@ metadata:
     tectonic-visibility: ocs
   labels:
     nexus-operator: "true"
-  name: nexus-operator.v0.1.0
+  name: nexus-operator.v0.1.0-cr2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -156,7 +156,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: nexus-operator
-                image: quay.io/m88i/nexus-operator:0.1.0-cr1
+                image: quay.io/m88i/nexus-operator:0.1.0-cr2
                 imagePullPolicy: Always
                 name: nexus-operator
                 resources: {}
@@ -251,5 +251,4 @@ spec:
   maturity: alpha
   provider:
     name: m88i Labs
-  replaces: nexus-operator.v0.0.0
-  version: 0.1.0
+  version: 0.1.0-cr2
