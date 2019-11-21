@@ -6,6 +6,8 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  - route.openshift.io
+  - extensions
   resources:
   - pods
   - services
@@ -14,6 +16,13 @@ rules:
   - events
   - configmaps
   - secrets
+  - routes
+  - serviceaccounts
+  - replicasets
+  - replicationcontrollers
+  - nodes
+  - networkpolicies
+  - ingresses
   verbs:
   - '*'
 - apiGroups:
