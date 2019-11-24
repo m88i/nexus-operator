@@ -23,6 +23,7 @@ import (
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
+	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
@@ -38,7 +39,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -90,7 +90,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		&corev1.Service{},
 		&corev1.PersistentVolumeClaim{},
 		&routev1.Route{},
+		&networking.Ingress{},
 	}
+
 	ownerHandler := &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &appsv1alpha1.Nexus{},
@@ -98,8 +100,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	for _, watchObject := range watchOwnedObjects {
 		err = c.Watch(&source.Kind{Type: watchObject}, ownerHandler)
 		if err != nil {
-			if isNoKindMatchError(routev1.GroupVersion.Group, err) {
-				// ignore if Route API is not found
+			if isNoKindMatchError(routev1.GroupVersion.Group, err) ||
+				isNoKindMatchError(networking.GroupName, err) {
+				// ignore if Route or Ingress API is not found
 				continue
 			}
 			return err

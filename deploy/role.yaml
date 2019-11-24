@@ -4,66 +4,71 @@ metadata:
   creationTimestamp: null
   name: nexus-operator
 rules:
-- apiGroups:
-  - ""
-  - route.openshift.io
-  - extensions
-  resources:
-  - pods
-  - services
-  - endpoints
-  - persistentvolumeclaims
-  - events
-  - configmaps
-  - secrets
-  - routes
-  - serviceaccounts
-  - replicasets
-  - replicationcontrollers
-  - nodes
-  - networkpolicies
-  - ingresses
-  verbs:
-  - '*'
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
-  verbs:
-  - '*'
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
-- apiGroups:
-  - apps
-  resourceNames:
-  - nexus-operator
-  resources:
-  - deployments/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  verbs:
-  - get
-- apiGroups:
-  - apps.m88i.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - configmaps
+      - secrets
+      - limitranges
+      - componentstatuses
+      - persistentvolumes
+      - bindings
+      - replicationcontrollers
+      - resourcequotas
+      - podtemplates
+      - serviceaccounts
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - daemonsets
+      - replicasets
+      - statefulsets
+    verbs:
+      - '*'
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - get
+      - create
+  - apiGroups:
+      - apps
+    resourceNames:
+      - nexus-operator
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+  - apiGroups:
+      - apps.m88i.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - '*'
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - '*'

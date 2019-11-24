@@ -20,7 +20,7 @@ package apis
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	routev1 "github.com/openshift/api/route/v1"
-	ingressv1beta1 "k8s.io/api/extensions/v1beta1"
+	ingressv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 func init() {

@@ -21,7 +21,8 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource/read"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
 	"reflect"
 
@@ -67,12 +68,19 @@ func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (reso
 	if routeAvailable, routeErr := openshift.IsRouteAvailable(r.discoveryClient); routeErr != nil {
 		return nil, routeErr
 	} else if routeAvailable {
-		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &v1beta1.IngressList{}, &routev1.RouteList{})
+		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &routev1.RouteList{})
 	} else {
-		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &v1beta1.IngressList{})
+		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{})
 	}
 
-	if err != nil {
+	// ingress cannot be listed using utils, so we load the single one
+	ingressResType := reflect.TypeOf(v1beta1.Ingress{})
+	ingress, err := reader.Load(ingressResType, nexus.Name)
+	if err == nil {
+		resources[ingressResType] = []resource.KubernetesResource{ingress}
+	}
+
+	if err != nil && !errors.IsNotFound(err) {
 		log.Error(err, "Failed to fetch deployed Nexus resources")
 		return nil, err
 	}

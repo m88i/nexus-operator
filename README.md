@@ -21,6 +21,8 @@ You can then edit or customize the installation as you pleased, just run:
 ```bash
 kubectl edit nexus
 ```
+
+If you're running on Kubernetes, edit the Nexus resource to add a [valid host for the Ingress](#network-on-kubernetes-114) to work.
 ### Clean up
 
 Considering that you ran the install command above, to remove the operator completely from your cluster, just run:
@@ -34,7 +36,7 @@ There are three flavours for exposing the Nexus server deployed with the Nexus O
 
 In the future, we plan to give more options to this feature like adding custom certificates.
 
-### NodePort
+### Use NodePort
 
 You can expose the Nexus server via [`NodePort`](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport) by setting the following parameters in the CR:
 
@@ -53,7 +55,7 @@ spec:
 
 It's not the recommended approach, but fits whatever Kubernetes flavour you have.
 
-### OpenShift
+### Network on OpenShift
 
 On OpenShift, the Nexus server can be exposed via [Routes](https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html).
 Set the following parameters in the CR:
@@ -69,7 +71,7 @@ spec:
     expose: true
 ``` 
 
-### Kubernetes
+### Network on Kubernetes 1.14+
 
 On Kubernetes, we leverage from an [`Ingress`](https://kubernetes.io/docs/concepts/services-networking/ingress/) to expose the Nexus service:
 
