@@ -11,6 +11,9 @@ metadata:
             "name": "nexus3"
           },
           "spec": {
+            "networking": {
+              "expose": true
+            },
             "persistence": {
               "persistent": true,
               "volumeSize": "10Gi"
@@ -33,7 +36,7 @@ metadata:
     capabilities: Basic Install
     categories: Developer Tools
     certified: "false"
-    containerImage: quay.io/m88i/nexus-operator:0.1.0-cr2
+    containerImage: quay.io/m88i/nexus-operator:0.1.0-cr3
     createdAt: "2019-11-16T13:12:22Z"
     description: Nexus Operator to deploy and manage Nexus 3.x servers
     repository: https://github.com/m88i/nexus-operator
@@ -41,7 +44,7 @@ metadata:
     tectonic-visibility: ocs
   labels:
     nexus-operator: "true"
-  name: nexus-operator.v0.1.0-cr2
+  name: nexus-operator.v0.1.0-cr3
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -114,7 +117,7 @@ spec:
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:
 
     * Deploys a new Nexus 3.x server based on either Community or Red Hat images
-    * Creates an [Ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes environments to expose the application to the world
+    * Creates an [Ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes (1.14+) environments to expose the application to the world
     * On OpenShift, creates a Route to expose the service outside the cluster
 
     After installing it, you will have to grab the `admin` user password from the deployed container. There's a file auto generated in `/nexus-data/admin.password`.
@@ -156,7 +159,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: nexus-operator
-                image: quay.io/m88i/nexus-operator:0.1.0-cr2
+                image: quay.io/m88i/nexus-operator:0.1.0-cr3
                 imagePullPolicy: Always
                 name: nexus-operator
                 resources: {}
@@ -173,6 +176,14 @@ spec:
           - events
           - configmaps
           - secrets
+          - limitranges
+          - componentstatuses
+          - persistentvolumes
+          - bindings
+          - replicationcontrollers
+          - resourcequotas
+          - podtemplates
+          - serviceaccounts
           verbs:
           - '*'
         - apiGroups:
@@ -200,12 +211,6 @@ spec:
           verbs:
           - update
         - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - get
-        - apiGroups:
           - apps
           resources:
           - replicasets
@@ -215,6 +220,18 @@ spec:
           - apps.m88i.io
           resources:
           - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          verbs:
+          - '*'
+        - apiGroups:
+          - networking.k8s.io
+          resources:
+          - ingresses
           verbs:
           - '*'
         serviceAccountName: nexus-operator
@@ -251,4 +268,4 @@ spec:
   maturity: alpha
   provider:
     name: m88i Labs
-  version: 0.1.0-cr2
+  version: 0.1.0-cr3
