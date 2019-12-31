@@ -104,7 +104,7 @@ If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/r
 
 ### Publish to OpenShift 4.x Marketplace
 
-1. Run `make prepare-olm version=0.1.0`
+1. Run `make prepare-olm version=0.2.0`
 
 2. Grab [Quay credentials](https://github.com/operator-framework/operator-courier/#authentication) with:
 
@@ -127,7 +127,7 @@ $ AUTH_TOKEN=$(curl -sH "Content-Type: application/json" -XPOST https://quay.io/
 $ export OPERATOR_DIR=build/_output/operatorhub/
 $ export QUAY_NAMESPACE=m88i # should be different for you ;)
 $ export PACKAGE_NAME=nexus-operator-hub
-$ export PACKAGE_VERSION=0.1.0
+$ export PACKAGE_VERSION=0.2.0
 $ export TOKEN=$AUTH_TOKEN
 ```
 
