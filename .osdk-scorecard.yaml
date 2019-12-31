@@ -8,5 +8,5 @@ scorecard:
     - olm:
         cr-manifest:
           - "deploy/crds/apps.m88i.io_v1alpha1_nexus_cr.yaml"
-        csv-path: "deploy/olm-catalog/nexus-operator/0.1.0/nexus-operator.v0.1.0.clusterserviceversion.yaml"
+        csv-path: "deploy/olm-catalog/nexus-operator/0.2.0/nexus-operator.v0.2.0.clusterserviceversion.yaml"
 
