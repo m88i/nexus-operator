@@ -1,4 +1,4 @@
-//     Copyright 2019 Nexus Operator and/or its authors
+//     Copyright 2020 Nexus Operator and/or its authors
 //
 //     This file is part of Nexus Operator.
 //

@@ -103,6 +103,7 @@ spec:
           required:
           - persistence
           - replicas
+          - useRedHatImage
           type: object
         status:
           description: NexusStatus defines the observed state of Nexus

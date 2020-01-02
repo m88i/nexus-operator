@@ -155,11 +155,11 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		// Error reading the object - requeue the request.
 		return result, err
 	}
-
+	cache := instance.DeepCopy()
 	deployedRes := make(map[reflect.Type][]utilres.KubernetesResource)
 
 	// In case of any errors from here, we should update the application status
-	defer r.updateNexusStatus(instance, &result, &err)
+	defer r.updateNexusStatus(instance, cache, &err)
 
 	// default networking parameters
 	if err = r.setDefaultNetworking(instance); err != nil {
@@ -245,9 +245,8 @@ func (r *ReconcileNexus) setDefaultNetworking(nexus *appsv1alpha1.Nexus) (err er
 	return nil
 }
 
-func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, result *reconcile.Result, err *error) {
+func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, cache *appsv1alpha1.Nexus, err *error) {
 	log.Info("Updating application status before leaving")
-	cache := nexus.DeepCopy()
 
 	if *err != nil {
 		nexus.Status.NexusStatus = fmt.Sprintf("Failed to deploy Nexus: %s", *err)
