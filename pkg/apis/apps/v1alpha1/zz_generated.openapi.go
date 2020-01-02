@@ -1,4 +1,4 @@
-//     Copyright 2019 Nexus Operator and/or its authors
+//     Copyright 2020 Nexus Operator and/or its authors
 //
 //     This file is part of Nexus Operator.
 //
@@ -154,7 +154,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 						},
 					},
 				},
-				Required: []string{"replicas", "persistence"},
+				Required: []string{"replicas", "persistence", "useRedHatImage"},
 			},
 		},
 		Dependencies: []string{

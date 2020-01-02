@@ -64,12 +64,11 @@ type NexusSpec struct {
 
 	// If you have access to Red Hat Container Catalog, turn this to true to use the certified image provided by Sonatype
 	// Default: false
-	// +optional
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Use Red Hat Image"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Use Red Hat Image"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
-	UseRedHatImage bool `json:"useRedHatImage,omitempty"`
+	UseRedHatImage bool `json:"useRedHatImage"`
 
 	// Networking definition
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false

@@ -86,13 +86,13 @@ func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1
 }
 
 func applyDefaultImage(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	if len(nexus.Spec.Image) == 0 {
-		if nexus.Spec.UseRedHatImage {
-			nexus.Spec.Image = nexusCertifiedLatestImage
-		} else {
-			nexus.Spec.Image = nexusCommunityLatestImage
-		}
+	if nexus.Spec.UseRedHatImage {
+		nexus.Spec.Image = nexusCertifiedLatestImage
+	} else if len(nexus.Spec.Image) == 0 {
+		nexus.Spec.UseRedHatImage = false
+		nexus.Spec.Image = nexusCommunityLatestImage
 	}
+
 	deployment.Spec.Template.Spec.Containers[0].Image = nexus.Spec.Image
 }
 

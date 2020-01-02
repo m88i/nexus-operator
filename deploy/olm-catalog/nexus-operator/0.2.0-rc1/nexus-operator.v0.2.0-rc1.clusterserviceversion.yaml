@@ -44,7 +44,7 @@ metadata:
     tectonic-visibility: ocs
   labels:
     nexus-operator: "true"
-  name: nexus-operator.v0.2.0
+  name: nexus-operator.v0.2.0-rc1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -159,7 +159,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: nexus-operator
-                image: quay.io/m88i/nexus-operator:0.2.0
+                image: quay.io/m88i/nexus-operator:0.2.0-rc1
                 imagePullPolicy: Always
                 name: nexus-operator
                 resources: {}
@@ -269,4 +269,4 @@ spec:
   provider:
     name: m88i Labs
   replaces: nexus-operator.v0.1.0
-  version: 0.2.0
+  version: 0.2.0-rc1

@@ -21,6 +21,6 @@ if [[ -z ${CI} ]]; then
     ./hack/go-mod.sh
     operator-sdk generate k8s
     operator-sdk generate openapi
-    operator-sdk olm-catalog gen-csv --csv-version 0.2.0 --from-version 0.1.0 --update-crds # future: --from-version 0.5.0
+    operator-sdk olm-catalog gen-csv --csv-version 0.2.0-rc1 --from-version 0.1.0 --update-crds # future: --from-version 0.5.0
 fi
 go vet ./...
