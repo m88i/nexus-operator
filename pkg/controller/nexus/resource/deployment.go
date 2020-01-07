@@ -107,7 +107,7 @@ func addProbes(deployment *appsv1.Deployment) {
 	defaultProbe := &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path: "",
+				Path: "/",
 				Port: intstr.IntOrString{
 					IntVal: nexusServicePort,
 				},

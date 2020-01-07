@@ -18,7 +18,6 @@
 package resource
 
 import (
-	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,38 +33,12 @@ func GetComparator() compare.MapComparator {
 	pvcType := reflect.TypeOf(v1.PersistentVolumeClaim{})
 	svcType := reflect.TypeOf(v1.Service{})
 	routeType := reflect.TypeOf(routev1.Route{})
+	deploymentType := reflect.TypeOf(appsv1.Deployment{})
 
 	resourceComparator.SetComparator(pvcType, resourceComparator.GetDefaultComparator())
 	resourceComparator.SetComparator(svcType, resourceComparator.GetComparator(svcType))
-	resourceComparator.SetComparator(getDeploymentComparator(resourceComparator))
+	resourceComparator.SetComparator(deploymentType, resourceComparator.GetComparator(deploymentType))
 	resourceComparator.SetComparator(routeType, resourceComparator.GetComparator(routeType))
 
 	return compare.MapComparator{Comparator: resourceComparator}
-}
-
-func getDeploymentComparator(resourceComparator compare.ResourceComparator) (
-	reflect.Type, func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool) {
-	svcType := reflect.TypeOf(appsv1.Deployment{})
-	defaultComparator := resourceComparator.GetDefaultComparator()
-	return svcType, func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-		depDeployed := deployed.(*appsv1.Deployment)
-		depReq := requested.(*appsv1.Deployment).DeepCopy()
-
-		// one container only
-		if len(depDeployed.Spec.Template.Spec.Containers) != 1 {
-			return false
-		}
-
-		// image should be the same set on CR
-		if depDeployed.Spec.Template.Spec.Containers[0].Image != depReq.Spec.Template.Spec.Containers[0].Image {
-			return false
-		}
-
-		// replicas must be equal to the ones set in the CR
-		if !reflect.DeepEqual(depDeployed.Spec.Replicas, depReq.Spec.Replicas) {
-			return false
-		}
-
-		return defaultComparator(deployed, requested)
-	}
 }
