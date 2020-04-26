@@ -79,6 +79,8 @@ type NexusPersistence struct {
 	// If persistent, the size of the Volume.
 	// Defaults: 10Gi
 	VolumeSize string `json:"volumeSize,omitempty"`
+	// StorageClass used by the managed PVC.
+	StorageClass string `json:"storageClass,omitempty"`
 }
 
 // NexusNetworkingExposeType defines how to expose Nexus service

@@ -101,6 +101,13 @@ func schema_pkg_apis_apps_v1alpha1_NexusPersistence(ref common.ReferenceCallback
 							Format:      "",
 						},
 					},
+					"storageClass": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StorageClass used by the managed PVC.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"persistent"},
 			},

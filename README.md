@@ -93,6 +93,30 @@ Just make sure that that the host resolves to your cluster.
 
 If you're running on Minikube, take a look in the article ["Set up Ingress on Minikube with the NGINX Ingress Controller"](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/) 
 
+## Persistence
+
+### Minikube
+
+On Minikube the dynamic PV [creation might fail](https://github.com/kubernetes/minikube/issues/7218). If this happens in your environment, **before creating the Nexus server**, create a PV with this template: [deploy/examples/pv-minikube.yaml](deploy/examples/pv-minikube.yaml). Then give the correct permissions to the directory in Minikube VM:
+
+```sh
+$ minikube ssh
+                         _             _            
+            _         _ ( )           ( )           
+  ___ ___  (_)  ___  (_)| |/')  _   _ | |_      __  
+/' _ ` _ `\| |/' _ `\| || , <  ( ) ( )| '_`\  /'__`\
+| ( ) ( ) || || ( ) || || |\`\ | (_) || |_) )(  ___/
+(_) (_) (_)(_)(_) (_)(_)(_) (_)`\___/'(_,__/'`\____)
+
+$ sudo chown 200:200 -R /data/pv0001/
+
+$ ls -la /data/
+total 8
+drwxr-xr-x  3 root root 4096 Apr 26 15:42 .
+drwxr-xr-x 19 root root  500 Apr 26 20:47 ..
+drwxr-xr-x  2  200  200 4096 Apr 26 15:42 pv0001
+```
+
 ## Red Hat Certified Images
 
 If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager), you might change the flag `spec.useRedHatImage` to `true`. 
