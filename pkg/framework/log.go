@@ -1,4 +1,4 @@
-//     Copyright 2019 Nexus Operator and/or its authors
+//     Copyright 2020 Nexus Operator and/or its authors
 //
 //     This file is part of Nexus Operator.
 //
@@ -15,10 +15,10 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-// +build tools
-
-package tools
+package framework
 
 import (
-	_ "sigs.k8s.io/controller-tools/pkg/crd/generator"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
+
+var log = logger.GetLogger("nexus_framework")

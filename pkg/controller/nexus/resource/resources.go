@@ -18,26 +18,24 @@
 package resource
 
 import (
+	"reflect"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource/read"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
-	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 )
-
-var log = logf.Log.WithName("controller_nexus")
 
 // NexusResourceManager is the resources manager for the Nexus CR.
 // Handles the creation of every single resource needed to deploy a Nexus server instance on Kubernetes
@@ -87,13 +85,12 @@ func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (reso
 	if resources == nil {
 		log.Info("No deployed resources found")
 	}
-	log.Info("Number of deployed ", "resources", len(resources))
+	log.Infof("Number of deployed resources %s", len(resources))
 	return resources, nil
 }
 
 func (r *nexusResourceManager) CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
-	logger := log.WithValues("Nexus.Namespace", nexus.Namespace, "Nexus.Name", nexus.Name)
-	logger.Info("Creating resources structures")
+	log.Infof("Creating resources structures namespace: %s, name: %s", nexus.Namespace, nexus.Name)
 	var pvc *v1.PersistentVolumeClaim
 	resources = make(map[reflect.Type][]resource.KubernetesResource)
 	service := newService(nexus)

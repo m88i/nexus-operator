@@ -24,4 +24,3 @@ echo Resetting vendor directory
 setGoModEnv
 
 go mod tidy
-go mod vendor

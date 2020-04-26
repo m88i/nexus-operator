@@ -9,6 +9,7 @@ rules:
     resources:
       - pods
       - services
+      - services/finalizers
       - endpoints
       - persistentvolumeclaims
       - events
@@ -23,7 +24,13 @@ rules:
       - podtemplates
       - serviceaccounts
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - apps
     resources:
@@ -32,7 +39,13 @@ rules:
       - replicasets
       - statefulsets
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - monitoring.coreos.com
     resources:
@@ -49,26 +62,38 @@ rules:
     verbs:
       - update
   - apiGroups:
-      - apps
-    resources:
-      - replicasets
-    verbs:
-      - get
-  - apiGroups:
       - apps.m88i.io
     resources:
       - '*'
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - route.openshift.io
     resources:
       - routes
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - networking.k8s.io
     resources:
       - ingresses
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch

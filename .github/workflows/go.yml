@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up Go 1.12
+      - name: Set up Go 1.14
         uses: actions/setup-go@v1
         with:
-          go-version: 1.12
+          go-version: 1.14
         id: go
 
       - name: Check out code into the Go module directory
@@ -28,9 +28,6 @@ jobs:
         run: |
           go mod tidy
 
-      - name: Mod Vendor
-        run: go mod vendor
-
       - name: FMT
         run: gofmt -s -l -w cmd/ pkg/ version/
 
@@ -38,4 +35,4 @@ jobs:
         run: go vet ./...
 
       - name: Test Packages
-        run: go test -mod=vendor ./pkg/... -count=1
+        run: go test ./pkg/... -count=1

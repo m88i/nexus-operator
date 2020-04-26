@@ -20,8 +20,12 @@ package test
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	routev1 "github.com/openshift/api/route/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
+	discfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	clienttesting "k8s.io/client-go/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -37,4 +41,21 @@ func GetSchema() *runtime.Scheme {
 	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Nexus{})
 	s.AddKnownTypes(routev1.GroupVersion, &routev1.Route{}, &routev1.RouteList{})
 	return s
+}
+
+// NewFakeDiscoveryClient creates a fake discovery client
+func NewFakeDiscoveryClient(isOpenShift bool) discovery.DiscoveryInterface {
+	disco := &discfake.FakeDiscovery{
+		Fake: &clienttesting.Fake{
+			Resources: []*metav1.APIResourceList{
+				{GroupVersion: "monitoring.coreos.com/v1alpha1"},
+			},
+		},
+	}
+	if isOpenShift {
+		disco.Fake.Resources = append(disco.Fake.Resources,
+			&metav1.APIResourceList{GroupVersion: "openshift.io/v1"},
+			&metav1.APIResourceList{GroupVersion: "build.openshift.io/v1"})
+	}
+	return disco
 }
