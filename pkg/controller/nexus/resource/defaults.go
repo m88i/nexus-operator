@@ -35,6 +35,8 @@ const (
 	nexusContainerName        = "nexus-server"
 )
 
+var nexusUID = int64(200)
+
 var (
 	nexusPodReq = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{

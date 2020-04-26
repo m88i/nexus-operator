@@ -1,5 +1,7 @@
 # if your cluster does not create a PV automatically for you, try creating manually
 # this PV matches with the configuration of the given examples
+# AFTER CREATING THE PV, ssh into minikube (minikube ssh) and run:
+# sudo chown 200:200 -R /data/pv0001/
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -11,4 +13,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/data/pv0001/"
+    path: "/data/pv0001"

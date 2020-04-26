@@ -51,6 +51,10 @@ func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
 		},
 	}
 
+	if len(nexus.Spec.Persistence.StorageClass) > 0 {
+		pvc.Spec.StorageClassName = &nexus.Spec.Persistence.StorageClass
+	}
+
 	applyLabels(nexus, &pvc.ObjectMeta)
 
 	return pvc

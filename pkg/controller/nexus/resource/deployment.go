@@ -19,6 +19,7 @@ package resource
 
 import (
 	"fmt"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -52,6 +53,7 @@ func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1
 			},
 			Template: v1.PodTemplateSpec{
 				Spec: v1.PodSpec{
+					SecurityContext: &v1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID},
 					Containers: []v1.Container{
 						{
 							Name: nexusContainerName,
@@ -130,6 +132,7 @@ func addVolume(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim, deployment 
 				VolumeSource: v1.VolumeSource{
 					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
 						ClaimName: pvc.Name,
+						ReadOnly:  false,
 					},
 				},
 			},

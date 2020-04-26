@@ -65,6 +65,9 @@ spec:
                   description: Flag to indicate if this instance will be persistent
                     or not
                   type: boolean
+                storageClass:
+                  description: StorageClass used by the managed PVC.
+                  type: string
                 volumeSize:
                   description: 'If persistent, the size of the Volume. Defaults: 10Gi'
                   type: string
