@@ -31,87 +31,141 @@ metadata:
             },
             "useRedHatImage": false
           }
+        },
+        {
+          "apiVersion": "apps.m88i.io/v1alpha1",
+          "kind": "Nexus",
+          "metadata": {
+            "name": "nexus3"
+          },
+          "spec": {
+            "networking": {
+              "expose": true,
+              "exposeAs": "Ingress",
+              "host": "nexus.example.com"
+            },
+            "persistence": {
+              "persistent": true,
+              "volumeSize": "10Gi"
+            },
+            "replicas": 1,
+            "resources": {
+              "limits": {
+                "cpu": "2",
+                "memory": "2Gi"
+              },
+              "requests": {
+                "cpu": "1",
+                "memory": "2Gi"
+              }
+            },
+            "useRedHatImage": false
+          }
+        },
+        {
+          "apiVersion": "apps.m88i.io/v1alpha1",
+          "kind": "Nexus",
+          "metadata": {
+            "name": "nexus3"
+          },
+          "spec": {
+            "networking": {
+              "expose": true,
+              "exposeAs": "NodePort",
+              "nodePort": 31031
+            },
+            "persistence": {
+              "persistent": true,
+              "volumeSize": "10Gi"
+            },
+            "replicas": 1,
+            "resources": {
+              "limits": {
+                "cpu": "2",
+                "memory": "2Gi"
+              },
+              "requests": {
+                "cpu": "1",
+                "memory": "2Gi"
+              }
+            },
+            "useRedHatImage": false
+          }
+        },
+        {
+          "apiVersion": "apps.m88i.io/v1alpha1",
+          "kind": "Nexus",
+          "metadata": {
+            "name": "nexus3"
+          },
+          "spec": {
+            "networking": {
+              "expose": true
+            },
+            "persistence": {
+              "persistent": true,
+              "volumeSize": "10Gi"
+            },
+            "replicas": 1,
+            "resources": {
+              "limits": {
+                "cpu": "2",
+                "memory": "2Gi"
+              },
+              "requests": {
+                "cpu": "1",
+                "memory": "2Gi"
+              }
+            },
+            "useRedHatImage": true
+          }
         }
       ]
     capabilities: Basic Install
-    categories: Developer Tools
-    certified: "false"
-    containerImage: quay.io/m88i/nexus-operator:0.1.0
-    createdAt: "2019-11-16T13:12:22Z"
-    description: Nexus Operator to deploy and manage Nexus 3.x servers
-    repository: https://github.com/m88i/nexus-operator
-    support: m88i Labs
-    tectonic-visibility: ocs
-  labels:
-    nexus-operator: "true"
-  name: nexus-operator.v0.2.0-rc1
+  name: nexus-operator.v0.2.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: Representation of a Nexus 3.x server
+    - description: Nexus custom resource to deploy the Nexus Server
       displayName: Nexus
       kind: Nexus
       name: nexus.apps.m88i.io
       resources:
       - kind: Deployment
-        name: ""
-        version: apps/v1
-      - kind: Service
-        name: ""
+        name: A Kubernetes Deployment
         version: v1
       - kind: PersistentVolumeClaim
-        name: ""
+        name: A Kubernetes PersistentVolumeClaim
+        version: v1
+      - kind: Service
+        name: A Kubernetes Service
         version: v1
       specDescriptors:
-      - description: Replicas
-        displayName: Replicas
-        path: replicas
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:podCount
-      - description: Image
+      - description: 'Full image tag name for this specific deployment Default: docker.io/sonatype/nexus3:latest'
         displayName: Image
         path: image
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:image
-      - description: Resources
+      - description: 'Number of pods replicas desired Default: 1'
+        displayName: Replicas
+        path: replicas
+      - description: Defined Resources for the Nexus instance
         displayName: Resources
         path: resources
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-      - description: Volume Size
-        displayName: Volume Size
-        path: persistence.volumeSize
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:label
-      - description: Indicates if is using a Red Hat certifed image or not
+      - description: 'If you have access to Red Hat Container Catalog, turn this to
+          true to use the certified image provided by Sonatype Default: false'
         displayName: Use Red Hat Image
         path: useRedHatImage
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - description: Indicates if Nexus service should be exposed
-        displayName: Expose
-        path: networking.expose
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
-      - description: Networking expose method
-        displayName: Expose As
-        path: networking.exposeAs
       statusDescriptors:
-      - description: Nexus server deployment conditions
-        displayName: Deployment Conditions
-        path: deploymentStatus.conditions
-        x-descriptors:
-        - urn:alm:descriptor:io.kubernetes.conditions
-      - description: Nexus Operator Status
-        displayName: Nexus Operator Status
-        path: nexusStatus
-      - description: External Route
-        displayName: External Route
-        path: nexusRoute
-        x-descriptors:
-        - urn:alm:descriptor:org.w3:link
+      - description: Condition status for the Nexus deployment
+        displayName: appsv1.DeploymentStatus
+        path: deploymentStatus
       version: v1alpha1
   description: |-
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:
@@ -159,7 +213,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: nexus-operator
-                image: quay.io/m88i/nexus-operator:0.2.0-rc1
+                image: quay.io/m88i/nexus-operator:0.2.0
                 imagePullPolicy: Always
                 name: nexus-operator
                 resources: {}
@@ -171,6 +225,7 @@ spec:
           resources:
           - pods
           - services
+          - services/finalizers
           - endpoints
           - persistentvolumeclaims
           - events
@@ -185,7 +240,13 @@ spec:
           - podtemplates
           - serviceaccounts
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - apps
           resources:
@@ -194,7 +255,13 @@ spec:
           - replicasets
           - statefulsets
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - monitoring.coreos.com
           resources:
@@ -211,29 +278,41 @@ spec:
           verbs:
           - update
         - apiGroups:
-          - apps
-          resources:
-          - replicasets
-          verbs:
-          - get
-        - apiGroups:
           - apps.m88i.io
           resources:
           - '*'
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - route.openshift.io
           resources:
           - routes
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         - apiGroups:
           - networking.k8s.io
           resources:
           - ingresses
           verbs:
-          - '*'
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
         serviceAccountName: nexus-operator
     strategy: deployment
   installModes:
@@ -268,5 +347,4 @@ spec:
   maturity: alpha
   provider:
     name: m88i Labs
-  replaces: nexus-operator.v0.1.0
-  version: 0.2.0-rc1
+  version: 0.2.0

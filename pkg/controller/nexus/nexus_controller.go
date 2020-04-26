@@ -20,14 +20,16 @@ package nexus
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/logger"
 	routev1 "github.com/openshift/api/route/v1"
 	networking "k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
-	"reflect"
 
 	utilres "github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/write"
@@ -42,13 +44,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_nexus")
+var log = logger.GetLogger("controller_nexus")
+
+var watchedObjects = []framework.WatchedObjects{
+	{
+		GroupVersion: routev1.GroupVersion,
+		AddToScheme:  routev1.Install,
+		Objects:      []runtime.Object{&routev1.Route{}},
+	},
+	{
+		GroupVersion: networking.SchemeGroupVersion,
+		AddToScheme:  networking.AddToScheme,
+		Objects:      []runtime.Object{&networking.Ingress{}},
+	},
+	{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}}},
+}
 
 var resourceMgr resource.NexusResourceManager
 
@@ -85,38 +100,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	watchOwnedObjects := []runtime.Object{
-		&appsv1.Deployment{},
-		&corev1.Service{},
-		&corev1.PersistentVolumeClaim{},
-		&routev1.Route{},
-		&networking.Ingress{},
-	}
-
-	ownerHandler := &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &appsv1alpha1.Nexus{},
-	}
-	for _, watchObject := range watchOwnedObjects {
-		err = c.Watch(&source.Kind{Type: watchObject}, ownerHandler)
-		if err != nil {
-			if isNoKindMatchError(routev1.GroupVersion.Group, err) ||
-				isNoKindMatchError(networking.GroupName, err) {
-				// ignore if Route or Ingress API is not found
-				continue
-			}
-			return err
-		}
+	controllerWatcher := framework.NewControllerWatcher(r.(*ReconcileNexus).discoveryClient, mgr, c, &appsv1alpha1.Nexus{})
+	if err = controllerWatcher.Watch(watchedObjects...); err != nil {
+		return err
 	}
 	return nil
-}
-
-// isNoKindMatchError verify if the given error is NoKindMatchError for the given group
-func isNoKindMatchError(group string, err error) bool {
-	if kindErr, ok := err.(*meta.NoKindMatchError); ok {
-		return kindErr.GroupKind.Group == group
-	}
-	return false
 }
 
 // blank assignment to verify that ReconcileNexus implements reconcile.Reconciler
@@ -138,8 +126,7 @@ type ReconcileNexus struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.Result, err error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Nexus")
+	log.Infof("Reconciling Nexus '%s' on namespace '%s'", request.Name, request.Namespace)
 	result = reconcile.Result{}
 
 	// Fetch the Nexus instance

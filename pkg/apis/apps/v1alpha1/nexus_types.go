@@ -36,7 +36,6 @@ type NexusSpec struct {
 	// +kubebuilder:validation:Minimum=1
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Replicas"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Replicas"
 	Replicas int32 `json:"replicas"`
 
 	// Full image tag name for this specific deployment
@@ -44,7 +43,6 @@ type NexusSpec struct {
 	// +optional
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Image"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Image"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes:image"
 	Image string `json:"image,omitempty"`
 
@@ -52,28 +50,24 @@ type NexusSpec struct {
 	// +optional
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Resources"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Resources"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:resourceRequirements"
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 
 	// Persistence definition
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Persistence"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Persistence"
 	Persistence NexusPersistence `json:"persistence"`
 
 	// If you have access to Red Hat Container Catalog, turn this to true to use the certified image provided by Sonatype
 	// Default: false
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Use Red Hat Image"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Use Red Hat Image"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
 	UseRedHatImage bool `json:"useRedHatImage"`
 
 	// Networking definition
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Networking"
-	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.description="Networking"
 	Networking NexusNetworking `json:"networking,omitempty"`
 }
 
@@ -118,7 +112,6 @@ type NexusStatus struct {
 	// Condition status for the Nexus deployment
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="appsv1.DeploymentStatus"
-	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.description="appsv1.DeploymentStatus"
 	DeploymentStatus v1.DeploymentStatus `json:"deploymentStatus,omitempty"`
 	// Will be "OK" when all objects are created successfully
 	NexusStatus string `json:"nexusStatus,omitempty"`
@@ -128,7 +121,7 @@ type NexusStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Nexus is the Schema for the nexus API
+// Nexus custom resource to deploy the Nexus Server
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path=nexus,scope=Namespaced
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Nexus"

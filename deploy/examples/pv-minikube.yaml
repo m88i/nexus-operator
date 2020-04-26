@@ -1,0 +1,14 @@
+# if your cluster does not create a PV automatically for you, try creating manually
+# this PV matches with the configuration of the given examples
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexus-volume
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/pv0001/"

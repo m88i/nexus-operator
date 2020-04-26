@@ -19,8 +19,16 @@
 
 if [[ -z ${CI} ]]; then
     ./hack/go-mod.sh
+    ./hack/addheaders.sh
+
     operator-sdk generate k8s
-    operator-sdk generate openapi
-    operator-sdk olm-catalog gen-csv --csv-version 0.2.0-rc1 --from-version 0.1.0 --update-crds # future: --from-version 0.5.0
+    operator-sdk generate crds
+
+    # get the openapi binary
+    which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+     echo "Generating openapi files"
+    ./bin/openapi-gen --logtostderr=true -o "" -i ./pkg/apis/apps/v1alpha1 -O zz_generated.openapi -p ./pkg/apis/apps/v1alpha1 -h ./hack/boilerplate.go.txt -r "-"
+
+    operator-sdk generate csv --update-crds --csv-version 0.2.0 --make-manifests=false --verbose --operator-name nexus-operator
 fi
 go vet ./...

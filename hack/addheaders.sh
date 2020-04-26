@@ -17,11 +17,9 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 
-if ! hash addlicense 2>/dev/null; then
-  go get -u github.com/google/addlicense
-fi
+which ./bin/addlicense > /dev/null || go build -o ./bin/addlicense github.com/google/addlicense
 
 # https://github.com/google/addlicense
 # https://www.gnu.org/licenses/gpl-howto.en.html
 
-addlicense -c "Nexus Operator and/or its authors" -f LICENSE_NOTICE cmd hack pkg version tools.go
+./bin/addlicense -c "Nexus Operator and/or its authors" -f LICENSE_NOTICE cmd hack pkg version
