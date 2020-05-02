@@ -33,6 +33,14 @@ metadata:
         }
       ]
     capabilities: Basic Install
+    categories: Developer Tools
+    certified: "false"
+    containerImage: quay.io/m88i/nexus-operator:0.2.0
+    createdAt: "2019-11-16T13:12:22Z"
+    description: Nexus Operator to deploy and manage Nexus 3.x servers
+    repository: https://github.com/m88i/nexus-operator
+    support: m88i Labs
+    tectonic-visibility: ocs
   name: nexus-operator.v0.2.0
   namespace: placeholder
 spec:
@@ -253,16 +261,18 @@ spec:
   - repository
   - repository manager
   - dev tools
-  - ""
+  labels:
+    name: nexus-operator
   links:
   - name: Documentation
     url: https://github.com/m88i/nexus-operator/blob/master/README.md
-  - name: Source
+  - name: Nexus Operator source code repository
     url: https://github.com/m88i/nexus-operator
   maintainers:
   - email: nexus-operator@googlegroups.com
     name: m88i Labs
   maturity: alpha
+  minKubeVersion: 1.11.0
   provider:
     name: m88i Labs
   replaces: nexus-operator.v0.1.0
