@@ -1,5 +1,5 @@
 #!/bin/bash
-#     Copyright 2019 Nexus Operator and/or its authors
+#     Copyright 2020 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
 #
@@ -16,22 +16,18 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+if [[ -z ${OPERATOR_SDK_VERSION} ]]; then
+    OPERATOR_SDK_VERSION=0.17.0
+fi
 
-NAMESPACE=nexus
+if [ ! -f ./bin/operator-sdk ]; then
+    echo "Installing Operator SDK version ${OPERATOR_SDK_VERSION}"
+    curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu
 
-echo "....... Creating namespace ......."
-kubectl create namespace ${NAMESPACE}
-
-echo "....... Applying CRDS ......."
-kubectl apply -f deploy/crds/apps.m88i.io_nexus_crd.yaml
-
-echo "....... Applying Rules and Service Account ......."
-kubectl apply -f deploy/role.yaml -n ${NAMESPACE}
-kubectl apply -f deploy/role_binding.yaml -n ${NAMESPACE}
-kubectl apply -f deploy/service_account.yaml -n ${NAMESPACE}
-
-echo "....... Applying Nexus Operator ......."
-kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
-
-echo "....... Creating the Nexus 3.x Server ......."
-kubectl apply -f examples/nexus3-centos-no-volume.yaml -n ${NAMESPACE}
+    chmod +x ${PWD}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu &&
+        mkdir -p ./bin &&
+        cp ${PWD}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu ./bin/operator-sdk &&
+        rm ${PWD}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu
+else
+    echo "Operator already installed, skipping"
+fi

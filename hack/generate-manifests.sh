@@ -1,5 +1,5 @@
 #!/bin/bash
-#     Copyright 2019 Nexus Operator and/or its authors
+#     Copyright 2020 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
 #
@@ -17,21 +17,9 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 
-NAMESPACE=nexus
+source ./hack/export-version.sh
 
-echo "....... Creating namespace ......."
-kubectl create namespace ${NAMESPACE}
-
-echo "....... Applying CRDS ......."
-kubectl apply -f deploy/crds/apps.m88i.io_nexus_crd.yaml
-
-echo "....... Applying Rules and Service Account ......."
-kubectl apply -f deploy/role.yaml -n ${NAMESPACE}
-kubectl apply -f deploy/role_binding.yaml -n ${NAMESPACE}
-kubectl apply -f deploy/service_account.yaml -n ${NAMESPACE}
-
-echo "....... Applying Nexus Operator ......."
-kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
-
-echo "....... Creating the Nexus 3.x Server ......."
-kubectl apply -f examples/nexus3-centos-no-volume.yaml -n ${NAMESPACE}
+rm ./deploy/olm-catalog/nexus-operator/manifests -rf
+# generate manifests use --from-version to upgrade: https://operator-sdk.netlify.app/docs/olm-integration/generating-a-csv/#upgrading-your-csv
+operator-sdk generate csv --apis-dir ./pkg/apis/apps/v1alpha1 --update-crds --csv-version $OP_VERSION --make-manifests=false --verbose --operator-name nexus-operator
+operator-sdk generate csv --apis-dir ./pkg/apis/apps/v1alpha1 --verbose --operator-name nexus-operator --csv-version $OP_VERSION

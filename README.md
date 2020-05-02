@@ -97,7 +97,7 @@ If you're running on Minikube, take a look in the article ["Set up Ingress on Mi
 
 ### Minikube
 
-On Minikube the dynamic PV [creation might fail](https://github.com/kubernetes/minikube/issues/7218). If this happens in your environment, **before creating the Nexus server**, create a PV with this template: [deploy/examples/pv-minikube.yaml](deploy/examples/pv-minikube.yaml). Then give the correct permissions to the directory in Minikube VM:
+On Minikube the dynamic PV [creation might fail](https://github.com/kubernetes/minikube/issues/7218). If this happens in your environment, **before creating the Nexus server**, create a PV with this template: [examples/pv-minikube.yaml](examples/pv-minikube.yaml). Then give the correct permissions to the directory in Minikube VM:
 
 ```sh
 $ minikube ssh
@@ -128,7 +128,7 @@ If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/r
 
 ### Publish to OpenShift 4.x Marketplace
 
-1. Run `make prepare-olm version=0.2.0`
+1. Run `make operator-verify`
 
 2. Grab [Quay credentials](https://github.com/operator-framework/operator-courier/#authentication) with:
 
@@ -150,7 +150,7 @@ $ AUTH_TOKEN=$(curl -sH "Content-Type: application/json" -XPOST https://quay.io/
 ```
 $ export OPERATOR_DIR=build/_output/operatorhub/
 $ export QUAY_NAMESPACE=m88i # should be different for you ;)
-$ export PACKAGE_NAME=nexus-operator-hub
+$ export PACKAGE_NAME=nexus-operator
 $ export PACKAGE_VERSION=0.2.0
 $ export TOKEN=$AUTH_TOKEN
 ```

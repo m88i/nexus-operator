@@ -1,0 +1,64 @@
+name: Nexus Operator PR Checks
+on: [push]
+jobs:
+  unit_test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+        id: go
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod/cache
+          key: ${{ runner.os }}-go-cache-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-cache-
+
+      - name: Mod Tidy
+        run: |
+          go mod tidy
+
+      - name: FMT
+        run: gofmt -s -l -w cmd/ pkg/ version/
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test Packages
+        run: go test ./pkg/... -count=1
+
+  olm_verify:
+    name: Operator OLM Verify
+    runs-on: ubuntu-latest
+    env:
+      OPERATOR_SDK_VERSION: 0.17.0
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Cache Operator SDK Binary
+        uses: actions/cache@v1
+        with:
+          path: ./bin
+          key: ${{ runner.os }}-operator-sdk-${{ env.OPERATOR_SDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-operator-sdk-
+
+      - name: Install Operator SDK
+        run: |
+          ./hack/ci/install-operator-sdk.sh
+          echo "::add-path::$GITHUB_WORKSPACE/bin"
+
+      - name: Generate Manifests
+        run: ./hack/generate-manifests.sh
+
+      - name: Run Operator Framewok verify
+        run: ./hack/operator-verify.sh

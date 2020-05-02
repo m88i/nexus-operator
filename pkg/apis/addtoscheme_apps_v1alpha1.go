@@ -19,11 +19,9 @@ package apis
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	routev1 "github.com/openshift/api/route/v1"
-	ingressv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
-	AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme, routev1.Install, ingressv1beta1.AddToScheme)
+	AddToSchemes = append(AddToSchemes, v1alpha1.SchemeBuilder.AddToScheme)
 }

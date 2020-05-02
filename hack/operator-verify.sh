@@ -1,5 +1,5 @@
-#!/bin/sh
-#     Copyright 2019 Nexus Operator and/or its authors
+#!/bin/bash
+#     Copyright 2020 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
 #
@@ -17,25 +17,20 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 
-. ./hack/go-mod-env.sh
-
 source ./hack/export-version.sh
 
-REPO=https://github.com/m88i/nexus-operator
-BRANCH=master
-REGISTRY=quay.io/m88i
-IMAGE=nexus-operator
-TAG=${OP_VERSION}
-TAR=${BRANCH}.tar.gz
-URL=${REPO}/archive/${TAR}
-CFLAGS=""
+OUTPUT="${PWD}/build/_output/operatorhub"
+OP_PATH="community-operators/nexus-operator"
+OPERATOR_TESTING_IMAGE=quay.io/operator-framework/operator-testing:latest
 
-setGoModEnv
-go generate ./...
-if [[ -z ${CI} ]]; then
-    ./hack/go-test.sh
-    # changed to podman, see: https://www.linuxuprising.com/2019/11/how-to-install-and-use-docker-on-fedora.html
-    operator-sdk build ${REGISTRY}/${IMAGE}:${TAG} --image-builder podman
-else
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -v -a -o build/_output/bin/nexus-operator github.com/m88i/nexus-operator/cmd/manager
-fi
+echo "Output dir is set to ${OUTPUT}"
+
+# clean up
+rm -rf "${OUTPUT}"
+mkdir -p "${OUTPUT}/nexus-operator/${OP_VERSION}"
+
+cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-operator/${OP_VERSION}"
+cp ./deploy/olm-catalog/nexus-operator/nexus-operator.package.yaml "${OUTPUT}/nexus-operator"
+
+docker pull ${OPERATOR_TESTING_IMAGE}
+docker run --rm -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} operator.verify --no-print-directory OP_PATH=${OP_PATH} VERBOSE=true

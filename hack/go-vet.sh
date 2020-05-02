@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #     Copyright 2019 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
@@ -16,7 +16,6 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-
 if [[ -z ${CI} ]]; then
     ./hack/go-mod.sh
     ./hack/addheaders.sh
@@ -25,10 +24,10 @@ if [[ -z ${CI} ]]; then
     operator-sdk generate crds
 
     # get the openapi binary
-    which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
-     echo "Generating openapi files"
+    which ./bin/openapi-gen >/dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+    echo "Generating openapi files"
     ./bin/openapi-gen --logtostderr=true -o "" -i ./pkg/apis/apps/v1alpha1 -O zz_generated.openapi -p ./pkg/apis/apps/v1alpha1 -h ./hack/boilerplate.go.txt -r "-"
 
-    operator-sdk generate csv --update-crds --csv-version 0.2.0 --make-manifests=false --verbose --operator-name nexus-operator
+    ./hack/generate-manifests.sh
 fi
 go vet ./...
