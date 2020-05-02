@@ -19,11 +19,13 @@ spec:
       memory: "2Gi"
   # Data persistence details
   persistence:
-    # Should we persist Nexus data? Turn this to false only if you're evaluating this resource.
-    # In case you need persistence, also set the volumeSize parameter to meet your needs.
+    # Should we persist Nexus data? Yes, please. (turn this to false only if you're evaluating this resource)
     persistent: false
-    # Size of the volume reserved for the pods. Be aware that if replicas greater then 1, a RWX Persistent Volume will be created, hence
-    # make sure that your cluster has support for this configuration. Ignored if persistent is set to false. Defaults to 10Gi
-    #volumeSize: 10Gi
+  # details regarding networking
   networking:
-    expose: false
+    # expose please
+    expose: true
+    # How do you want to expose the Nexus server? In this case, NodePort is the way to go
+    exposeAs: "NodePort"
+    # The port that we will access the Nexus server. Make sure that this port is available in your node
+    nodePort: 31031

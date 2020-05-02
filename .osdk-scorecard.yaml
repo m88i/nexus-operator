@@ -1,6 +1,6 @@
 scorecard:
   # Setting a global scorecard option
-  output: json
+  output: text
   plugins:
     - basic:
         cr-manifest:
@@ -8,5 +8,4 @@ scorecard:
     - olm:
         cr-manifest:
           - "deploy/crds/apps.m88i.io_v1alpha1_nexus_cr.yaml"
-        csv-path: "deploy/olm-catalog/nexus-operator/0.2.0-rc1/nexus-operator.v0.2.0-rc1.clusterserviceversion.yaml"
-
+        csv-path: "deploy/olm-catalog/nexus-operator/0.2.0/nexus-operator.v0.2.0.clusterserviceversion.yaml"

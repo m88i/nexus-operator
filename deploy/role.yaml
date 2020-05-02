@@ -15,14 +15,8 @@ rules:
       - events
       - configmaps
       - secrets
-      - limitranges
-      - componentstatuses
-      - persistentvolumes
-      - bindings
       - replicationcontrollers
-      - resourcequotas
       - podtemplates
-      - serviceaccounts
     verbs:
       - create
       - delete
@@ -62,9 +56,22 @@ rules:
     verbs:
       - update
   - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+      - deployments
+    verbs:
+      - get
+  - apiGroups:
       - apps.m88i.io
     resources:
-      - '*'
+      - "*"
     verbs:
       - create
       - delete

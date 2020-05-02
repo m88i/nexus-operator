@@ -59,7 +59,11 @@ install:
 uninstall:
 	./hack/uninstall.sh
 
-.PHONY: prepare-olm
+.PHONY: operator-verify
+operator-verify:
+	./hack/operator-verify.sh
+
+.PHONY: olm-integration
 version = ""
-prepare-olm:
-	./hack/pr-operatorhub.sh $(version)
+olm-integration:
+	./hack/olm-integration.sh

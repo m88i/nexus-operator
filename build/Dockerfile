@@ -1,4 +1,4 @@
-FROM registry.redhat.io/ubi8-minimal:latest
+FROM registry.redhat.io/ubi8/ubi-minimal:latest
 
 ENV OPERATOR=/usr/local/bin/nexus-operator \
     USER_UID=1001 \
