@@ -18,15 +18,25 @@
 package resource
 
 import (
+	"fmt"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	v1 "github.com/openshift/api/route/v1"
+	"github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const kindService = "Service"
+const (
+	kindService  = "Service"
+	routeNotInit = "route not initialized"
+)
 
-func newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *v1.Route {
+type routeBuilder struct {
+	route *v1.Route
+	err   error
+	nexus *v1alpha1.Nexus
+}
+
+func (r *routeBuilder) newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *routeBuilder {
 	route := &v1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nexus.Name,
@@ -44,6 +54,24 @@ func newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *v1.Route {
 	}
 
 	applyLabels(nexus, &route.ObjectMeta)
+	r.route = route
 
-	return route
+	return r
+}
+
+func (r *routeBuilder) withRedirect() *routeBuilder {
+	if r == nil {
+		r.err = fmt.Errorf(routeNotInit)
+		return r
+	}
+
+	r.route.Spec.TLS = &v1.TLSConfig{
+		Termination:                   v1.TLSTerminationEdge,
+		InsecureEdgeTerminationPolicy: v1.InsecureEdgeTerminationPolicyRedirect,
+	}
+	return r
+}
+
+func (r *routeBuilder) build() (*v1.Route, error) {
+	return r.route, r.err
 }

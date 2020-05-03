@@ -34,8 +34,6 @@ make uninstall
 
 There are three flavours for exposing the Nexus server deployed with the Nexus Operator: `NodePort`, `Route` (for OpenShift) and `Ingress` (for Kubernetes).
 
-In the future, we plan to give more options to this feature like adding custom certificates.
-
 ### Use NodePort
 
 You can expose the Nexus server via [`NodePort`](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport) by setting the following parameters in the CR:
@@ -69,7 +67,7 @@ spec:
   (...)
   networking:
     expose: true
-``` 
+```
 
 ### Network on Kubernetes 1.14+
 
@@ -88,10 +86,14 @@ spec:
     host: "nexus.example.com"
 ```
 
-Please note that `host` is a required parameter when exposing via `Ingress`. 
-Just make sure that that the host resolves to your cluster. 
+Please note that `host` is a required parameter when exposing via `Ingress`.
+Just make sure that that the host resolves to your cluster.
 
-If you're running on Minikube, take a look in the article ["Set up Ingress on Minikube with the NGINX Ingress Controller"](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/) 
+If you're running on Minikube, take a look in the article ["Set up Ingress on Minikube with the NGINX Ingress Controller"](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/)
+
+### TLS/SSL
+
+For details about TLS configuration check out our [TLS guide](https://github.com/m88i/nexus-operator/tree/master/docs/TLS.md).
 
 ## Persistence
 
@@ -119,8 +121,8 @@ drwxr-xr-x  2  200  200 4096 Apr 26 15:42 pv0001
 
 ## Red Hat Certified Images
 
-If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager), you might change the flag `spec.useRedHatImage` to `true`. 
-**You'll have to set your Red Hat credentials** in the namespace where Nexus is deployed to be able to pull the image. 
+If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager), you might change the flag `spec.useRedHatImage` to `true`.
+**You'll have to set your Red Hat credentials** in the namespace where Nexus is deployed to be able to pull the image.
 
 [In future versions](https://github.com/m88i/nexus-operator/issues/14) the Operator will handle this step for you.
 
@@ -143,7 +145,7 @@ $ AUTH_TOKEN=$(curl -sH "Content-Type: application/json" -XPOST https://quay.io/
         "password": "'"${QUAY_PASSWORD}"'"
     }
 }' | jq -r '.token')
-``` 
+```
 
 3. Set courier variables:
 
@@ -162,7 +164,7 @@ operator-courier push "$OPERATOR_DIR" "$QUAY_NAMESPACE" "$PACKAGE_NAME" "$PACKAG
 ```
 
 5. Check if the application was pushed successfuly in Quay.io. Bear in mind that the application should be **public**.
- 
+
 6. Publish the operator source there:
 
 ```

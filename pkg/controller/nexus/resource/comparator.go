@@ -18,10 +18,12 @@
 package resource
 
 import (
+	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
+	"k8s.io/api/extensions/v1beta1"
 	"reflect"
 )
 
@@ -34,11 +36,28 @@ func GetComparator() compare.MapComparator {
 	svcType := reflect.TypeOf(v1.Service{})
 	routeType := reflect.TypeOf(routev1.Route{})
 	deploymentType := reflect.TypeOf(appsv1.Deployment{})
+	ingressType := reflect.TypeOf(v1beta1.Ingress{})
 
 	resourceComparator.SetComparator(pvcType, resourceComparator.GetDefaultComparator())
 	resourceComparator.SetComparator(svcType, resourceComparator.GetComparator(svcType))
 	resourceComparator.SetComparator(deploymentType, resourceComparator.GetComparator(deploymentType))
 	resourceComparator.SetComparator(routeType, resourceComparator.GetComparator(routeType))
+	resourceComparator.SetComparator(ingressType, ingressEqual)
 
 	return compare.MapComparator{Comparator: resourceComparator}
+}
+
+func ingressEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	ingress1 := deployed.(*v1beta1.Ingress)
+	ingress2 := deployed.(*v1beta1.Ingress)
+	var pairs [][2]interface{}
+	pairs = append(pairs, [2]interface{}{ingress1.Name, ingress2.Name})
+	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
+	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
+
+	equal := compare.EqualPairs(pairs)
+	if !equal {
+		log.Info("Resources are not equal", "deployed", deployed, "requested", requested)
+	}
+	return equal
 }

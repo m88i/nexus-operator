@@ -24,8 +24,33 @@ import (
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const (
+	ingressGroup   = "networking.k8s.io"
+	ingressVersion = "v1beta1"
+)
+
+func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
+	serverGroups, err := d.ServerGroups()
+	if err != nil {
+		return false, err
+	}
+	for _, serverGroup := range serverGroups.Groups {
+		if serverGroup.Name == ingressGroup {
+			for _, version := range serverGroup.Versions {
+				if version.Version == ingressVersion {
+					return true, nil
+				}
+				// we found the correct group, but not the correct version, so fail
+				return false, nil
+			}
+		}
+	}
+	return false, nil
+}
 
 // GetIngressURI discover the URI for Ingress
 func GetIngressURI(cli client.Client, ingressName types.NamespacedName) (string, error) {

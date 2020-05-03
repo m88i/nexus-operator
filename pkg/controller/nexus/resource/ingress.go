@@ -26,12 +26,22 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const ingressBasePath = "/"
+const (
+	ingressBasePath = "/"
+	ingressNotInit  = "ingress not initialized"
+)
 
-func newIngress(nexus *v1alpha1.Nexus, service *corev1.Service) (*v1beta1.Ingress, error) {
+type ingressBuilder struct {
+	ingress *v1beta1.Ingress
+	err     error
+	nexus   *v1alpha1.Nexus
+}
+
+func (i *ingressBuilder) newIngress(nexus *v1alpha1.Nexus, service *corev1.Service) *ingressBuilder {
 	port, err := getNexusDefaultPort(service)
 	if err != nil {
-		return nil, err
+		i.err = err
+		return i
 	}
 
 	ingress := &v1beta1.Ingress{
@@ -60,8 +70,37 @@ func newIngress(nexus *v1alpha1.Nexus, service *corev1.Service) (*v1beta1.Ingres
 	}
 
 	applyLabels(nexus, &ingress.ObjectMeta)
+	i.ingress = ingress
+	i.nexus = nexus
 
-	return ingress, nil
+	return i
+}
+
+func (i *ingressBuilder) withCustomTLS() *ingressBuilder {
+	if i == nil {
+		i.err = fmt.Errorf(ingressNotInit)
+		return i
+	}
+
+	i.ingress.Spec.TLS = []v1beta1.IngressTLS{
+		{
+			Hosts:      hosts(i.ingress),
+			SecretName: i.nexus.Spec.Networking.TLS.SecretName,
+		},
+	}
+	return i
+}
+
+func (i *ingressBuilder) build() (*v1beta1.Ingress, error) {
+	if i == nil {
+		return nil, fmt.Errorf(ingressNotInit)
+	}
+
+	if i.err != nil {
+		return nil, i.err
+	}
+
+	return i.ingress, nil
 }
 
 func getNexusDefaultPort(service *corev1.Service) (intstr.IntOrString, error) {
@@ -70,5 +109,13 @@ func getNexusDefaultPort(service *corev1.Service) (intstr.IntOrString, error) {
 			return port.TargetPort, nil
 		}
 	}
-	return intstr.IntOrString{IntVal: 0}, fmt.Errorf("No default Nexus port (%d) found in service %s ", nexusServicePort, service.Name)
+	return intstr.IntOrString{IntVal: 0}, fmt.Errorf("No default nexus port (%d) found in service %s ", nexusServicePort, service.Name)
+}
+
+func hosts(ingress *v1beta1.Ingress) []string {
+	var hosts []string
+	for _, rule := range ingress.Spec.Rules {
+		hosts = append(hosts, rule.Host)
+	}
+	return hosts
 }
