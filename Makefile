@@ -64,6 +64,11 @@ operator-verify:
 	./hack/operator-verify.sh
 
 .PHONY: olm-integration
-version = ""
 olm-integration:
 	./hack/olm-integration.sh
+
+.PHONY: test-e2e
+namespace="nexus-e2e"
+create_namespace=true
+test-e2e:
+	NAMESPACE_E2E=$(namespace) CREATE_NAMESPACE=$(create_namespace) ./hack/run-e2e-test.sh
