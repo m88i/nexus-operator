@@ -110,13 +110,13 @@ nexus.apps.m88i.io/nexus3 created
 Now we should have an Ingress with TLS configuration:
 
 ```
-$ kubectl get -n nexus Ingress/nexus3
+$ kubectl get -n nexus ingress/nexus3
 NAME     CLASS    HOSTS                   ADDRESS         PORTS     AGE
 nexus3   <none>   nexus-tls.example.com   192.168.39.29   80, 443   84s
-$ kubectl get -n nexus Ingress/nexus3 -o yaml
+$ kubectl get -n nexus ingress/nexus3 -o yaml
 apiVersion: extensions/v1beta1
 kind: Ingress
-(output omitted)
+# (output omitted)
 spec:
   rules:
   - host: nexus-tls.example.com
@@ -294,7 +294,7 @@ To be sure, let's take a look at the YAML as well:
 $ oc get route/nexus3 -o yaml
 apiVersion: route.openshift.io/v1
 kind: Route
-(output omitted)
+# (output omitted)
 spec:
   host: nexus3-nexus.192.168.42.189.nip.io
   port:
@@ -370,5 +370,5 @@ $ curl -vLk http://nexus3-nexus.192.168.42.189.nip.io
 *   Trying 192.168.42.189...
 * TCP_NODELAY set
 * Connected to nexus3-nexus.192.168.42.189.nip.io (192.168.42.189) port 443 (#1)
-* (output omitted)
+# (output omitted)
 ```

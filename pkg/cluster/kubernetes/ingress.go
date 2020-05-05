@@ -21,19 +21,21 @@ import (
 	"context"
 	"fmt"
 	"github.com/m88i/nexus-operator/pkg/util"
-	"k8s.io/api/networking/v1beta1"
+	"k8s.io/api/extensions/v1beta1"
+	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	ingressGroup   = "networking.k8s.io"
-	ingressVersion = "v1beta1"
-)
+// It would be nice to keep the version as constant as well, but the package only offers it as a variable.
+// FIXME if this ever changes and remove `ingressVersion` from the function(s)
+const ingressGroup   = networking.GroupName
 
 func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
+	ingressVersion := networking.SchemeGroupVersion.Version
+
 	serverGroups, err := d.ServerGroups()
 	if err != nil {
 		return false, err
