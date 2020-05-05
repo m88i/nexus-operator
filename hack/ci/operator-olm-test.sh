@@ -16,21 +16,28 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+source ./hack/ci/operator-ensure-manifest.sh
 
-source ./hack/export-version.sh
-
-OUTPUT="${PWD}/build/_output/operatorhub"
+CATALOG_IMAGE="operatorhubio-catalog:temp"
 OP_PATH="community-operators/nexus-operator"
+INSTALL_MODE="SingleNamespace"
 OPERATOR_TESTING_IMAGE=quay.io/operator-framework/operator-testing:latest
 
-echo "Output dir is set to ${OUTPUT}"
+if [ -z ${KUBECONFIG} ]; then
+    KUBECONFIG=${HOME}/.kube/config
+    echo "---> KUBECONFIG environment variable not set, defining to:"
+    ls -la ${KUBECONFIG}
+fi
 
-# clean up
-rm -rf "${OUTPUT}"
-mkdir -p "${OUTPUT}/nexus-operator/${OP_VERSION}"
+echo "---> Building temporary catalog Image"
+docker build --build-arg PERMISSIVE_LOAD=false -f ./hack/ci/operatorhubio-catalog.Dockerfile -t ${CATALOG_IMAGE} .
+echo "---> Loading Catalog Image into Kind"
+kind load docker-image ${CATALOG_IMAGE} --name operator-test
 
-cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-operator/${OP_VERSION}"
-cp ./deploy/olm-catalog/nexus-operator/nexus-operator.package.yaml "${OUTPUT}/nexus-operator"
-
+# running tests
 docker pull ${OPERATOR_TESTING_IMAGE}
-docker run --rm -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} operator.verify --no-print-directory OP_PATH=${OP_PATH} VERBOSE=true
+docker run --network=host --rm \
+    -v ${KUBECONFIG}:/root/.kube/config:z \
+    -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} \
+    operator.test --no-print-directory \
+    OP_PATH=${OP_PATH} VERBOSE=true NO_KIND=0 CATALOG_IMAGE=${CATALOG_IMAGE} INSTALL_MODE=${INSTALL_MODE}
