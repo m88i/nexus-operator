@@ -227,3 +227,100 @@ func TestReconcileNexus_setDefaultNetworking(t *testing.T) {
 		})
 	}
 }
+
+func TestReconcileNexus_validateTLS(t *testing.T) {
+	type fields struct {
+		client          client.Client
+		scheme          *runtime.Scheme
+		discoveryClient discovery.DiscoveryInterface
+		resourceManager nexusres.NexusResourceManager
+	}
+	type args struct {
+		nexus *v1alpha1.Nexus
+	}
+
+	cli := test.NewFakeClient()
+	reconcileOcp := newFakeReconcileNexus(cli, true)
+	reconcileK8s := newFakeReconcileNexus(cli, false)
+	fieldOCP := fields{
+		client:          cli,
+		scheme:          test.GetSchema(),
+		discoveryClient: reconcileOcp.discoveryClient,
+		resourceManager: reconcileOcp.resourceManager,
+	}
+	fieldK8s := fields{
+		client:          cli,
+		scheme:          test.GetSchema(),
+		discoveryClient: reconcileK8s.discoveryClient,
+		resourceManager: reconcileK8s.resourceManager,
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			"Mandatory, but not exposing on Openshift",
+			fieldOCP,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{TLS: v1alpha1.NexusNetworkingTLS{Mandatory: true}}}}},
+			true,
+		},
+		{
+			"Mandatory, but not exposing on Kubernetes",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{TLS: v1alpha1.NexusNetworkingTLS{Mandatory: true}}}}},
+			true,
+		},
+		{
+			"Mandatory and exposing on Openshift",
+			fieldOCP,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.RouteExposeType, TLS: v1alpha1.NexusNetworkingTLS{Mandatory: true}}}}},
+			false,
+		},
+		{
+			"Mandatory and exposing, but on Kubernetes",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, TLS: v1alpha1.NexusNetworkingTLS{Mandatory: true}}}}},
+			true,
+		},
+		{
+			"SecretName, but not exposing on Openshift",
+			fieldOCP,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{TLS: v1alpha1.NexusNetworkingTLS{SecretName: "test"}}}}},
+			true,
+		},
+		{
+			"SecretName, but not exposing on Kubernetes",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{TLS: v1alpha1.NexusNetworkingTLS{SecretName: "test"}}}}},
+			true,
+		},
+		{
+			"SecretName and exposing, but on Openshift",
+			fieldOCP,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.RouteExposeType, TLS: v1alpha1.NexusNetworkingTLS{SecretName: "test"}}}}},
+			true,
+		},
+		{
+			"SecretName and exposing on Kubernetes",
+			fieldK8s,
+			args{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, TLS: v1alpha1.NexusNetworkingTLS{SecretName: "test"}}}}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ReconcileNexus{
+				client:          tt.fields.client,
+				scheme:          tt.fields.scheme,
+				discoveryClient: tt.fields.discoveryClient,
+				resourceManager: tt.fields.resourceManager,
+			}
+			if err := r.validateTLS(tt.args.nexus); (err != nil) != tt.wantErr {
+				t.Errorf("validateTLS() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

@@ -57,6 +57,21 @@ spec:
                     exposed via NodePort.
                   format: int32
                   type: integer
+                tls:
+                  description: TLS/SSL-related configuration
+                  properties:
+                    mandatory:
+                      description: When exposing via Route, set to `true` to only
+                        allow encrypted traffic using TLS (disables HTTP in favor
+                        of HTTPS). Defaults to false.
+                      type: boolean
+                    secretName:
+                      description: When exposing via Ingress, inform the name of the
+                        TLS secret containing certificate and private key for TLS
+                        encryption. It must be present in the same namespace as the
+                        Operator.
+                      type: string
+                  type: object
               type: object
             persistence:
               description: Persistence definition

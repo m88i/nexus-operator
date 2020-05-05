@@ -53,7 +53,7 @@ func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1
 			},
 			Template: v1.PodTemplateSpec{
 				Spec: v1.PodSpec{
-					SecurityContext: &v1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID},
+					SecurityContext: &v1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}},
 					Containers: []v1.Container{
 						{
 							Name: nexusContainerName,

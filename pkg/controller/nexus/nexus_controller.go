@@ -100,6 +100,12 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Watch for TLS secret changes to update route
+	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &appsv1alpha1.Nexus{},
+	})
+
 	controllerWatcher := framework.NewControllerWatcher(r.(*ReconcileNexus).discoveryClient, mgr, c, &appsv1alpha1.Nexus{})
 	if err = controllerWatcher.Watch(watchedObjects...); err != nil {
 		return err
@@ -153,6 +159,11 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return
 	}
 
+	// check if TLS config is sane
+	if err = r.validateTLS(instance); err != nil {
+		return
+	}
+
 	// Create the objects as desired by the Nexus instance
 	requestedRes, err := r.resourceManager.CreateRequiredResources(instance)
 	if err != nil {
@@ -173,10 +184,10 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 			continue
 		}
 		log.Info("Will ",
-			"create", len(delta.Added),
-			"update", len(delta.Updated),
-			"delete", len(delta.Removed),
-			"instances of", resourceType)
+			"create ", len(delta.Added),
+			", update ", len(delta.Updated),
+			", delete ", len(delta.Removed),
+			" instances of ", resourceType)
 		_, err = writer.AddResources(delta.Added)
 		if err != nil {
 			return
@@ -229,6 +240,27 @@ func (r *ReconcileNexus) setDefaultNetworking(nexus *appsv1alpha1.Nexus) (err er
 		return fmt.Errorf("Ingress networking requires a host. Check Nexus resource 'spec.networking.host' parameter ")
 	}
 
+	return nil
+}
+
+// validateTLS ensures TLS configuration is valid
+func (r *ReconcileNexus) validateTLS(nexus *appsv1alpha1.Nexus) error {
+	if nexus.Spec.Networking.TLS.Mandatory || len(nexus.Spec.Networking.TLS.SecretName) > 0 {
+		if !nexus.Spec.Networking.Expose || nexus.Spec.Networking.ExposeAs == appsv1alpha1.NodePortExposeType {
+			return fmt.Errorf("TLS encryption is only available when using a Route or Ingress")
+		}
+
+		ocp, err := openshift.IsOpenShift(r.discoveryClient)
+		if err != nil {
+			return err
+		}
+
+		if ocp && len(nexus.Spec.Networking.TLS.SecretName) > 0 {
+			return fmt.Errorf("spec.networking.tls.secretName is only available when using an Ingress")
+		} else if !ocp && nexus.Spec.Networking.TLS.Mandatory {
+			return fmt.Errorf("spec.networking.tls.mandatory is only available when using a Route")
+		}
+	}
 	return nil
 }
 

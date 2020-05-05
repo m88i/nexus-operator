@@ -106,6 +106,19 @@ type NexusNetworking struct {
 	Host string `json:"host,omitempty"`
 	// NodePort defined in the exposed service. Required if exposed via NodePort.
 	NodePort int32 `json:"nodePort,omitempty"`
+	// TLS/SSL-related configuration
+	// +optional
+	TLS NexusNetworkingTLS `json:"tls,omitempty"`
+}
+
+// NexusNetworkingTLS defines TLS/SSL-related configuration
+type NexusNetworkingTLS struct {
+	// When exposing via Route, set to `true` to only allow encrypted traffic using TLS (disables HTTP in favor of HTTPS). Defaults to false.
+	// +optional
+	Mandatory bool `json:"mandatory,omitempty"`
+	// When exposing via Ingress, inform the name of the TLS secret containing certificate and private key for TLS encryption. It must be present in the same namespace as the Operator.
+	// +optional
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // NexusStatus defines the observed state of Nexus
