@@ -95,7 +95,7 @@ func (c *controllerWatcher) Watch(watchedObjects ...WatchedObjects) (err error) 
 		if object.AddToScheme == nil {
 			desiredObjects = append(desiredObjects, object)
 		} else {
-			if _, found := serverGroupMap[object.GroupVersion.Group][object.GroupVersion.Version]; found {
+			if _, found := serverGroupMap[object.GroupVersion.String()]; found {
 				addToScheme = append(addToScheme, object.AddToScheme)
 				desiredObjects = append(desiredObjects, object)
 				delete(c.groupsNotWatched, object.GroupVersion.Group)
@@ -133,19 +133,18 @@ func (c *controllerWatcher) Watch(watchedObjects ...WatchedObjects) (err error) 
 	return
 }
 
-func (c *controllerWatcher) getServerGroupMap() (map[string]map[string]bool, error) {
+func (c *controllerWatcher) getServerGroupMap() (map[string]bool, error) {
 	serverGroups, err := c.discoverClient.ServerGroups()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch server groups list: %v", err)
 	}
 
-	serverGroupMap := map[string]map[string]bool{}
+	serverGroupMap := make(map[string]bool)
 	for _, serverGroup := range serverGroups.Groups {
-		versions := make(map[string]bool)
 		for _, version := range serverGroup.Versions {
-			versions[version.Version] = true
+			key := fmt.Sprintf("%s/%s", serverGroup.Name, version.Version)
+			serverGroupMap[key] = true
 		}
-		serverGroupMap[serverGroup.Name] = versions
 	}
 	return serverGroupMap, nil
 }
