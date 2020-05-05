@@ -16,21 +16,23 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-
 source ./hack/export-version.sh
 
 OUTPUT="${PWD}/build/_output/operatorhub"
-OP_PATH="community-operators/nexus-operator"
-OPERATOR_TESTING_IMAGE=quay.io/operator-framework/operator-testing:latest
 
 echo "Output dir is set to ${OUTPUT}"
 
 # clean up
 rm -rf "${OUTPUT}"
-mkdir -p "${OUTPUT}/nexus-operator/${OP_VERSION}"
 
+mkdir -p "${OUTPUT}/nexus-operator/${OP_VERSION}"
 cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-operator/${OP_VERSION}"
 cp ./deploy/olm-catalog/nexus-operator/nexus-operator.package.yaml "${OUTPUT}/nexus-operator"
 
-docker pull ${OPERATOR_TESTING_IMAGE}
-docker run --rm -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} operator.verify --no-print-directory OP_PATH=${OP_PATH} VERBOSE=true
+# replaces
+replace_version=$(grep replaces "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml" | cut -f2 -d'v')
+if [ ! -z "${replace_version}" ]; then
+    echo "Found replaces version in the new CSV: ${replace_version}. Including in the package."
+    mkdir -p "${OUTPUT}/nexus-operator/${replace_version}"
+    cp "./deploy/olm-catalog/nexus-operator/${replace_version}/"*.yaml "${OUTPUT}/nexus-operator/${replace_version}"
+fi

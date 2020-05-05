@@ -59,10 +59,6 @@ install:
 uninstall:
 	./hack/uninstall.sh
 
-.PHONY: operator-verify
-operator-verify:
-	./hack/operator-verify.sh
-
 .PHONY: olm-integration
 olm-integration:
 	./hack/olm-integration.sh
