@@ -18,12 +18,11 @@
 package framework
 
 import (
-	"strings"
-
+	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
-	controllerruntime "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -83,7 +82,7 @@ func (c *controllerWatcher) IsGroupWatched(group string) bool {
 }
 
 func (c *controllerWatcher) Watch(watchedObjects ...WatchedObjects) (err error) {
-	serverGroups, err := c.discoverClient.ServerGroups()
+	serverGroupMap, err := c.getServerGroupMap()
 	if err != nil {
 		return
 	}
@@ -96,17 +95,11 @@ func (c *controllerWatcher) Watch(watchedObjects ...WatchedObjects) (err error) 
 		if object.AddToScheme == nil {
 			desiredObjects = append(desiredObjects, object)
 		} else {
-			found := false
-			for _, serverGroup := range serverGroups.Groups {
-				if strings.Contains(serverGroup.Name, object.GroupVersion.Group) {
-					addToScheme = append(addToScheme, object.AddToScheme)
-					desiredObjects = append(desiredObjects, object)
-					found = true
-					delete(c.groupsNotWatched, object.GroupVersion.Group)
-					break
-				}
-			}
-			if !found {
+			if _, found := serverGroupMap[object.GroupVersion.String()]; found {
+				addToScheme = append(addToScheme, object.AddToScheme)
+				desiredObjects = append(desiredObjects, object)
+				delete(c.groupsNotWatched, object.GroupVersion.Group)
+			} else {
 				c.groupsNotWatched[object.GroupVersion.Group] = true
 				log.Warnf("Impossible to register GroupVersion %s. CRD not installed in the cluster, controller might not behave as expected", object.GroupVersion)
 			}
@@ -138,4 +131,20 @@ func (c *controllerWatcher) Watch(watchedObjects ...WatchedObjects) (err error) 
 	}
 
 	return
+}
+
+func (c *controllerWatcher) getServerGroupMap() (map[string]bool, error) {
+	serverGroups, err := c.discoverClient.ServerGroups()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't fetch server groups list: %v", err)
+	}
+
+	serverGroupMap := make(map[string]bool)
+	for _, serverGroup := range serverGroups.Groups {
+		for _, version := range serverGroup.Versions {
+			key := fmt.Sprintf("%s/%s", serverGroup.Name, version.Version)
+			serverGroupMap[key] = true
+		}
+	}
+	return serverGroupMap, nil
 }
