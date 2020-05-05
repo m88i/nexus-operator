@@ -18,10 +18,10 @@
 
 set -e
 
-if [ -z "${KUBE_VER}" ]; then
+if [ -z "${KUBE_VERSION}" ]; then
     KIND_KUBE_VERSION=""
 else
-    KIND_KUBE_VERSION="--image kindest/node:${KUBE_VER}"
+    KIND_KUBE_VERSION="--image kindest/node:${KUBE_VERSION}"
 fi
 
 if [ ! -z ${VERBOSE+x} ] && [ "${VERBOSE}" == "1" ]; then

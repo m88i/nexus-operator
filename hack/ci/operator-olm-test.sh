@@ -21,7 +21,7 @@ source ./hack/ci/operator-ensure-manifest.sh
 CATALOG_IMAGE="operatorhubio-catalog:temp"
 OP_PATH="community-operators/nexus-operator"
 INSTALL_MODE="SingleNamespace"
-OPERATOR_TESTING_IMAGE=quay.io/operator-framework/operator-testing:latest
+OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
 
 if [ -z ${KUBECONFIG} ]; then
     KUBECONFIG=${HOME}/.kube/config

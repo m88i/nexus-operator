@@ -30,8 +30,7 @@ cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-o
 cp ./deploy/olm-catalog/nexus-operator/nexus-operator.package.yaml "${OUTPUT}/nexus-operator"
 
 # replaces
-replace_version=$(grep replaces "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml")
-replace_version=${replace_version: -5}
+replace_version=$(grep replaces "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml" | cut -f2 -d'v')
 if [ ! -z "${replace_version}" ]; then
     echo "Found replaces version in the new CSV: ${replace_version}. Including in the package."
     mkdir -p "${OUTPUT}/nexus-operator/${replace_version}"

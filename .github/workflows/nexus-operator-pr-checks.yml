@@ -38,7 +38,7 @@ jobs:
       - name: Test Packages
         run: go test ./pkg/... -count=1
 
-  olm_verify:
+  olm_tests:
     name: Operator OLM Tests
     runs-on: ubuntu-latest
     env:

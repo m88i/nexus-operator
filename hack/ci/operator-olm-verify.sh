@@ -18,7 +18,7 @@
 
 source ./hack/ci/operator-ensure-manifest.sh
 
-OPERATOR_TESTING_IMAGE=quay.io/operator-framework/operator-testing:latest
+OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
 OP_PATH="community-operators/nexus-operator"
 
 docker pull ${OPERATOR_TESTING_IMAGE}
