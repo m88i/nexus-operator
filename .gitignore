@@ -2,6 +2,9 @@
 build/_output
 build/_test
 
+# logs
+*.log
+
 # bin tools addition
 bin/
 
