@@ -99,7 +99,6 @@ jobs:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     env:
-      CREATE_NAMESPACE: false
       NAMESPACE_TEST: nexus-e2e
     steps:
       - name: Check out code
