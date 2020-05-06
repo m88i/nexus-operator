@@ -1,8 +1,13 @@
-name: Nexus Operator PR Checks
-on: [pull_request]
+name: Nexus Operator Integration Checks
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 env:
   OPERATOR_SDK_VERSION: 0.17.0
   GO_VERSION: 1.14
+  KIND_VERSION: v0.8.1
 jobs:
   unit_test:
     name: Unit Tests
@@ -42,7 +47,6 @@ jobs:
     name: Operator OLM Tests
     runs-on: ubuntu-latest
     env:
-      KIND_VERSION: v0.8.1
       NAMESPACE_TEST: operator-test
     steps:
       - name: Check out code
@@ -82,3 +86,44 @@ jobs:
 
       - name: Run Operator OLM Integration Test
         run: ./hack/ci/operator-olm-test.sh
+
+  e2e_tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    env:
+      CREATE_NAMESPACE: false
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Cache Operator SDK Binary
+        uses: actions/cache@v1
+        with:
+          path: ./bin
+          key: ${{ runner.os }}-operator-sdk-${{ env.OPERATOR_SDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-operator-sdk-
+
+      - name: Install Operator SDK
+        run: |
+          ./hack/ci/install-operator-sdk.sh
+          echo "::add-path::$GITHUB_WORKSPACE/bin"
+
+      - name: Cacke KIND Binary
+        uses: actions/cache@v1
+        with:
+          path: ./bin
+          key: ${{ runner.os }}-kind-${{ env.KIND_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-kind-
+
+      - name: Install KIND
+        run: |
+          ./hack/ci/install-kind.sh
+          echo "::add-path::$GITHUB_WORKSPACE/bin"
+
+      - name: Start KIND
+        run: ./hack/ci/start-kind.sh
+
+      - name: Run e2e test
+        run: ./hack/run-e2e-test.sh
