@@ -1,3 +1,5 @@
+![Nexus Operator Integration Checks](https://github.com/m88i/nexus-operator/workflows/Nexus%20Operator%20Integration%20Checks/badge.svg)
+
 # Nexus Operator
 
 A Nexus OSS Kubernetes Operator based on Operators SDK
