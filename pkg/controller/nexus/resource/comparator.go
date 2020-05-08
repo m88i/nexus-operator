@@ -20,10 +20,12 @@ package resource
 import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/rbac"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	k8srbac "k8s.io/api/rbac/v1"
 	"reflect"
 )
 
@@ -37,12 +39,18 @@ func GetComparator() compare.MapComparator {
 	routeType := reflect.TypeOf(routev1.Route{})
 	deploymentType := reflect.TypeOf(appsv1.Deployment{})
 	ingressType := reflect.TypeOf(v1beta1.Ingress{})
+	roleType := reflect.TypeOf(k8srbac.Role{})
+	roleBindingType := reflect.TypeOf(k8srbac.RoleBinding{})
+	svcAccntType := reflect.TypeOf(v1.ServiceAccount{})
 
 	resourceComparator.SetComparator(pvcType, resourceComparator.GetDefaultComparator())
 	resourceComparator.SetComparator(svcType, resourceComparator.GetComparator(svcType))
 	resourceComparator.SetComparator(deploymentType, resourceComparator.GetComparator(deploymentType))
 	resourceComparator.SetComparator(routeType, resourceComparator.GetComparator(routeType))
 	resourceComparator.SetComparator(ingressType, ingressEqual)
+	resourceComparator.SetComparator(roleType, rbac.GetComparator(roleType))
+	resourceComparator.SetComparator(roleBindingType, rbac.GetComparator(roleBindingType))
+	resourceComparator.SetComparator(svcAccntType, rbac.GetComparator(svcAccntType))
 
 	return compare.MapComparator{Comparator: resourceComparator}
 }

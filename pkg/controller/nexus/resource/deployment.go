@@ -83,6 +83,7 @@ func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1
 	addVolume(nexus, pvc, deployment)
 	addProbes(deployment)
 	applyJVMArgs(deployment)
+	addServiceAccount(nexus, deployment)
 
 	return deployment
 }
@@ -169,4 +170,12 @@ func calculateJVMMemory(limits v1.ResourceList) (jvmMemory, directMemSize string
 	jvmMemory = heapSizeDefault
 	directMemSize = maxDirectMemorySizeDefault
 	return
+}
+
+func addServiceAccount(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+	if len(nexus.Spec.ServiceAccountName) > 0 {
+		deployment.Spec.Template.Spec.ServiceAccountName = nexus.Spec.ServiceAccountName
+	} else {
+		deployment.Spec.Template.Spec.ServiceAccountName = nexus.Name
+	}
 }

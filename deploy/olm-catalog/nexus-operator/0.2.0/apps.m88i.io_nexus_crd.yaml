@@ -121,6 +121,11 @@ spec:
                     value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                   type: object
               type: object
+            serviceAccountName:
+              description: ServiceAccountName is the name of the ServiceAccount to
+                use to run the Pods. If left blank, a default ServiceAccount is created
+                with the same name as the Nexus CR.
+              type: string
             useRedHatImage:
               description: 'If you have access to Red Hat Container Catalog, turn
                 this to true to use the certified image provided by Sonatype Default:
