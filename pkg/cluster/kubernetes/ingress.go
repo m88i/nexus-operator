@@ -29,13 +29,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const ingressGroup = networking.GroupName
+
 // It would be nice to keep the version as constant as well, but the package only offers it as a variable.
-// FIXME if this ever changes and remove `ingressVersion` from the function(s)
-const ingressGroup   = networking.GroupName
+// FIXME if this ever changes and turn this into a const
+var ingressVersion = networking.SchemeGroupVersion.Version
 
+// IsIngressAvailable checks if th cluster supports Ingresses from k8s.io/api/networking/v1beta1
 func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
-	ingressVersion := networking.SchemeGroupVersion.Version
-
 	serverGroups, err := d.ServerGroups()
 	if err != nil {
 		return false, err
@@ -46,9 +47,9 @@ func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
 				if version.Version == ingressVersion {
 					return true, nil
 				}
-				// we found the correct group, but not the correct version, so fail
-				return false, nil
 			}
+			// we found the correct group, but not the correct version, so fail
+			return false, nil
 		}
 	}
 	return false, nil
