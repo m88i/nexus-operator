@@ -164,8 +164,6 @@ It is possible to use a custom [ServiceAccount](https://kubernetes.io/docs/refer
 
 **Important**: the Operator handles the creation of default resources necessary to run. If you choose to use a custom ServiceAccount be sure to also configure [Role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [RoleBinding](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding) resources.
 
-If the informed ServiceAccount is not found, the Operator will attempt to use the default one created by the Operator.
-
 ## Red Hat Certified Images
 
 If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/registry.connect.redhat.com/sonatype/nexus-repository-manager), you might change the flag `spec.useRedHatImage` to `true`.
