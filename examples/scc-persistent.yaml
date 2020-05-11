@@ -1,0 +1,22 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: nexus-operator
+fsGroup:
+  ranges:
+  - max: 200
+    min: 200
+  type: MustRunAs
+runAsUser:
+  type: MustRunAs
+  uid: 200
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  ranges:
+  - max: 200
+    min: 200
+  type: MustRunAs
+volumes:
+- persistentVolumeClaim
+- secret

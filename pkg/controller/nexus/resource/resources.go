@@ -20,6 +20,7 @@ package resource
 import (
 	"fmt"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/rbac"
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource/read"
@@ -85,6 +86,13 @@ func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (reso
 		}
 	}
 
+	rbacManager := rbac.NewDefaultManager(nexus, r.client)
+	rbacResources, err := rbacManager.GetDeployedResources()
+	if err != nil {
+		return nil, fmt.Errorf("failure fetching deployed rbac resources: %v", err)
+	}
+	resources = resourceMapUnion(resources, rbacResources)
+
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error(err, "Failed to fetch deployed nexus resources")
 		return nil, err
@@ -123,6 +131,13 @@ func (r *nexusResourceManager) CreateRequiredResources(nexus *v1alpha1.Nexus) (r
 			resources[reflect.TypeOf(v1beta1.Ingress{})] = []resource.KubernetesResource{ingress}
 		}
 	}
+
+	rbacManager := rbac.NewDefaultManager(nexus, r.client)
+	rbacResources, err := rbacManager.GetRequiredResources()
+	if err != nil {
+		return nil, fmt.Errorf("failure generating rbac resources: %v", err)
+	}
+	resources = resourceMapUnion(resources, rbacResources)
 
 	resources[reflect.TypeOf(appsv1.Deployment{})] = []resource.KubernetesResource{newDeployment(nexus, pvc)}
 	resources[reflect.TypeOf(v1.Service{})] = []resource.KubernetesResource{service}
@@ -167,4 +182,12 @@ func (r *nexusResourceManager) createRoute(nexus *v1alpha1.Nexus, service *v1.Se
 		return nil, fmt.Errorf("couldn't create route: %v", err)
 	}
 	return route, nil
+}
+
+// resourceMapUnion takes two maps and returns its union. If a key is present in both maps it takes the value from the 'b' map
+func resourceMapUnion(a, b map[reflect.Type][]resource.KubernetesResource) map[reflect.Type][]resource.KubernetesResource {
+	for key, value := range b {
+		a[key] = value
+	}
+	return a
 }
