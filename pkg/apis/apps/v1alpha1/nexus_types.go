@@ -70,7 +70,7 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Networking"
 	Networking NexusNetworking `json:"networking,omitempty"`
 
-	// ServiceAccountName is the name of the ServiceAccount to use to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
+	// ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }

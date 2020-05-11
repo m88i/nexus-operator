@@ -163,7 +163,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 					},
 					"serviceAccountName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ServiceAccountName is the name of the ServiceAccount to use to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.",
+							Description: "ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

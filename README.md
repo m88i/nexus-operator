@@ -30,10 +30,9 @@ If you're running on Kubernetes, edit the Nexus resource to add a [valid host fo
 
 If you're running the Operator on Openshift 3.x it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
 
-This is necessary because the Nexus image the operator uses requires its container to be ran as UID 200. The use of default SCC resources in Openshift 3.x results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41).
+This is necessary because the Nexus image requires its container to be ran as UID 200. The use of default SCC resources in Openshift 3.x results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41).
 
-Valid SCC resources can be found at the `examples/` directory. You must associate the the SCC with the ServiceAccount in use. In the commands below it is assumed you'll be using the default ServiceAccount created when installing this Operator.
-
+Valid SCC resources can be found at the `examples/` directory. You must associate the SCC with the `ServiceAccount` in use. In the commands below it is assumed you'll be using the default `ServiceAccount` created when deploying a new Nexus CR.
 For persistent configurations:
 
 ```
@@ -54,9 +53,9 @@ Once the SCC has been created, run:
 $ oc adm policy add-scc-to-user nexus-operator -z <ServiceAccountName>
 ```
 
-This command will bind the SCC we just created with the ServiceAccount being used to create the Pods.
+This command will bind the SCC we just created with the `ServiceAccount` being used to create the Pods.
 
-If you're [using a custom ServiceAccount](##ServiceAccount), replace "`<ServiceAccountName>`" with the name of that account. If you're not using a custom ServiceAccount, the operator has created a default one which has the same name as your Nexus CR, replace "`<ServiceAccountName>`" with that.
+If you're [using a custom ServiceAccount](#service-account), replace "`<ServiceAccountName>`" with the name of that account. If you're not using a custom `ServiceAccount`, the operator has created a default one which has the same name as your Nexus CR, replace "`<ServiceAccountName>`" with that.
 
 [In future versions](https://github.com/m88i/nexus-operator/issues/51) the Operator will handle this for you.
 
@@ -156,13 +155,13 @@ drwxr-xr-x 19 root root  500 Apr 26 20:47 ..
 drwxr-xr-x  2  200  200 4096 Apr 26 15:42 pv0001
 ```
 
-## ServiceAccount
+## Service Account
 
-It is possible to use a custom [ServiceAccount](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/) to perform your Deployments with the Nexus Operator via:
+It is possible to use a custom [`ServiceAccount`](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/) to perform your Deployments with the Nexus Operator via:
 
-  - `spec.serviceAccountName` (*string*): ServiceAccountName is the name of the ServiceAccount to use to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
+  - `spec.serviceAccountName` (*string*): ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
 
-**Important**: the Operator handles the creation of default resources necessary to run. If you choose to use a custom ServiceAccount be sure to also configure [Role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [RoleBinding](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding) resources.
+**Important**: the Operator handles the creation of default resources necessary to run. If you choose to use a custom ServiceAccount be sure to also configure [`Role`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [`RoleBinding`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding) resources.
 
 ## Red Hat Certified Images
 
