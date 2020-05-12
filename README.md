@@ -1,5 +1,24 @@
 ![Nexus Operator Integration Checks](https://github.com/m88i/nexus-operator/workflows/Nexus%20Operator%20Integration%20Checks/badge.svg)
 
+Table of Contents
+=================
+
+   * [Nexus Operator](#nexus-operator)
+      * [Pre Requisites](#pre-requisites)
+      * [Quick Install](#quick-install)
+         * [Openshift 3.x](#openshift-3x)
+         * [Clean up](#clean-up)
+      * [Networking](#networking)
+         * [Use NodePort](#use-nodeport)
+         * [Network on OpenShift](#network-on-openshift)
+         * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
+         * [TLS/SSL](#tlsssl)
+      * [Persistence](#persistence)
+         * [Minikube](#minikube)
+      * [Service Account](#service-account)
+      * [Red Hat Certified Images](#red-hat-certified-images)
+
+
 # Nexus Operator
 
 A Nexus OSS Kubernetes Operator based on Operators SDK
