@@ -19,7 +19,7 @@
 source ./hack/export-version.sh
 
 operator-sdk generate csv --apis-dir ./pkg/apis/apps/v1alpha1 --verbose --operator-name nexus-operator --csv-version $OP_VERSION
-operator-sdk bundle create quay.io/m88i/nexus-operator.v${OP_VERSION}:latest  -d ./deploy/olm-catalog/nexus-operator/${OP_VERSION} --package nexus-operator --channels alpha  --overwrite --image-builder podman
+operator-sdk bundle create quay.io/m88i/nexus-operator.v${OP_VERSION}:latest -d ./deploy/olm-catalog/nexus-operator/${OP_VERSION} --package nexus-operator-m88i --channels alpha --overwrite --image-builder podman
 podman push quay.io/m88i/nexus-operator.v${OP_VERSION}:latest
 operator-sdk bundle validate quay.io/m88i/nexus-operator.v${OP_VERSION}:latest
 
