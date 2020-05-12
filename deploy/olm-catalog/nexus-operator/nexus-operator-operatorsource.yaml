@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1
 kind: OperatorSource
 metadata:
-  name: nexus-operator-m88i
+  name: nexus-operator-hub
   namespace: openshift-marketplace
 spec:
   type: appregistry
