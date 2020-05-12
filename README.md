@@ -18,7 +18,6 @@ Table of Contents
       * [Service Account](#service-account)
       * [Red Hat Certified Images](#red-hat-certified-images)
 
-
 # Nexus Operator
 
 A Nexus OSS Kubernetes Operator based on Operators SDK
