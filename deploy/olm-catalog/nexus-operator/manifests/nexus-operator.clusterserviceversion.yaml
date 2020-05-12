@@ -275,5 +275,4 @@ spec:
   minKubeVersion: 1.11.0
   provider:
     name: m88i Labs
-  replaces: nexus-operator.v0.1.0
   version: 0.2.0

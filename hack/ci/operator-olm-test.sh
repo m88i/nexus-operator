@@ -19,7 +19,7 @@
 source ./hack/ci/operator-ensure-manifest.sh
 
 CATALOG_IMAGE="operatorhubio-catalog:temp"
-OP_PATH="community-operators/nexus-operator"
+OP_PATH="community-operators/nexus-operator-m88i"
 INSTALL_MODE="SingleNamespace"
 OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
 

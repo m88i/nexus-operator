@@ -19,7 +19,7 @@
 source ./hack/ci/operator-ensure-manifest.sh
 
 OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
-OP_PATH="community-operators/nexus-operator"
+OP_PATH="community-operators/nexus-operator-m88i"
 
 docker pull ${OPERATOR_TESTING_IMAGE}
 docker run --rm -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} operator.verify --no-print-directory OP_PATH=${OP_PATH} VERBOSE=true

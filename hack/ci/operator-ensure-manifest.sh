@@ -25,14 +25,14 @@ echo "Output dir is set to ${OUTPUT}"
 # clean up
 rm -rf "${OUTPUT}"
 
-mkdir -p "${OUTPUT}/nexus-operator/${OP_VERSION}"
-cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-operator/${OP_VERSION}"
-cp ./deploy/olm-catalog/nexus-operator/nexus-operator.package.yaml "${OUTPUT}/nexus-operator"
+mkdir -p "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}"
+cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}"
+cp ./deploy/olm-catalog/nexus-operator/nexus-operator-m88i.package.yaml "${OUTPUT}/nexus-operator-m88i"
 
 # replaces
 replace_version=$(grep replaces "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml" | cut -f2 -d'v')
 if [ ! -z "${replace_version}" ]; then
     echo "Found replaces version in the new CSV: ${replace_version}. Including in the package."
-    mkdir -p "${OUTPUT}/nexus-operator/${replace_version}"
-    cp "./deploy/olm-catalog/nexus-operator/${replace_version}/"*.yaml "${OUTPUT}/nexus-operator/${replace_version}"
+    mkdir -p "${OUTPUT}/nexus-operator-m88i/${replace_version}"
+    cp "./deploy/olm-catalog/nexus-operator/${replace_version}/"*.yaml "${OUTPUT}/nexus-operator-m88i/${replace_version}"
 fi
