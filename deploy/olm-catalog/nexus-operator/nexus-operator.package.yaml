@@ -2,4 +2,4 @@ channels:
 - currentCSV: nexus-operator.v0.2.0
   name: alpha
 defaultChannel: alpha
-packageName: nexus-operator
+packageName: nexus-operator-hub
