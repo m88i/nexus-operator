@@ -102,7 +102,7 @@ jobs:
       CREATE_NAMESPACE: false
       NAMESPACE_E2E: default
       CLUSTER_NAME: nexus-e2e
-      CUSTOM_IMAGE_TAG: "nexus-operator:temp"
+      CUSTOM_IMAGE_TAG: "localhost:5000/nexus-operator:temp"
     steps:
       - name: Check out code
         uses: actions/checkout@v2
