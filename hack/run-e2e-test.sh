@@ -28,7 +28,15 @@ else
 fi
 
 echo "Executing e2e tests on ${NAMESPACE_E2E}"
-operator-sdk test local ./test/e2e --go-test-flags "-v" --debug --up-local --operator-namespace $NAMESPACE_E2E
+
+if [[ ${RUN_WITH_IMAGE^^} == "TRUE" ]]; then
+    echo "Running tests with image"
+    operator-sdk test local ./test/e2e --go-test-flags "-v" --debug --image ${CUSTOM_IMAGE_TAG} --operator-namespace $NAMESPACE_E2E
+else
+    echo "Running tests with local binary"
+    operator-sdk test local ./test/e2e --go-test-flags "-v" --debug --up-local --operator-namespace $NAMESPACE_E2E
+fi
+
 test_exit_code=$?
 
 if [[ ${CREATE_NAMESPACE^^} == "TRUE" ]]; then
