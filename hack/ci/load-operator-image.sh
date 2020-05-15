@@ -19,5 +19,6 @@
 echo "---> Loading Operator Image into Kind"
 kind load docker-image ${CUSTOM_IMAGE_TAG} --name ${CLUSTER_NAME}
 
-echo "---> Checking internal loaded images"
-docker exec ${CLUSTER_NAME}-control-plane crictl images
+node_name=$(kubectl get nodes -o jsonpath="{.items[0].metadata.name}")
+echo "---> Checking internal loaded images on node ${node_name}"
+docker exec ${node_name} crictl images
