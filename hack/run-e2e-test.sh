@@ -21,26 +21,28 @@ if [[ -z ${NAMESPACE_E2E} ]]; then
 fi
 
 if [[ ${CREATE_NAMESPACE^^} == "TRUE" ]]; then
-    echo "Creating Namespace ${NAMESPACE_E2E} to run e2e tests"
+    echo "---> Creating Namespace ${NAMESPACE_E2E} to run e2e tests"
     kubectl create namespace $NAMESPACE_E2E
 else
-    echo "Skipping creating namespace"
+    echo "---> Skipping creating namespace"
 fi
 
-echo "Executing e2e tests on ${NAMESPACE_E2E}"
+echo "---> Executing e2e tests on ${NAMESPACE_E2E}"
 
 if [[ ${RUN_WITH_IMAGE^^} == "TRUE" ]]; then
-    echo "Running tests with image ${CUSTOM_IMAGE_TAG}"
+    echo "---> Running tests with image ${CUSTOM_IMAGE_TAG}"
+    echo "---> Updating deployment file to imagePullPolicy: Never"
+    sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' ./deploy/operator.yaml
     operator-sdk test local ./test/e2e --go-test-flags "-v" --debug --image ${CUSTOM_IMAGE_TAG} --operator-namespace $NAMESPACE_E2E
 else
-    echo "Running tests with local binary"
+    echo "---> Running tests with local binary"
     operator-sdk test local ./test/e2e --go-test-flags "-v" --debug --up-local --operator-namespace $NAMESPACE_E2E
 fi
 
 test_exit_code=$?
 
 if [[ ${CREATE_NAMESPACE^^} == "TRUE" ]]; then
-    echo "Cleaning up namespace ${NAMESPACE_E2E}"
+    echo "---> Cleaning up namespace ${NAMESPACE_E2E}"
     kubectl delete namespace $NAMESPACE_E2E
 fi
 
