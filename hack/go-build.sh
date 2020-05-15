@@ -26,10 +26,14 @@ source ./hack/export-version.sh
 REGISTRY=quay.io/m88i
 IMAGE=nexus-operator
 TAG=${OP_VERSION}
+DEFAULT_BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal:latest
 
 setGoModEnv
 go generate ./...
 
+if [[ ! -z ${CUSTOM_BASE_IMAGE} ]]; then
+    sed -i -e 's,'"${DEFAULT_BASE_IMAGE}"','"${CUSTOM_BASE_IMAGE}"',' ./build/Dockerfile
+fi
 if [[ -z ${CUSTOM_IMAGE_TAG} ]]; then
     CUSTOM_IMAGE_TAG=${REGISTRY}/${IMAGE}:${TAG}
 fi

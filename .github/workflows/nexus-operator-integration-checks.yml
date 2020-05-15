@@ -137,6 +137,7 @@ jobs:
       - name: Build Operator Image
         env:
           BUILDER: docker
+          CUSTOM_BASE_IMAGE: alpine:latest
         run: |
           ./hack/go-build.sh
 
