@@ -17,6 +17,7 @@ rules:
       - secrets
       - replicationcontrollers
       - podtemplates
+      - serviceaccounts
     verbs:
       - create
       - delete
