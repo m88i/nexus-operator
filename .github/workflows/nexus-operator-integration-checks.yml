@@ -128,12 +128,6 @@ jobs:
           ./hack/ci/install-operator-sdk.sh
           echo "::add-path::$GITHUB_WORKSPACE/bin"
 
-      - name: Login to Registry
-        env:
-          DOCKER_PWD: ${{ secrets.RH_REGISTRY_PWD }}
-          DOCKER_USER: ${{ secrets.RH_REGISTRY_USER }}
-        run: docker login -u="${DOCKER_USER}" -p="${DOCKER_PWD}" registry.redhat.io
-
       - name: Build Operator Image
         env:
           BUILDER: docker
