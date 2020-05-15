@@ -6,7 +6,7 @@ Table of Contents
    * [Nexus Operator](#nexus-operator)
       * [Pre Requisites](#pre-requisites)
       * [Quick Install](#quick-install)
-         * [Openshift 3.x](#openshift-3x)
+         * [Openshift](#openshift)
          * [Clean up](#clean-up)
       * [Networking](#networking)
          * [Use NodePort](#use-nodeport)
@@ -44,13 +44,14 @@ kubectl edit nexus
 
 If you're running on Kubernetes, edit the Nexus resource to add a [valid host for the Ingress](#network-on-kubernetes-114) to work.
 
-### Openshift 3.x
+### Openshift
 
-If you're running the Operator on Openshift 3.x it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
+If you're running the Operator on Openshift (3.11 or 4.x+) it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
 
-This is necessary because the Nexus image requires its container to be ran as UID 200. The use of default SCC resources in Openshift 3.x results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41).
+This is necessary because the Nexus image requires its container to be ran as UID 200. The use of default SCC resources in Openshift results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41).
 
 Valid SCC resources can be found at the `examples/` directory. You must associate the SCC with the `ServiceAccount` in use. In the commands below it is assumed you'll be using the default `ServiceAccount` created when deploying a new Nexus CR.
+
 For persistent configurations:
 
 ```
@@ -60,7 +61,7 @@ $ oc apply -f examples/scc-persistent.yaml
 For volatile configurations:
 
 ```
-$ oc apply -f examples/scc-persistent.yaml
+$ oc apply -f examples/scc-volatile.yaml
 ```
 
 > **Note**: you must choose one or the other, applying both will result in using the one applied last.
@@ -68,7 +69,7 @@ $ oc apply -f examples/scc-persistent.yaml
 Once the SCC has been created, run:
 
 ```
-$ oc adm policy add-scc-to-user nexus-operator -z <ServiceAccountName>
+$ oc adm policy add-scc-to-user <SCCName> -z <ServiceAccountName>
 ```
 
 This command will bind the SCC we just created with the `ServiceAccount` being used to create the Pods.

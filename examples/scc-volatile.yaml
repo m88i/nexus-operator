@@ -1,11 +1,11 @@
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: nexus-operator
+  name: <Change Me!>
 fsGroup:
   ranges:
-  - max: 200
-    min: 200
+    - max: 200
+      min: 200
   type: MustRunAs
 runAsUser:
   type: MustRunAs
@@ -14,8 +14,8 @@ seLinuxContext:
   type: MustRunAs
 supplementalGroups:
   ranges:
-  - max: 200
-    min: 200
+    - max: 200
+      min: 200
   type: MustRunAs
 volumes:
-- secret
+  - secret

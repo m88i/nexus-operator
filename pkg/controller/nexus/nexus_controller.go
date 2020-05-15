@@ -62,7 +62,7 @@ var watchedObjects = []framework.WatchedObjects{
 		AddToScheme:  networking.AddToScheme,
 		Objects:      []runtime.Object{&networking.Ingress{}},
 	},
-	{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}}},
+	{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}, &corev1.ServiceAccount{}}},
 }
 
 var resourceMgr resource.NexusResourceManager
