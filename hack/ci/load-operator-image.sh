@@ -18,5 +18,3 @@
 
 echo "---> Loading Operator Image into Kind"
 kind load docker-image ${CUSTOM_IMAGE_TAG} --name ${CLUSTER_NAME}
-echo "---> Images loaded into Kind"
-docker exec -it ${CLUSTER_NAME} crictl images
