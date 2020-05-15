@@ -33,5 +33,9 @@ fi
 if [[ ! "$(./bin/kind get clusters)" =~ "${CLUSTER_NAME}" ]]; then
     ./bin/kind create cluster --name ${CLUSTER_NAME} --wait 1m ${KIND_KUBE_VERSION} ${KIND_VERBOSITY}
 else
-    echo "Already found cluster named '${CLUSTER_NAME}'"
+    echo "---> Already found cluster named '${CLUSTER_NAME}'"
 fi
+
+echo "---> Checking KIND cluster conditions"
+kubectl get nodes -o wide
+kubectl get pods --all-namespaces -o wide
