@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #     Copyright 2019 Nexus Operator and/or its authors
 #
 #     This file is part of Nexus Operator.
@@ -16,26 +16,30 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+# CUSTOM_IMAGE_TAG: name of the operator tag. set this var to change the default name of the image being built. Default to quay.io/m88i/nexus-operator:current-version
+# BUILDER: builder to build the image. either podman or docker. default to podman
 
-. ./hack/go-mod-env.sh
-
+# include
+source ./hack/go-mod-env.sh
 source ./hack/export-version.sh
 
-REPO=https://github.com/m88i/nexus-operator
-BRANCH=master
 REGISTRY=quay.io/m88i
 IMAGE=nexus-operator
 TAG=${OP_VERSION}
-TAR=${BRANCH}.tar.gz
-URL=${REPO}/archive/${TAR}
-CFLAGS=""
+DEFAULT_BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal:latest
 
 setGoModEnv
 go generate ./...
-if [[ -z ${CI} ]]; then
-    ./hack/go-test.sh
-    # changed to podman, see: https://www.linuxuprising.com/2019/11/how-to-install-and-use-docker-on-fedora.html
-    operator-sdk build ${REGISTRY}/${IMAGE}:${TAG} --image-builder podman
-else
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -v -a -o build/_output/bin/nexus-operator github.com/m88i/nexus-operator/cmd/manager
+
+if [[ ! -z ${CUSTOM_BASE_IMAGE} ]]; then
+    sed -i -e 's,'"${DEFAULT_BASE_IMAGE}"','"${CUSTOM_BASE_IMAGE}"',' ./build/Dockerfile
 fi
+if [[ -z ${CUSTOM_IMAGE_TAG} ]]; then
+    CUSTOM_IMAGE_TAG=${REGISTRY}/${IMAGE}:${TAG}
+fi
+if [[ -z ${BUILDER} ]]; then
+    BUILDER=podman
+fi
+
+# changed to podman, see: https://www.linuxuprising.com/2019/11/how-to-install-and-use-docker-on-fedora.html
+operator-sdk build ${CUSTOM_IMAGE_TAG} --image-builder ${BUILDER}

@@ -47,7 +47,7 @@ jobs:
     name: Operator OLM Tests
     runs-on: ubuntu-latest
     env:
-      NAMESPACE_TEST: operator-test
+      CLUSTER_NAME: operator-test
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -101,7 +101,8 @@ jobs:
     env:
       CREATE_NAMESPACE: false
       NAMESPACE_E2E: default
-      NAMESPACE_TEST: nexus-e2e
+      CLUSTER_NAME: nexus-e2e
+      CUSTOM_IMAGE_TAG: "nexus-operator:temp"
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -127,6 +128,13 @@ jobs:
           ./hack/ci/install-operator-sdk.sh
           echo "::add-path::$GITHUB_WORKSPACE/bin"
 
+      - name: Build Operator Image
+        env:
+          BUILDER: docker
+          CUSTOM_BASE_IMAGE: alpine:latest
+        run: |
+          ./hack/go-build.sh
+
       - name: Cacke KIND Binary
         uses: actions/cache@v1
         with:
@@ -143,5 +151,10 @@ jobs:
       - name: Start KIND
         run: ./hack/ci/start-kind.sh
 
+      - name: Load Operator Image
+        run: ./hack/ci/load-operator-image.sh
+
       - name: Run e2e test
+        env:
+          RUN_WITH_IMAGE: true
         run: ./hack/run-e2e-test.sh

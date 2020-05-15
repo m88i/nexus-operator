@@ -16,10 +16,9 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-source ./hack/ci/operator-ensure-manifest.sh
+echo "---> Loading Operator Image into Kind"
+kind load docker-image ${CUSTOM_IMAGE_TAG} --name ${CLUSTER_NAME}
 
-OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
-OP_PATH="community-operators/nexus-operator-m88i"
-
-docker pull ${OPERATOR_TESTING_IMAGE}
-docker run --rm -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} operator.verify --no-print-directory OP_PATH=${OP_PATH} VERBOSE=true
+node_name=$(kubectl get nodes -o jsonpath="{.items[0].metadata.name}")
+echo "---> Checking internal loaded images on node ${node_name}"
+docker exec ${node_name} crictl images

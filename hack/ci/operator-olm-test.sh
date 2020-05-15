@@ -32,7 +32,7 @@ fi
 echo "---> Building temporary catalog Image"
 docker build --build-arg PERMISSIVE_LOAD=false -f ./hack/ci/operatorhubio-catalog.Dockerfile -t ${CATALOG_IMAGE} .
 echo "---> Loading Catalog Image into Kind"
-kind load docker-image ${CATALOG_IMAGE} --name operator-test
+kind load docker-image ${CATALOG_IMAGE} --name ${CLUSTER_NAME}
 
 # running tests
 docker pull ${OPERATOR_TESTING_IMAGE}
