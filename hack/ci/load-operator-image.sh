@@ -20,4 +20,4 @@ echo "---> Loading Operator Image into Kind"
 kind load docker-image ${CUSTOM_IMAGE_TAG} --name ${CLUSTER_NAME}
 
 echo "---> Checking internal loaded images"
-docker exec -it ${CLUSTER_NAME}-control-plane crictl images
+docker exec ${CLUSTER_NAME}-control-plane crictl images
