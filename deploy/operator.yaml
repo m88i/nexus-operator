@@ -15,7 +15,7 @@ spec:
       serviceAccountName: nexus-operator
       containers:
         - name: nexus-operator
-          image: quay.io/m88i/nexus-operator:0.2.1
+          image: quay.io/m88i/nexus-operator:0.3.0
           command:
             - nexus-operator
           imagePullPolicy: Always

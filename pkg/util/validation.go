@@ -1,4 +1,4 @@
-//     Copyright 2019 Nexus Operator and/or its authors
+//     Copyright 2020 Nexus Operator and/or its authors
 //
 //     This file is part of Nexus Operator.
 //
@@ -15,9 +15,12 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package version
+package util
 
-var (
-	// Version of the Operator :-)
-	Version = "0.3.0"
-)
+// EnsureMinimum garantees that the given value number is, at least, minimum
+func EnsureMinimum(value, minimum int32) int32 {
+	if value < minimum {
+		return minimum
+	}
+	return value
+}

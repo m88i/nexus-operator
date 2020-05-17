@@ -33,6 +33,42 @@ spec:
               description: 'Full image tag name for this specific deployment Default:
                 docker.io/sonatype/nexus3:latest'
               type: string
+            livenessProbe:
+              description: LivenessProbe describes how the Nexus container liveness
+                probe should work
+              properties:
+                failureThreshold:
+                  description: Minimum consecutive failures for the probe to be considered
+                    failed after having succeeded. Defaults to 3. Minimum value is
+                    1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+                initialDelaySeconds:
+                  description: Number of seconds after the container has started before
+                    liveness probes are initiated.
+                  format: int32
+                  type: integer
+                periodSeconds:
+                  description: How often (in seconds) to perform the probe. Default
+                    to 10 seconds. Minimum value is 1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+                successThreshold:
+                  description: Minimum consecutive successes for the probe to be considered
+                    successful after having failed. Defaults to 1. Must be 1 for liveness
+                    and startup. Minimum value is 1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+                timeoutSeconds:
+                  description: Number of seconds after which the probe times out.
+                    Defaults to 1 second. Minimum value is 1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+              type: object
             networking:
               description: Networking definition
               properties:
@@ -89,11 +125,47 @@ spec:
               required:
               - persistent
               type: object
+            readinessProbe:
+              description: ReadinessProbe describes how the Nexus container readiness
+                probe should work
+              properties:
+                failureThreshold:
+                  description: Minimum consecutive failures for the probe to be considered
+                    failed after having succeeded. Defaults to 3. Minimum value is
+                    1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+                initialDelaySeconds:
+                  description: Number of seconds after the container has started before
+                    liveness probes are initiated.
+                  format: int32
+                  type: integer
+                periodSeconds:
+                  description: How often (in seconds) to perform the probe. Default
+                    to 10 seconds. Minimum value is 1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+                successThreshold:
+                  description: Minimum consecutive successes for the probe to be considered
+                    successful after having failed. Defaults to 1. Must be 1 for liveness
+                    and startup. Minimum value is 1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+                timeoutSeconds:
+                  description: Number of seconds after which the probe times out.
+                    Defaults to 1 second. Minimum value is 1.
+                  format: int32
+                  minimum: 1
+                  type: integer
+              type: object
             replicas:
-              description: 'Number of pods replicas desired Default: 1'
+              description: Number of pods replicas desired
               format: int32
               maximum: 100
-              minimum: 1
+              minimum: 0
               type: integer
             resources:
               description: Defined Resources for the Nexus instance

@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -38,6 +39,8 @@ const (
 	jvmArgsEnvValueFormat      = "-Xms%s -Xmx%s -XX:MaxDirectMemorySize=%s -Djava.util.prefs.userRoot=${NEXUS_DATA}/javaprefs"
 	heapSizeDefault            = "1200m"
 	maxDirectMemorySizeDefault = "2g"
+	probeInitialDelaySeconds   = int32(120)
+	probeTimeoutSeconds        = int32(15)
 )
 
 func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1.Deployment {
@@ -81,7 +84,7 @@ func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1
 	applyDefaultImage(nexus, deployment)
 	applyDefaultResourceReqs(nexus, deployment)
 	addVolume(nexus, pvc, deployment)
-	addProbes(deployment)
+	addProbes(nexus, deployment)
 	applyJVMArgs(deployment)
 	addServiceAccount(nexus, deployment)
 
@@ -106,7 +109,7 @@ func applyDefaultResourceReqs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployme
 	deployment.Spec.Template.Spec.Containers[0].Resources = nexus.Spec.Resources
 }
 
-func addProbes(deployment *appsv1.Deployment) {
+func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	defaultProbe := &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
@@ -117,12 +120,38 @@ func addProbes(deployment *appsv1.Deployment) {
 				Scheme: v1.URISchemeHTTP,
 			},
 		},
-		InitialDelaySeconds: 60,
-		TimeoutSeconds:      10,
+		InitialDelaySeconds: probeInitialDelaySeconds,
+		TimeoutSeconds:      probeTimeoutSeconds,
 	}
 
-	deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = defaultProbe
-	deployment.Spec.Template.Spec.Containers[0].LivenessProbe = defaultProbe
+	deployment.Spec.Template.Spec.Containers[0].LivenessProbe = defaultProbe.DeepCopy()
+	deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = defaultProbe.DeepCopy()
+
+	if nexus.Spec.LivenessProbe != nil {
+		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold =
+			util.EnsureMinimum(nexus.Spec.LivenessProbe.FailureThreshold, 1)
+		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.InitialDelaySeconds =
+			util.EnsureMinimum(nexus.Spec.LivenessProbe.InitialDelaySeconds, 0)
+		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.PeriodSeconds =
+			util.EnsureMinimum(nexus.Spec.LivenessProbe.PeriodSeconds, 1)
+		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.SuccessThreshold =
+			util.EnsureMinimum(nexus.Spec.LivenessProbe.SuccessThreshold, 1)
+		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.TimeoutSeconds =
+			util.EnsureMinimum(nexus.Spec.LivenessProbe.TimeoutSeconds, 1)
+	}
+
+	if nexus.Spec.ReadinessProbe != nil {
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.FailureThreshold =
+			util.EnsureMinimum(nexus.Spec.ReadinessProbe.FailureThreshold, 1)
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds =
+			util.EnsureMinimum(nexus.Spec.ReadinessProbe.InitialDelaySeconds, 0)
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.PeriodSeconds =
+			util.EnsureMinimum(nexus.Spec.ReadinessProbe.PeriodSeconds, 1)
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.SuccessThreshold =
+			util.EnsureMinimum(nexus.Spec.ReadinessProbe.SuccessThreshold, 1)
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.TimeoutSeconds =
+			util.EnsureMinimum(nexus.Spec.ReadinessProbe.TimeoutSeconds, 1)
+	}
 }
 
 func addVolume(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim, deployment *appsv1.Deployment) {

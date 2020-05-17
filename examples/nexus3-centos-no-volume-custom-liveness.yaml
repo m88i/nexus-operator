@@ -1,0 +1,33 @@
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  # Number of Nexus pod replicas (can't be increased after creation)
+  replicas: 1
+  # Here you can specify the image version to fulfill your needs. Defaults to docker.io/sonatype/nexus3:latest if useRedHatImage is set to false
+  #image: "docker.io/sonatype/nexus3:latest"
+  # let's use the centOS image since we do not have access to Red Hat Catalog
+  useRedHatImage: false
+  # Set the resources requests and limits for Nexus pods. See: https://help.sonatype.com/repomanager3/system-requirements
+  resources:
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+  # Data persistence details
+  persistence:
+    # Should we persist Nexus data? Yes, please. (turn this to false only if you're evaluating this resource)
+    persistent: false
+  # details regarding networking
+  networking:
+    # expose please
+    expose: true
+    # How do you want to expose the Nexus server? In this case, NodePort is the way to go
+    exposeAs: "NodePort"
+    # The port that we will access the Nexus server. Make sure that this port is available in your node
+    nodePort: 31031
+  livenessProbe:
+    initialDelaySeconds: 240

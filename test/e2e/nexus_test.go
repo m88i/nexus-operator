@@ -21,7 +21,7 @@ import (
 
 var (
 	retryInterval        = time.Second * 10
-	timeout              = time.Second * 120
+	timeout              = time.Second * 360
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 5
 )
@@ -54,6 +54,7 @@ func nexusNoPersitenceNodePort(t *testing.T, f *framework.Framework, ctx *framew
 			Networking:     v1alpha1.NexusNetworking{Expose: true, NodePort: 31031, ExposeAs: v1alpha1.NodePortExposeType},
 			Persistence:    v1alpha1.NexusPersistence{Persistent: false},
 			UseRedHatImage: false,
+			LivenessProbe:  &v1alpha1.NexusProbe{InitialDelaySeconds: 240},
 		},
 	}
 	// use TestCtx's create helper to create the object and add a cleanup function for the new object

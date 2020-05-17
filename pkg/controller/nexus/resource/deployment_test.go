@@ -18,12 +18,13 @@
 package resource
 
 import (
+	"testing"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_newDeployment_WithoutPersistence(t *testing.T) {
@@ -127,4 +128,34 @@ func Test_calculateJVMMemory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_customProbes(t *testing.T) {
+	appName := "nexus3"
+	nexus := &v1alpha1.Nexus{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      appName,
+			Namespace: t.Name(),
+		},
+		Spec: v1alpha1.NexusSpec{
+			Replicas: 1,
+			Persistence: v1alpha1.NexusPersistence{
+				Persistent: true,
+			},
+			LivenessProbe: &v1alpha1.NexusProbe{
+				FailureThreshold:    0,
+				PeriodSeconds:       10,
+				InitialDelaySeconds: 0,
+				SuccessThreshold:    3,
+				TimeoutSeconds:      15,
+			},
+		},
+	}
+	pvc := newPVC(nexus)
+	deployment := newDeployment(nexus, pvc)
+
+	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
+	assert.Equal(t, int32(1), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold)
+	assert.Equal(t, int32(0), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.InitialDelaySeconds)
+	assert.Equal(t, int32(probeInitialDelaySeconds), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds)
 }
