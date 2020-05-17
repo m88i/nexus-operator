@@ -68,7 +68,7 @@ jobs:
           path: ./bin
           key: ${{ runner.os }}-operator-sdk-${{ env.OPERATOR_SDK_VERSION }}
           restore-keys: |
-            ${{ runner.os }}-operator-sdk-
+            ${{ runner.os }}-operator-sdk-${{ env.OPERATOR_SDK_VERSION }}
 
       - name: Install Operator SDK
         run: |
@@ -81,7 +81,7 @@ jobs:
           path: ./bin
           key: ${{ runner.os }}-kind-${{ env.KIND_VERSION }}
           restore-keys: |
-            ${{ runner.os }}-kind-
+            ${{ runner.os }}-kind-${{ env.KIND_VERSION }}
 
       - name: Install KIND
         run: |
