@@ -19,7 +19,7 @@ spec:
       memory: "2Gi"
   # Data persistence details
   persistence:
-    # Should we persist Nexus data? Yes, please. (turn this to false only if you're evaluating this resource)
+    # Should we persist Nexus data? (turn this to false only if you're evaluating this resource)
     persistent: false
   # details regarding networking
   networking:

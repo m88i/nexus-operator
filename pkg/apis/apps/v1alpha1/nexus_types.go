@@ -130,7 +130,7 @@ type NexusNetworking struct {
 // alive or ready to receive traffic.
 // +k8s:openapi-gen=true
 type NexusProbe struct {
-	// Number of seconds after the container has started before liveness probes are initiated.
+	// Number of seconds after the container has started before probes are initiated.
 	// +optional
 	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty" protobuf:"varint,2,opt,name=initialDelaySeconds"`
 	// Number of seconds after which the probe times out.

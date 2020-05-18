@@ -33,8 +33,8 @@ fi
 csv_file=${OUTPUT}/nexus-operator-m88i/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml
 echo "---> Updating CSV file '${csv_file}' to imagePullPolicy: Never"
 sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' ${csv_file}
-echo "---> Resulting imagePullPolicy"
-cat ${csv_file} | grep -irn imagePullPolicy
+echo "---> Resulting imagePullPolicy on manifest files"
+grep -rn imagePullPolicy ${OUTPUT}/nexus-operator-m88i
 
 echo "---> Building temporary catalog Image"
 docker build --build-arg PERMISSIVE_LOAD=false -f ./hack/ci/operatorhubio-catalog.Dockerfile -t ${CATALOG_IMAGE} .
