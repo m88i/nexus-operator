@@ -17,6 +17,7 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 source ./hack/ci/operator-ensure-manifest.sh
+source ./hack/export-version.sh
 
 CATALOG_IMAGE="operatorhubio-catalog:temp"
 OP_PATH="community-operators/nexus-operator-m88i"
@@ -28,6 +29,12 @@ if [ -z ${KUBECONFIG} ]; then
     echo "---> KUBECONFIG environment variable not set, defining to:"
     ls -la ${KUBECONFIG}
 fi
+
+csv_file=${OUTPUT}/nexus-operator-m88i/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml
+echo "---> Updating CSV file '${csv_file}' to imagePullPolicy: Never"
+sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' ${csv_file}
+echo "---> Resulting imagePullPolicy on manifest files"
+grep -rn imagePullPolicy ${OUTPUT}/nexus-operator-m88i
 
 echo "---> Building temporary catalog Image"
 docker build --build-arg PERMISSIVE_LOAD=false -f ./hack/ci/operatorhubio-catalog.Dockerfile -t ${CATALOG_IMAGE} .

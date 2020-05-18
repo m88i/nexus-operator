@@ -31,9 +31,8 @@ type NexusSpec struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
 	// Number of pods replicas desired
-	// Default: 1
 	// +kubebuilder:validation:Maximum=100
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Replicas"
 	Replicas int32 `json:"replicas"`
@@ -71,8 +70,20 @@ type NexusSpec struct {
 	Networking NexusNetworking `json:"networking,omitempty"`
 
 	// ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Service Account"
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	// LivenessProbe describes how the Nexus container liveness probe should work
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
+	// +optional
+	LivenessProbe *NexusProbe `json:"livenessProbe,omitempty"`
+
+	// ReadinessProbe describes how the Nexus container readiness probe should work
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
+	// +optional
+	ReadinessProbe *NexusProbe `json:"readinessProbe,omitempty"`
 }
 
 // NexusPersistence is the structure for the data persistent
@@ -113,6 +124,35 @@ type NexusNetworking struct {
 	// TLS/SSL-related configuration
 	// +optional
 	TLS NexusNetworkingTLS `json:"tls,omitempty"`
+}
+
+// NexusProbe describes a health check to be performed against a container to determine whether it is
+// alive or ready to receive traffic.
+// +k8s:openapi-gen=true
+type NexusProbe struct {
+	// Number of seconds after the container has started before probes are initiated.
+	// +optional
+	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty" protobuf:"varint,2,opt,name=initialDelaySeconds"`
+	// Number of seconds after which the probe times out.
+	// Defaults to 1 second. Minimum value is 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty" protobuf:"varint,3,opt,name=timeoutSeconds"`
+	// How often (in seconds) to perform the probe.
+	// Default to 10 seconds. Minimum value is 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	PeriodSeconds int32 `json:"periodSeconds,omitempty" protobuf:"varint,4,opt,name=periodSeconds"`
+	// Minimum consecutive successes for the probe to be considered successful after having failed.
+	// Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	SuccessThreshold int32 `json:"successThreshold,omitempty" protobuf:"varint,5,opt,name=successThreshold"`
+	// Minimum consecutive failures for the probe to be considered failed after having succeeded.
+	// Defaults to 3. Minimum value is 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	FailureThreshold int32 `json:"failureThreshold,omitempty" protobuf:"varint,6,opt,name=failureThreshold"`
 }
 
 // NexusNetworkingTLS defines TLS/SSL-related configuration

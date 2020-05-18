@@ -31,6 +31,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"./pkg/apis/apps/v1alpha1.Nexus":            schema_pkg_apis_apps_v1alpha1_Nexus(ref),
 		"./pkg/apis/apps/v1alpha1.NexusPersistence": schema_pkg_apis_apps_v1alpha1_NexusPersistence(ref),
+		"./pkg/apis/apps/v1alpha1.NexusProbe":       schema_pkg_apis_apps_v1alpha1_NexusProbe(ref),
 		"./pkg/apis/apps/v1alpha1.NexusSpec":        schema_pkg_apis_apps_v1alpha1_NexusSpec(ref),
 		"./pkg/apis/apps/v1alpha1.NexusStatus":      schema_pkg_apis_apps_v1alpha1_NexusStatus(ref),
 	}
@@ -115,6 +116,54 @@ func schema_pkg_apis_apps_v1alpha1_NexusPersistence(ref common.ReferenceCallback
 	}
 }
 
+func schema_pkg_apis_apps_v1alpha1_NexusProbe(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NexusProbe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"initialDelaySeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of seconds after the container has started before liveness probes are initiated.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"timeoutSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"periodSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"successThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"failureThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -124,7 +173,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 				Properties: map[string]spec.Schema{
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Number of pods replicas desired Default: 1",
+							Description: "Number of pods replicas desired",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -168,12 +217,24 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 							Format:      "",
 						},
 					},
+					"livenessProbe": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LivenessProbe describes how the Nexus container liveness probe should work",
+							Ref:         ref("./pkg/apis/apps/v1alpha1.NexusProbe"),
+						},
+					},
+					"readinessProbe": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ReadinessProbe describes how the Nexus container readiness probe should work",
+							Ref:         ref("./pkg/apis/apps/v1alpha1.NexusProbe"),
+						},
+					},
 				},
 				Required: []string{"replicas", "persistence", "useRedHatImage"},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/apps/v1alpha1.NexusNetworking", "./pkg/apis/apps/v1alpha1.NexusPersistence", "k8s.io/api/core/v1.ResourceRequirements"},
+			"./pkg/apis/apps/v1alpha1.NexusNetworking", "./pkg/apis/apps/v1alpha1.NexusPersistence", "./pkg/apis/apps/v1alpha1.NexusProbe", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 

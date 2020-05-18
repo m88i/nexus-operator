@@ -16,8 +16,10 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+source ./hack/export-version.sh
+
 echo "---> Loading Operator Image into Kind"
-kind load docker-image ${CUSTOM_IMAGE_TAG} --name ${CLUSTER_NAME}
+kind load docker-image quay.io/m88i/nexus-operator:${OP_VERSION} --name ${CLUSTER_NAME}
 
 node_name=$(kubectl get nodes -o jsonpath="{.items[0].metadata.name}")
 echo "---> Checking internal loaded images on node ${node_name}"

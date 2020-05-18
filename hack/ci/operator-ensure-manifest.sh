@@ -20,19 +20,17 @@ source ./hack/export-version.sh
 
 OUTPUT="${PWD}/build/_output/operatorhub"
 
-echo "Output dir is set to ${OUTPUT}"
+echo "---> Output dir is set to ${OUTPUT}"
 
 # clean up
 rm -rf "${OUTPUT}"
 
-mkdir -p "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}"
-cp "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/"*.yaml "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}"
-cp ./deploy/olm-catalog/nexus-operator/nexus-operator-m88i.package.yaml "${OUTPUT}/nexus-operator-m88i"
+mkdir -p "${OUTPUT}"
+cp -r "./deploy/olm-catalog/nexus-operator/" "${OUTPUT}/"
+mv "${OUTPUT}/nexus-operator" "${OUTPUT}/nexus-operator-m88i"
+rm "${OUTPUT}/nexus-operator-m88i/manifests" -rf
+rm "${OUTPUT}/nexus-operator-m88i/metadata" -rf
+rm "${OUTPUT}/nexus-operator-m88i/0.1.0" -rf
 
-# replaces
-replace_version=$(grep replaces "./deploy/olm-catalog/nexus-operator/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml" | cut -f2 -d'v')
-if [ ! -z "${replace_version}" ]; then
-    echo "Found replaces version in the new CSV: ${replace_version}. Including in the package."
-    mkdir -p "${OUTPUT}/nexus-operator-m88i/${replace_version}"
-    cp "./deploy/olm-catalog/nexus-operator/${replace_version}/"*.yaml "${OUTPUT}/nexus-operator-m88i/${replace_version}"
-fi
+echo "---> Manifest files in the output directory for OLM verification"
+ls -la "${OUTPUT}/nexus-operator-m88i/"
