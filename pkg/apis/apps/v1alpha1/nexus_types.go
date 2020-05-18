@@ -64,6 +64,14 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
 	UseRedHatImage bool `json:"useRedHatImage"`
 
+	// GenerateRandomAdminPassword enables the random password generation.
+	// Defaults to 'false': the default password for a newly created instance is 'admin123', which should be changed in the first login.
+	// If set to 'true', you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Generate Random Admin Password"
+	// +optional
+	GenerateRandomAdminPassword bool `json:"generateRandomAdminPassword,omitempty"`
+
 	// Networking definition
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Networking"

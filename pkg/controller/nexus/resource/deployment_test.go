@@ -18,6 +18,7 @@
 package resource
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -158,4 +159,49 @@ func Test_customProbes(t *testing.T) {
 	assert.Equal(t, int32(1), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold)
 	assert.Equal(t, int32(0), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.InitialDelaySeconds)
 	assert.Equal(t, int32(probeInitialDelaySeconds), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds)
+}
+
+func Test_applyJVMArgs_withRandomPassword(t *testing.T) {
+	appName := "nexus3"
+	nexus := &v1alpha1.Nexus{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      appName,
+			Namespace: t.Name(),
+		},
+		Spec: v1alpha1.NexusSpec{
+			Replicas: 1,
+			Persistence: v1alpha1.NexusPersistence{
+				Persistent: true,
+			},
+			GenerateRandomAdminPassword: true,
+		},
+	}
+	pvc := newPVC(nexus)
+	deployment := newDeployment(nexus, pvc)
+
+	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgRandomPassword, "true"}, "="))
+	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXms, heapSizeDefault}, ""))
+	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXmx, heapSizeDefault}, ""))
+}
+
+func Test_applyJVMArgs_withDefaultValues(t *testing.T) {
+	appName := "nexus3"
+	nexus := &v1alpha1.Nexus{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      appName,
+			Namespace: t.Name(),
+		},
+		Spec: v1alpha1.NexusSpec{
+			Replicas: 1,
+			Persistence: v1alpha1.NexusPersistence{
+				Persistent: true,
+			},
+		},
+	}
+	pvc := newPVC(nexus)
+	deployment := newDeployment(nexus, pvc)
+
+	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgRandomPassword, "false"}, "="))
+	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXms, heapSizeDefault}, ""))
+	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXmx, heapSizeDefault}, ""))
 }

@@ -16,6 +16,7 @@ Table of Contents
       * [Persistence](#persistence)
          * [Minikube](#minikube)
       * [Service Account](#service-account)
+      * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
 
 # Nexus Operator
@@ -181,6 +182,18 @@ It is possible to use a custom [`ServiceAccount`](https://kubernetes.io/docs/ref
   - `spec.serviceAccountName` (*string*): ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
 
 **Important**: the Operator handles the creation of default resources necessary to run. If you choose to use a custom ServiceAccount be sure to also configure [`Role`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [`RoleBinding`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding) resources.
+
+## Control Random Admin Password Generation
+
+By default, from version 0.3.0 the Nexus Operator **does not** generate a random password for the `admin` user. This means that you can login in the server right away with the default administrator credentials (admin/admin123). **Comes in handy for development purposes, but consider changing this password right away on production environments**.
+
+To enable random password generation, you can set the attribute `generateRandomAdminPassword` in the Nexus CR spec to `true`. Then the Nexus service will create a random password in the file system. You have to grab the password from a file inside the Nexus Server container in order to login in the web console:
+
+```
+$ kubectl exec <nexus server pod name> -- cat /nexus-data/admin.password
+```
+
+Use this password to login into the web console with the username `admin`. 
 
 ## Red Hat Certified Images
 

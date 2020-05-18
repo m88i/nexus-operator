@@ -62,6 +62,16 @@ spec:
         name: A Kubernetes Service
         version: v1
       specDescriptors:
+      - description: 'GenerateRandomAdminPassword enables the random password generation.
+          Default to ''false'': the default password for a newly created instance
+          is ''admin123'', which must be changed in the first login. If set to ''true'',
+          you must grab the generated ''admin'' password. To read this password, you
+          have to ssh into the container and read an auto generated file located at
+          `/nexus-data/admin.password`. Use `cat` to read the file and view the password.
+          Use it to login for the first time and follow the on screen instructions
+          to have the Nexus server ready for use.'
+        displayName: Generate Random Admin Password
+        path: generateRandomAdminPassword
       - description: 'Full image tag name for this specific deployment Default: docker.io/sonatype/nexus3:latest'
         displayName: Image
         path: image
@@ -98,8 +108,7 @@ spec:
     * Creates an [Ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes (1.14+) environments to expose the application to the world
     * On OpenShift, creates a Route to expose the service outside the cluster
 
-    After installing it, you will have to grab the `admin` user password from the deployed container. There's a file auto generated in `/nexus-data/admin.password`.
-    Use `cat` to read the file and view the password. Use it to login for the first time and follow the on screen instructions to have the Nexus server ready for use.
+    [See our documentation](https://github.com/m88i/nexus-operator/blob/master/README.md) for more installation and usage scenarios.
 
     If you experience any issues or have any ideas for new features, please [file an issue in our Github repository](https://github.com/m88i/nexus-operator/issues) or send an email to our maillist: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com)
 
