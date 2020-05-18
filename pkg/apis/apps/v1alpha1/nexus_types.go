@@ -65,11 +65,8 @@ type NexusSpec struct {
 	UseRedHatImage bool `json:"useRedHatImage"`
 
 	// GenerateRandomAdminPassword enables the random password generation.
-	// Default to 'false': the default password for a newly created instance is 'admin123', which must be changed in the first login.
-	// If set to 'true', you must grab the generated 'admin' password.
-	// To read this password, you have to ssh into the container and read an auto generated file located at `/nexus-data/admin.password`.
-	// Use `cat` to read the file and view the password.
-	// Use it to login for the first time and follow the on screen instructions to have the Nexus server ready for use.
+	// Defaults to 'false': the default password for a newly created instance is 'admin123', which should be changed in the first login.
+	// If set to 'true', you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Generate Random Admin Password"
 	// +optional

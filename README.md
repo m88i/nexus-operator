@@ -16,7 +16,7 @@ Table of Contents
       * [Persistence](#persistence)
          * [Minikube](#minikube)
       * [Service Account](#service-account)
-      * [Control random admin password generation](#control-random-admin-password-generation)
+      * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
 
 # Nexus Operator
@@ -183,7 +183,7 @@ It is possible to use a custom [`ServiceAccount`](https://kubernetes.io/docs/ref
 
 **Important**: the Operator handles the creation of default resources necessary to run. If you choose to use a custom ServiceAccount be sure to also configure [`Role`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) and [`RoleBinding`](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding) resources.
 
-## Control random admin password generation
+## Control Random Admin Password Generation
 
 By default, from version 0.3.0 the Nexus Operator **does not** generate a random password for the `admin` user. This means that you can login in the server right away with the default administrator credentials (admin/admin123). **Comes in handy for development purposes, but consider changing this password right away on production environments**.
 
