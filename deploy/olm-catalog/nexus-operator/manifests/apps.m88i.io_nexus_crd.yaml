@@ -29,6 +29,17 @@ spec:
         spec:
           description: NexusSpec defines the desired state of Nexus
           properties:
+            generateRandomAdminPassword:
+              description: 'GenerateRandomAdminPassword enables the random password
+                generation. Default to ''false'': the default password for a newly
+                created instance is ''admin123'', which must be changed in the first
+                login. If set to ''true'', you must grab the generated ''admin'' password.
+                To read this password, you have to ssh into the container and read
+                an auto generated file located at `/nexus-data/admin.password`. Use
+                `cat` to read the file and view the password. Use it to login for
+                the first time and follow the on screen instructions to have the Nexus
+                server ready for use.'
+              type: boolean
             image:
               description: 'Full image tag name for this specific deployment Default:
                 docker.io/sonatype/nexus3:latest'
@@ -46,7 +57,7 @@ spec:
                   type: integer
                 initialDelaySeconds:
                   description: Number of seconds after the container has started before
-                    liveness probes are initiated.
+                    probes are initiated.
                   format: int32
                   type: integer
                 periodSeconds:
@@ -138,7 +149,7 @@ spec:
                   type: integer
                 initialDelaySeconds:
                   description: Number of seconds after the container has started before
-                    liveness probes are initiated.
+                    probes are initiated.
                   format: int32
                   type: integer
                 periodSeconds:

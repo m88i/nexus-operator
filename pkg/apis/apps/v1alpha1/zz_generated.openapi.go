@@ -125,7 +125,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusProbe(ref common.ReferenceCallback) comm
 				Properties: map[string]spec.Schema{
 					"initialDelaySeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Number of seconds after the container has started before liveness probes are initiated.",
+							Description: "Number of seconds after the container has started before probes are initiated.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -200,6 +200,13 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 					"useRedHatImage": {
 						SchemaProps: spec.SchemaProps{
 							Description: "If you have access to Red Hat Container Catalog, turn this to true to use the certified image provided by Sonatype Default: false",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateRandomAdminPassword": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateRandomAdminPassword enables the random password generation. Default to 'false': the default password for a newly created instance is 'admin123', which must be changed in the first login. If set to 'true', you must grab the generated 'admin' password. To read this password, you have to ssh into the container and read an auto generated file located at `/nexus-data/admin.password`. Use `cat` to read the file and view the password. Use it to login for the first time and follow the on screen instructions to have the Nexus server ready for use.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
