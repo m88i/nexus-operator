@@ -1,4 +1,8 @@
 ![Nexus Operator Integration Checks](https://github.com/m88i/nexus-operator/workflows/Nexus%20Operator%20Integration%20Checks/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/m88i/nexus-operator)](https://goreportcard.com/report/github.com/m88i/nexus-operator)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/m88i/nexus-operator?label=latest)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m88i/nexus-operator)
 
 Table of Contents
 =================
@@ -21,7 +25,11 @@ Table of Contents
 
 # Nexus Operator
 
-A Nexus OSS Kubernetes Operator based on Operators SDK
+A Nexus OSS Kubernetes Operator based on Operators SDK.
+
+You can found us at the [OperatorHub](https://operatorhub.io/operator/nexus-operator-m88i) or in the ["Operators" tab in your OpenShift 4.x web console](https://docs.openshift.com/container-platform/4.4/operators/olm-adding-operators-to-cluster.html), just search for "Nexus". If you don't have access to the [OLM](https://github.com/operator-framework/operator-lifecycle-manager), try installing it manually [following our quick installation guide](#quick-install).
+
+If you have any questions please either [open an issue](https://github.com/m88i/nexus-operator/issues) or send an email to the mailing list: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com).
 
 ## Pre Requisites
 
