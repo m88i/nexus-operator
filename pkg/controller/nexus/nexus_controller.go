@@ -31,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 
-	utilres "github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/write"
 
 	appsv1alpha1 "github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -64,8 +63,6 @@ var watchedObjects = []framework.WatchedObjects{
 	},
 	{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}, &corev1.ServiceAccount{}}},
 }
-
-var resourceMgr resource.NexusResourceManager
 
 const okStatus = "OK"
 
@@ -143,7 +140,6 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return result, err
 	}
 	cache := instance.DeepCopy()
-	deployedRes := make(map[reflect.Type][]utilres.KubernetesResource)
 
 	// In case of any errors from here, we should update the application status
 	defer r.updateNexusStatus(instance, cache, &err)
@@ -164,7 +160,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return
 	}
 	// Get the actual deployed objects
-	deployedRes, err = r.resourceManager.GetDeployedResources(instance)
+	deployedRes, err := r.resourceManager.GetDeployedResources(instance)
 	if err != nil {
 		return
 	}
@@ -269,19 +265,16 @@ func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, cache *app
 
 	if statusErr := r.getNexusDeploymentStatus(nexus); statusErr != nil {
 		log.Error(statusErr, "Error while fetching Nexus Deployment status")
-		err = &statusErr
 	}
 
 	if urlErr := r.getNexusURL(nexus); urlErr != nil {
 		log.Error(urlErr, "Error while fetching Nexus URL status")
-		err = &urlErr
 	}
 
 	if !reflect.DeepEqual(cache, nexus) {
 		log.Info("Updating nexus status")
 		if updateErr := r.client.Update(context.TODO(), nexus); updateErr != nil {
 			log.Error(updateErr, "Error while updating Nexus status")
-			err = &updateErr
 		}
 	}
 

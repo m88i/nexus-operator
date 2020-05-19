@@ -16,13 +16,11 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-
 . ./hack/go-mod-env.sh
 
-if [[ -z ${CI} ]]; then
-    ./hack/go-vet.sh
-    ./hack/go-fmt.sh
-    ./hack/go-lint.sh
-fi
+./hack/go-vet.sh
+./hack/go-fmt.sh
+./hack/go-lint.sh
+
 setGoModEnv
 go test ./pkg/... -count=1

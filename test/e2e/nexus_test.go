@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/m88i/nexus-operator/pkg/apis"
@@ -38,7 +40,7 @@ func TestNexus(t *testing.T) {
 	})
 }
 
-func nexusNoPersitenceNodePort(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+func nexusNoPersitenceNodePort(t *testing.T, f *framework.Framework, ctx *framework.Context) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -79,12 +81,19 @@ func nexusNoPersitenceNodePort(t *testing.T, f *framework.Framework, ctx *framew
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 
+	// guarantee that we have set the correct default limits
+	deployment := &appsv1.Deployment{}
+	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: nexus3.Name, Namespace: nexus3.Namespace}, deployment)
+	assert.NoError(t, err)
+	assert.Equal(t, deployment.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String(), "2Gi")
+	assert.Equal(t, deployment.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String(), "2Gi")
+
 	return nil
 }
 
 func NexusCluster(t *testing.T) {
 	t.Parallel()
-	ctx := framework.NewTestCtx(t)
+	ctx := framework.NewContext(t)
 	defer ctx.Cleanup()
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {

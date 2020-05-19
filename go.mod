@@ -3,15 +3,14 @@ module github.com/m88i/nexus-operator
 require (
 	github.com/RHsyseng/operator-utils v0.0.0-20200417223319-07e65f1aaddd
 	github.com/go-logr/logr v0.1.0
-	github.com/go-openapi/spec v0.19.7
+	github.com/go-openapi/spec v0.19.8
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/operator-sdk v0.17.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
-	go.uber.org/zap v1.14.1
+	go.uber.org/zap v1.15.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/tools v0.0.0-20200425043458-8463f397d07c // indirect
 	k8s.io/api v0.17.4
 	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible

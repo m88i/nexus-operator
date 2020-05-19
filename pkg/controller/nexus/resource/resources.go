@@ -19,9 +19,10 @@ package resource
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/rbac"
-	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource/read"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
@@ -37,7 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // NexusResourceManager is the resources manager for the nexus CR.
@@ -70,8 +71,14 @@ func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (reso
 		return nil, routeErr
 	} else if routeAvailable {
 		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &routev1.RouteList{})
+		if err != nil {
+			log.Error(err, "Failed to list resources")
+		}
 	} else {
 		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{})
+		if err != nil {
+			log.Error(err, "Failed to list resources")
+		}
 	}
 
 	// Necessary to support < 1.14 K8s clusters

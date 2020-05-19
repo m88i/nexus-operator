@@ -44,8 +44,8 @@ const (
 	jvmArgsMaxMemSize          = "-XX:MaxDirectMemorySize"
 	jvmArgsUserRoot            = "-Djava.util.prefs.userRoot"
 	jvmArgRandomPassword       = "-Dnexus.security.randompassword"
-	heapSizeDefault            = "1200m"
-	maxDirectMemorySizeDefault = "2g"
+	heapSizeDefault            = "1718m"
+	maxDirectMemorySizeDefault = "2148m"
 	probeInitialDelaySeconds   = int32(240)
 	probeTimeoutSeconds        = int32(15)
 )
@@ -118,7 +118,7 @@ func applyDefaultImage(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 }
 
 func applyDefaultResourceReqs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	if &nexus.Spec.Resources == nil {
+	if nexus.Spec.Resources.Limits == nil && nexus.Spec.Resources.Requests == nil {
 		nexus.Spec.Resources = nexusPodReq
 	}
 	deployment.Spec.Template.Spec.Containers[0].Resources = nexus.Spec.Resources
