@@ -16,14 +16,8 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+# it's expected to have GOPATH in your PATH
+# see this link to understand why we are using a different go.mod file: https://github.com/golang/go/issues/34506
+which golangci-lint >/dev/null || go get -modfile=go.tools.mod github.com/golangci/golangci-lint/cmd/golangci-lint@v1.27.0
 
-which ./bin/golint > /dev/null || go build -o ./bin/golint golang.org/x/lint/golint
-
-dirs=(cmd pkg version)
-for dir in "${dirs[@]}"
-do
-    if ! ./bin/golint -set_exit_status ${dir}/...; then
-        code=1
-    fi
-done
-exit ${code:0}
+golangci-lint run ./pkg/... ./test/...

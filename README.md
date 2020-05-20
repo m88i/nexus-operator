@@ -18,6 +18,7 @@ Table of Contents
       * [Service Account](#service-account)
       * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
+      * [Contributing](#contributing)
 
 # Nexus Operator
 
@@ -201,3 +202,7 @@ If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/r
 **You'll have to set your Red Hat credentials** in the namespace where Nexus is deployed to be able to pull the image.
 
 [In future versions](https://github.com/m88i/nexus-operator/issues/14) the Operator will handle this step for you.
+
+## Contributing
+
+Please read our [Contribution Guide](CONTRIBUTING.md).

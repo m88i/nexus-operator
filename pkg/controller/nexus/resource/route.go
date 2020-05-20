@@ -19,8 +19,9 @@ package resource
 
 import (
 	"fmt"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/openshift/api/route/v1"
+	v1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -33,7 +34,6 @@ const (
 type routeBuilder struct {
 	route *v1.Route
 	err   error
-	nexus *v1alpha1.Nexus
 }
 
 func (r *routeBuilder) newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *routeBuilder {

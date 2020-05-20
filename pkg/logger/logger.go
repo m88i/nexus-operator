@@ -94,10 +94,19 @@ func createLogger(options *Opts) (logger Logger) {
 		}),
 		SugaredLogger: zapSugaredLogger(options),
 	}
-	defer log.SugaredLogger.Sync()
+	defer syncLogger(log)
 
 	logf.SetLogger(log.Logger)
 	return log
+}
+
+func syncLogger(logger Logger) {
+	if err := logger.SugaredLogger.Sync(); err != nil {
+		// Let the messages in DEBUG mode only
+		// see: https://github.com/uber-go/zap/issues/772
+		// see: https://github.com/uber-go/zap/issues/370
+		logger.SugaredLogger.Debug("Failed to sync Sugered log: ", err)
+	}
 }
 
 // zapSugaredLogger is a Logger implementation.
@@ -157,7 +166,7 @@ func zapSugaredLoggerTo(options *Opts) *zap.SugaredLogger {
 			enc = zapcore.NewJSONEncoder(encCfg)
 			lvl = zap.NewAtomicLevelAt(zap.InfoLevel)
 			opts = append(opts, zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-				return zapcore.NewSampler(core, time.Second, 100, 100)
+				return zapcore.NewSamplerWithOptions(core, time.Second, 100, 100)
 			}))
 		}
 	}
