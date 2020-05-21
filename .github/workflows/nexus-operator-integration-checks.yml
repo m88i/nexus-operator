@@ -10,6 +10,7 @@ on:
       - "LICENSE"
       - "LICENSE_NOTICE"
       - "Makefile"
+      - "ISSUE_TEMPLATE"
     branches:
       - master
 env:
