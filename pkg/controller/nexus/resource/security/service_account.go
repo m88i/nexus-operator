@@ -15,19 +15,17 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package rbac
+package security
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func defaultServiceAccount(nexus *v1alpha1.Nexus) *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
-		},
+	account := &corev1.ServiceAccount{
+		ObjectMeta: framework.DefaultObjectMeta(nexus),
 	}
+	return account
 }

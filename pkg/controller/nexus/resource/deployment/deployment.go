@@ -15,10 +15,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package deployment
 
 import (
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -48,41 +49,58 @@ const (
 	maxDirectMemorySizeDefault = "2148m"
 	probeInitialDelaySeconds   = int32(240)
 	probeTimeoutSeconds        = int32(15)
+	nexusDataDir               = "/nexus-data"
+	nexusCommunityLatestImage  = "docker.io/sonatype/nexus3:latest"
+	nexusCertifiedLatestImage  = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
+	nexusContainerName         = "nexus-server"
 )
 
-var jvmArgsMap = map[string]string{
-	jvmArgsXms:           heapSizeDefault,
-	jvmArgsXmx:           heapSizeDefault,
-	jvmArgsMaxMemSize:    maxDirectMemorySizeDefault,
-	jvmArgsUserRoot:      "${NEXUS_DATA}/javaprefs",
-	jvmArgRandomPassword: "false",
-}
+var (
+	jvmArgsMap = map[string]string{
+		jvmArgsXms:           heapSizeDefault,
+		jvmArgsXmx:           heapSizeDefault,
+		jvmArgsMaxMemSize:    maxDirectMemorySizeDefault,
+		jvmArgsUserRoot:      "${NEXUS_DATA}/javaprefs",
+		jvmArgRandomPassword: "false",
+	}
 
-func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1.Deployment {
-	deployment := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
+	nexusUID = int64(200)
+
+	nexusPodReq = corev1.ResourceRequirements{
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("2"),
+			corev1.ResourceMemory: resource.MustParse("2Gi"),
 		},
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("1"),
+			corev1.ResourceMemory: resource.MustParse("2Gi"),
+		},
+	}
+)
+
+func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
+	deployment := &appsv1.Deployment{
+		ObjectMeta: framework.DefaultObjectMeta(nexus),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &nexus.Spec.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: generateLabels(nexus),
+				MatchLabels: framework.GenerateLabels(nexus),
 			},
-			Template: v1.PodTemplateSpec{
-				Spec: v1.PodSpec{
-					SecurityContext: &v1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}},
-					Containers: []v1.Container{
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: framework.DefaultObjectMeta(nexus),
+				Spec: corev1.PodSpec{
+					SecurityContext: &corev1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}},
+					Containers: []corev1.Container{
 						{
 							Name: nexusContainerName,
-							Ports: []v1.ContainerPort{
+							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
-									ContainerPort: nexusServicePort,
-									Protocol:      v1.ProtocolTCP,
+									ContainerPort: NexusServicePort,
+									Protocol:      corev1.ProtocolTCP,
 								},
 							},
-							ImagePullPolicy: v1.PullAlways,
+							ImagePullPolicy: corev1.PullAlways,
 						},
 					},
 				},
@@ -93,12 +111,9 @@ func newDeployment(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim) *appsv1
 		},
 	}
 
-	applyLabels(nexus, &deployment.ObjectMeta)
-	applyLabels(nexus, &deployment.Spec.Template.ObjectMeta)
-
 	applyDefaultImage(nexus, deployment)
 	applyDefaultResourceReqs(nexus, deployment)
-	addVolume(nexus, pvc, deployment)
+	addVolume(nexus, deployment)
 	addProbes(nexus, deployment)
 	applyJVMArgs(nexus, deployment)
 	addServiceAccount(nexus, deployment)
@@ -125,14 +140,14 @@ func applyDefaultResourceReqs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployme
 }
 
 func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	defaultProbe := &v1.Probe{
-		Handler: v1.Handler{
-			HTTPGet: &v1.HTTPGetAction{
+	defaultProbe := &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.IntOrString{
-					IntVal: nexusServicePort,
+					IntVal: NexusServicePort,
 				},
-				Scheme: v1.URISchemeHTTP,
+				Scheme: corev1.URISchemeHTTP,
 			},
 		},
 		InitialDelaySeconds: probeInitialDelaySeconds,
@@ -169,20 +184,20 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	}
 }
 
-func addVolume(nexus *v1alpha1.Nexus, pvc *v1.PersistentVolumeClaim, deployment *appsv1.Deployment) {
+func addVolume(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	if nexus.Spec.Persistence.Persistent {
-		deployment.Spec.Template.Spec.Volumes = []v1.Volume{
+		deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
 			{
 				Name: fmt.Sprintf("%s-data", nexus.Name),
-				VolumeSource: v1.VolumeSource{
-					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
-						ClaimName: pvc.Name,
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: nexus.Name,
 						ReadOnly:  false,
 					},
 				},
 			},
 		}
-		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
 			{
 				Name:      fmt.Sprintf("%s-data", nexus.Name),
 				MountPath: nexusDataDir,
@@ -218,13 +233,13 @@ func applyJVMArgs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 
 	deployment.Spec.Template.Spec.Containers[0].Env =
 		append(deployment.Spec.Template.Spec.Containers[0].Env,
-			v1.EnvVar{
+			corev1.EnvVar{
 				Name:  jvmArgsEnvKey,
 				Value: jvmArgs.String(),
 			})
 }
 
-func calculateJVMMemory(limits v1.ResourceList) (jvmMemory, directMemSize string) {
+func calculateJVMMemory(limits corev1.ResourceList) (jvmMemory, directMemSize string) {
 	if limits != nil {
 		memoryLimit := limits.Memory()
 		if memoryLimit != nil {

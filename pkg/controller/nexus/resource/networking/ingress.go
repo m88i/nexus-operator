@@ -15,20 +15,20 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package networking
 
 import (
 	"fmt"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	"k8s.io/api/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
 	ingressBasePath = "/"
-	ingressNotInit  = "ingress not initialized"
+	ingressNotInit  = "ingress builder not initialized"
 )
 
 type ingressBuilder struct {
@@ -37,18 +37,9 @@ type ingressBuilder struct {
 	nexus   *v1alpha1.Nexus
 }
 
-func (i *ingressBuilder) newIngress(nexus *v1alpha1.Nexus, service *corev1.Service) *ingressBuilder {
-	port, err := getNexusDefaultPort(service)
-	if err != nil {
-		i.err = err
-		return i
-	}
-
+func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 	ingress := &v1beta1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
-		},
+		ObjectMeta: framework.DefaultObjectMeta(nexus),
 		Spec: v1beta1.IngressSpec{
 			Rules: []v1beta1.IngressRule{
 				{
@@ -58,8 +49,8 @@ func (i *ingressBuilder) newIngress(nexus *v1alpha1.Nexus, service *corev1.Servi
 							{
 								Path: ingressBasePath,
 								Backend: v1beta1.IngressBackend{
-									ServiceName: service.Name,
-									ServicePort: port,
+									ServiceName: nexus.Name,
+									ServicePort: intstr.FromInt(deployment.NexusServicePort),
 								},
 							},
 						},
@@ -69,11 +60,11 @@ func (i *ingressBuilder) newIngress(nexus *v1alpha1.Nexus, service *corev1.Servi
 		},
 	}
 
-	applyLabels(nexus, &ingress.ObjectMeta)
-	i.ingress = ingress
-	i.nexus = nexus
-
-	return i
+	return &ingressBuilder{
+		ingress: ingress,
+		err:     nil,
+		nexus:   nexus,
+	}
 }
 
 func (i *ingressBuilder) withCustomTLS() *ingressBuilder {
@@ -101,15 +92,6 @@ func (i *ingressBuilder) build() (*v1beta1.Ingress, error) {
 	}
 
 	return i.ingress, nil
-}
-
-func getNexusDefaultPort(service *corev1.Service) (intstr.IntOrString, error) {
-	for _, port := range service.Spec.Ports {
-		if port.TargetPort.IntVal == nexusServicePort {
-			return port.TargetPort, nil
-		}
-	}
-	return intstr.IntOrString{IntVal: 0}, fmt.Errorf("No default nexus port (%d) found in service %s ", nexusServicePort, service.Name)
 }
 
 func hosts(ingress *v1beta1.Ingress) []string {

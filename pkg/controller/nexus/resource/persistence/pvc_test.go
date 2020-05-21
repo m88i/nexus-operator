@@ -15,7 +15,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package persistence
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"

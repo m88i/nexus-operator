@@ -19,16 +19,14 @@ package resource
 
 import (
 	"fmt"
+
+	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/networking"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/persistence"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/security"
 	"reflect"
 
-	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/rbac"
-
-	"github.com/RHsyseng/operator-utils/pkg/resource/read"
-	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
-	routev1 "github.com/openshift/api/route/v1"
-	"k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
@@ -36,24 +34,40 @@ import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
 )
+
+const mgrsNotInit = "resource managers have not been initialized"
 
 // NexusResourceManager is the resources manager for the nexus CR.
 // Handles the creation of every single resource needed to deploy a nexus server instance on Kubernetes
 type NexusResourceManager interface {
+	// InitManagers initializes the managers responsible for the resources life cycle
+	InitManagers(nexus *v1alpha1.Nexus) error
 	// GetDeployedResources will fetch for the resources managed by the nexus instance deployed in the cluster
-	GetDeployedResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error)
-	// CreateRequiredResources will create the requests resources as it's supposed to be
-	CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error)
+	GetDeployedResources() (resources map[reflect.Type][]resource.KubernetesResource, err error)
+	// GetRequiredResources will create the requests resources as it's supposed to be
+	GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error)
+	// GetComparator returns the comparator based on the active managers
+	GetComparator() (compare.MapComparator, error)
+}
+
+type Manager interface {
+	// GetRequiredResources returns the resources initialized by the manager
+	GetRequiredResources() ([]resource.KubernetesResource, error)
+	// GetDeployedResources returns the resources deployed on the cluster
+	GetDeployedResources() ([]resource.KubernetesResource, error)
+	// GetCustomComparator returns the custom comp function used to compare two resources of a specific type
+	// Returns nil if there is no custom comparator for that type
+	GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool
+	// GetCustomComparators returns all custom comp functions in a map indexed by the resource type
+	// Returns nil if there are none
+	GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool
 }
 
 type nexusResourceManager struct {
-	NexusResourceManager
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
+	managers        []Manager
 }
 
 // New creates a new resource manager for nexus CR
@@ -64,137 +78,69 @@ func New(client client.Client, discoveryClient discovery.DiscoveryInterface) Nex
 	}
 }
 
-func (r *nexusResourceManager) GetDeployedResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
-	reader := read.New(r.client).WithNamespace(nexus.Namespace).WithOwnerObject(nexus)
 
-	if routeAvailable, routeErr := openshift.IsRouteAvailable(r.discoveryClient); routeErr != nil {
-		return nil, routeErr
-	} else if routeAvailable {
-		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{}, &routev1.RouteList{})
+// InitManagers initializes the managers responsible for the resources life cycle
+func (r *nexusResourceManager) InitManagers(nexus *v1alpha1.Nexus) error {
+	networkManager, err := networking.NewManager(nexus, r.client, r.discoveryClient)
+	if err != nil {
+		return fmt.Errorf("unable to create networking manager: %v", err)
+	}
+
+	r.managers = []Manager{
+		deployment.NewManager(nexus, r.client),
+		persistence.NewManager(nexus, r.client),
+		security.NewManager(nexus, r.client),
+		networkManager,
+	}
+	return nil
+}
+
+func (r *nexusResourceManager) GetDeployedResources() (map[reflect.Type][]resource.KubernetesResource, error) {
+	if len(r.managers) == 0 {
+		return nil, fmt.Errorf(mgrsNotInit)
+	}
+
+	log.Info("Fetching deployed resources")
+	builder := compare.NewMapBuilder()
+	for _, manager := range r.managers {
+		deployedResources, err := manager.GetDeployedResources()
 		if err != nil {
-			log.Error(err, "Failed to list resources")
+			return nil, err
 		}
-	} else {
-		resources, err = reader.ListAll(&v1.PersistentVolumeClaimList{}, &v1.ServiceList{}, &appsv1.DeploymentList{})
+		builder.Add(deployedResources...)
+	}
+	return builder.ResourceMap(), nil
+}
+
+func (r *nexusResourceManager) GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error) {
+	if len(r.managers) == 0 {
+		return nil, fmt.Errorf(mgrsNotInit)
+	}
+
+	log.Info("Fetching required resources")
+	builder := compare.NewMapBuilder()
+	for _, manager := range r.managers {
+		requiredResources, err := manager.GetRequiredResources()
 		if err != nil {
-			log.Error(err, "Failed to list resources")
+			return nil, err
+		}
+		builder.Add(requiredResources...)
+	}
+	return builder.ResourceMap(), nil
+}
+
+// GetComparator will create the comparator for the Nexus instance
+// The comparator can be used to compare two different sets of resources and update them accordingly
+func (r *nexusResourceManager) GetComparator() (compare.MapComparator, error) {
+	if len(r.managers) == 0 {
+		return compare.MapComparator{}, fmt.Errorf(mgrsNotInit)
+	}
+
+	resourceComparator := compare.DefaultComparator()
+	for _, manager := range r.managers {
+		for resType, compFunc := range manager.GetCustomComparators() {
+			resourceComparator.SetComparator(resType, compFunc)
 		}
 	}
-
-	// Necessary to support < 1.14 K8s clusters
-	if available, err := kubernetes.IsIngressAvailable(r.discoveryClient); err != nil {
-		return nil, err
-	} else if available {
-		// ingress cannot be listed using utils, so we load the single one
-		ingressResType := reflect.TypeOf(v1beta1.Ingress{})
-		ingress, err := reader.Load(ingressResType, nexus.Name)
-		if err == nil {
-			resources[ingressResType] = []resource.KubernetesResource{ingress}
-		}
-	}
-
-	rbacManager := rbac.NewDefaultManager(nexus, r.client)
-	rbacResources, err := rbacManager.GetDeployedResources()
-	if err != nil {
-		return nil, fmt.Errorf("failure fetching deployed rbac resources: %v", err)
-	}
-	resources = resourceMapUnion(resources, rbacResources)
-
-	if err != nil && !errors.IsNotFound(err) {
-		log.Error(err, "Failed to fetch deployed nexus resources")
-		return nil, err
-	}
-	if resources == nil {
-		log.Info("No deployed resources found")
-	}
-	log.Infof("Number of deployed resources %d", len(resources))
-	return resources, nil
-}
-
-func (r *nexusResourceManager) CreateRequiredResources(nexus *v1alpha1.Nexus) (resources map[reflect.Type][]resource.KubernetesResource, err error) {
-	log.Infof("Creating resources structures namespace: %s, name: %s", nexus.Namespace, nexus.Name)
-	var pvc *v1.PersistentVolumeClaim
-	resources = make(map[reflect.Type][]resource.KubernetesResource)
-	service := newService(nexus)
-
-	if nexus.Spec.Persistence.Persistent {
-		pvc = newPVC(nexus)
-		resources[reflect.TypeOf(v1.PersistentVolumeClaim{})] = []resource.KubernetesResource{pvc}
-	}
-
-	if nexus.Spec.Networking.Expose {
-		switch nexus.Spec.Networking.ExposeAs {
-		case v1alpha1.RouteExposeType:
-			route, err := r.createRoute(nexus, service)
-			if err != nil {
-				return nil, err
-			}
-			resources[reflect.TypeOf(routev1.Route{})] = []resource.KubernetesResource{route}
-		case v1alpha1.IngressExposeType:
-			ingress, err := r.createIngress(nexus, service)
-			if err != nil {
-				return nil, err
-			}
-			resources[reflect.TypeOf(v1beta1.Ingress{})] = []resource.KubernetesResource{ingress}
-		}
-	}
-
-	rbacManager := rbac.NewDefaultManager(nexus, r.client)
-	rbacResources, err := rbacManager.GetRequiredResources()
-	if err != nil {
-		return nil, fmt.Errorf("failure generating rbac resources: %v", err)
-	}
-	resources = resourceMapUnion(resources, rbacResources)
-
-	resources[reflect.TypeOf(appsv1.Deployment{})] = []resource.KubernetesResource{newDeployment(nexus, pvc)}
-	resources[reflect.TypeOf(v1.Service{})] = []resource.KubernetesResource{service}
-	return resources, nil
-}
-
-func (r *nexusResourceManager) createIngress(nexus *v1alpha1.Nexus, service *v1.Service) (*v1beta1.Ingress, error) {
-	// Necessary to support < 1.14 K8s clusters
-	if available, err := kubernetes.IsIngressAvailable(r.discoveryClient); err != nil {
-		return nil, err
-	} else if !available {
-		return nil, fmt.Errorf("ingress is not available in this cluster")
-	}
-	builder := (&ingressBuilder{}).newIngress(nexus, service)
-
-	if len(nexus.Spec.Networking.TLS.SecretName) > 0 {
-		builder = builder.withCustomTLS()
-	}
-
-	ingress, err := builder.build()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create ingress: %v", err)
-	}
-	return ingress, nil
-}
-
-func (r *nexusResourceManager) createRoute(nexus *v1alpha1.Nexus, service *v1.Service) (*routev1.Route, error) {
-	if available, err := openshift.IsRouteAvailable(r.discoveryClient); err != nil {
-		return nil, err
-	} else if !available {
-		return nil, fmt.Errorf("route not available")
-	}
-
-	builder := (&routeBuilder{}).newRoute(nexus, service)
-
-	if nexus.Spec.Networking.TLS.Mandatory {
-		builder = builder.withRedirect()
-	}
-
-	route, err := builder.build()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create route: %v", err)
-	}
-	return route, nil
-}
-
-// resourceMapUnion takes two maps and returns its union. If a key is present in both maps it takes the value from the 'b' map
-func resourceMapUnion(a, b map[reflect.Type][]resource.KubernetesResource) map[reflect.Type][]resource.KubernetesResource {
-	for key, value := range b {
-		a[key] = value
-	}
-	return a
+	return compare.MapComparator{Comparator: resourceComparator}, nil
 }

@@ -15,44 +15,44 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package deployment
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func newService(nexus *v1alpha1.Nexus) *v1.Service {
-	svc := &v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
-		},
-		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
+const (
+	NexusServicePort = 8081
+	nexusPortName    = "http"
+)
+
+func newService(nexus *v1alpha1.Nexus) *corev1.Service {
+	svc := &corev1.Service{
+		ObjectMeta: framework.DefaultObjectMeta(nexus),
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
 				{
-					Name:     "http",
-					Protocol: v1.ProtocolTCP,
-					Port:     nexusServicePort,
+					Name:     nexusPortName,
+					Protocol: corev1.ProtocolTCP,
+					Port:     NexusServicePort,
 					TargetPort: intstr.IntOrString{
-						IntVal: nexusServicePort,
+						IntVal: NexusServicePort,
 					},
 				},
 			},
-			Selector:        generateLabels(nexus),
-			SessionAffinity: v1.ServiceAffinityNone,
+			Selector:        framework.GenerateLabels(nexus),
+			SessionAffinity: corev1.ServiceAffinityNone,
 		},
 	}
 
 	if nexus.Spec.Networking.ExposeAs == v1alpha1.NodePortExposeType {
-		svc.Spec.Type = v1.ServiceTypeNodePort
+		svc.Spec.Type = corev1.ServiceTypeNodePort
 		svc.Spec.Ports[0].NodePort = nexus.Spec.Networking.NodePort
-		svc.Spec.ExternalTrafficPolicy = v1.ServiceExternalTrafficPolicyTypeCluster
+		svc.Spec.ExternalTrafficPolicy = corev1.ServiceExternalTrafficPolicyTypeCluster
 	}
-
-	applyLabels(nexus, &svc.ObjectMeta)
 
 	return svc
 }

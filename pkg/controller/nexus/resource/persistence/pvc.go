@@ -15,14 +15,16 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package persistence
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const nexusVolumeSize = "10Gi"
 
 func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
 	if len(nexus.Spec.Persistence.VolumeSize) == 0 {
@@ -35,10 +37,7 @@ func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
 	}
 
 	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
-		},
+		ObjectMeta: framework.DefaultObjectMeta(nexus),
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				accessMode,
@@ -54,8 +53,6 @@ func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
 	if len(nexus.Spec.Persistence.StorageClass) > 0 {
 		pvc.Spec.StorageClassName = &nexus.Spec.Persistence.StorageClass
 	}
-
-	applyLabels(nexus, &pvc.ObjectMeta)
 
 	return pvc
 }

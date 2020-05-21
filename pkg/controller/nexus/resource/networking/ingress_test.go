@@ -15,10 +15,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package networking
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
@@ -44,30 +45,17 @@ var (
 	}
 
 	ingressService = &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "nexus3",
+			Namespace: "nexus",
+		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
-				{TargetPort: intstr.IntOrString{IntVal: nexusServicePort}},
+				{TargetPort: intstr.IntOrString{IntVal: deployment.NexusServicePort}},
 			},
 		},
 	}
 )
-
-func TestGetNexusDefaultPort(t *testing.T) {
-	s := &v1.Service{}
-
-	s.Spec.Ports = []v1.ServicePort{}
-	_, err := getNexusDefaultPort(s)
-	assert.NotNil(t, err)
-
-	s.Spec.Ports = []v1.ServicePort{{TargetPort: intstr.IntOrString{IntVal: 80}}}
-	_, err = getNexusDefaultPort(s)
-	assert.NotNil(t, err)
-
-	s.Spec.Ports = []v1.ServicePort{{TargetPort: intstr.IntOrString{IntVal: nexusServicePort}}}
-	port, err := getNexusDefaultPort(s)
-	assert.Nil(t, err)
-	assert.Equal(t, s.Spec.Ports[0].TargetPort, port)
-}
 
 func TestHosts(t *testing.T) {
 	ingress := &v1beta1.Ingress{
@@ -93,13 +81,13 @@ func TestHosts(t *testing.T) {
 }
 
 func TestNewIngress(t *testing.T) {
-	ingress, err := (&ingressBuilder{}).newIngress(ingressNexus, ingressService).build()
+	ingress, err := newIngressBuilder(ingressNexus).build()
 	assert.Nil(t, err)
 	assertIngressBasic(t, ingress)
 }
 
 func TestNewIngressWithSecretName(t *testing.T) {
-	ingress, err := (&ingressBuilder{}).newIngress(ingressNexus, ingressService).withCustomTLS().build()
+	ingress, err := newIngressBuilder(ingressNexus).withCustomTLS().build()
 	assert.Nil(t, err)
 	assertIngressBasic(t, ingress)
 	assertIngressSecretName(t, ingress)
