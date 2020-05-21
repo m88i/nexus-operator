@@ -19,7 +19,7 @@ package deployment
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
@@ -43,6 +43,6 @@ func Test_newService(t *testing.T) {
 
 	assert.Len(t, svc.Spec.Ports, 1)
 	assert.Equal(t, int32(NexusServicePort), svc.Spec.Ports[0].Port)
-	assert.Equal(t, appName, svc.Labels[framework.AppLabel])
-	assert.Equal(t, appName, svc.Spec.Selector[framework.AppLabel])
+	assert.Equal(t, appName, svc.Labels[meta.AppLabel])
+	assert.Equal(t, appName, svc.Spec.Selector[meta.AppLabel])
 }

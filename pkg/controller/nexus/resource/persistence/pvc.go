@@ -19,16 +19,16 @@ package persistence
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-const nexusVolumeSize = "10Gi"
+const defaultVolumeSize = "10Gi"
 
 func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
 	if len(nexus.Spec.Persistence.VolumeSize) == 0 {
-		nexus.Spec.Persistence.VolumeSize = nexusVolumeSize
+		nexus.Spec.Persistence.VolumeSize = defaultVolumeSize
 	}
 
 	accessMode := corev1.ReadWriteOnce
@@ -37,7 +37,7 @@ func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
 	}
 
 	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: framework.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				accessMode,

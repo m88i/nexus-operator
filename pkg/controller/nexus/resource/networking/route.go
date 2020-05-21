@@ -19,10 +19,10 @@ package networking
 
 import (
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
-	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -39,7 +39,7 @@ type routeBuilder struct {
 
 func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
 	route := &v1.Route{
-		ObjectMeta: framework.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Spec: v1.RouteSpec{
 			To: v1.RouteTargetReference{
 				Kind: serviceKind,

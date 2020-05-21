@@ -51,7 +51,7 @@ var (
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
-				{TargetPort: intstr.IntOrString{IntVal: deployment.NexusServicePort}},
+				{TargetPort: intstr.FromInt(deployment.NexusServicePort)},
 			},
 		},
 	}

@@ -19,7 +19,7 @@ package deployment
 
 import (
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"sort"
 	"strconv"
 	"strings"
@@ -80,14 +80,14 @@ var (
 
 func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 	deployment := &appsv1.Deployment{
-		ObjectMeta: framework.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &nexus.Spec.Replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: framework.GenerateLabels(nexus),
+				MatchLabels: meta.GenerateLabels(nexus),
 			},
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: framework.DefaultObjectMeta(nexus),
+				ObjectMeta: meta.DefaultObjectMeta(nexus),
 				Spec: corev1.PodSpec{
 					SecurityContext: &corev1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}},
 					Containers: []corev1.Container{

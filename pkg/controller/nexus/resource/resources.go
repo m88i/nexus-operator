@@ -78,7 +78,6 @@ func New(client client.Client, discoveryClient discovery.DiscoveryInterface) Nex
 	}
 }
 
-
 // InitManagers initializes the managers responsible for the resources life cycle
 func (r *nexusResourceManager) InitManagers(nexus *v1alpha1.Nexus) error {
 	networkManager, err := networking.NewManager(nexus, r.client, r.discoveryClient)

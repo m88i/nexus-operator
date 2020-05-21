@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -39,7 +39,7 @@ type ingressBuilder struct {
 
 func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 	ingress := &v1beta1.Ingress{
-		ObjectMeta: framework.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Spec: v1beta1.IngressSpec{
 			Rules: []v1beta1.IngressRule{
 				{

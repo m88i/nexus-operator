@@ -44,7 +44,7 @@ func Test_newPVC_defaultValues(t *testing.T) {
 
 	assert.Len(t, pvc.Spec.AccessModes, 1)
 	assert.Equal(t, corev1.ReadWriteOnce, pvc.Spec.AccessModes[0])
-	assert.Equal(t, resource.MustParse(nexusVolumeSize), pvc.Spec.Resources.Requests["storage"])
+	assert.Equal(t, resource.MustParse(defaultVolumeSize), pvc.Spec.Resources.Requests["storage"])
 }
 
 func Test_newPVC_moreThanOneReplica(t *testing.T) {

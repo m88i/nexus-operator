@@ -19,7 +19,7 @@ package deployment
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -31,7 +31,7 @@ const (
 
 func newService(nexus *v1alpha1.Nexus) *corev1.Service {
 	svc := &corev1.Service{
-		ObjectMeta: framework.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
@@ -43,7 +43,7 @@ func newService(nexus *v1alpha1.Nexus) *corev1.Service {
 					},
 				},
 			},
-			Selector:        framework.GenerateLabels(nexus),
+			Selector:        meta.GenerateLabels(nexus),
 			SessionAffinity: corev1.ServiceAffinityNone,
 		},
 	}

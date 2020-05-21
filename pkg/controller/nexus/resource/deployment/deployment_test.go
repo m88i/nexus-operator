@@ -18,7 +18,7 @@
 package deployment
 
 import (
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"strings"
 	"testing"
 
@@ -55,9 +55,9 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 0)
 	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 0)
 
-	assert.Equal(t, appName, deployment.Labels[framework.AppLabel])
-	assert.Equal(t, appName, deployment.Spec.Template.Labels[framework.AppLabel])
-	assert.Equal(t, appName, deployment.Spec.Selector.MatchLabels[framework.AppLabel])
+	assert.Equal(t, appName, deployment.Labels[meta.AppLabel])
+	assert.Equal(t, appName, deployment.Spec.Template.Labels[meta.AppLabel])
+	assert.Equal(t, appName, deployment.Spec.Selector.MatchLabels[meta.AppLabel])
 }
 
 func Test_newDeployment_WithPersistence(t *testing.T) {
