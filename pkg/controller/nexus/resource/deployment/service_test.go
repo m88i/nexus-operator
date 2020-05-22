@@ -15,47 +15,34 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package deployment
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"testing"
 )
 
-func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
-	if len(nexus.Spec.Persistence.VolumeSize) == 0 {
-		nexus.Spec.Persistence.VolumeSize = nexusVolumeSize
-	}
-
-	accessMode := corev1.ReadWriteOnce
-	if nexus.Spec.Replicas > 1 {
-		accessMode = corev1.ReadWriteMany
-	}
-
-	pvc := &corev1.PersistentVolumeClaim{
+func Test_newService(t *testing.T) {
+	appName := "nexus3"
+	nexus := &v1alpha1.Nexus{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
+			Name:      appName,
+			Namespace: t.Name(),
 		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				accessMode,
-			},
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse(nexus.Spec.Persistence.VolumeSize),
-				},
+		Spec: v1alpha1.NexusSpec{
+			Replicas: 1,
+			Persistence: v1alpha1.NexusPersistence{
+				Persistent: false,
 			},
 		},
 	}
+	svc := newService(nexus)
 
-	if len(nexus.Spec.Persistence.StorageClass) > 0 {
-		pvc.Spec.StorageClassName = &nexus.Spec.Persistence.StorageClass
-	}
-
-	applyLabels(nexus, &pvc.ObjectMeta)
-
-	return pvc
+	assert.Len(t, svc.Spec.Ports, 1)
+	assert.Equal(t, int32(NexusServicePort), svc.Spec.Ports[0].Port)
+	assert.Equal(t, appName, svc.Labels[meta.AppLabel])
+	assert.Equal(t, appName, svc.Spec.Selector[meta.AppLabel])
 }

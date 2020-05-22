@@ -15,7 +15,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package persistence
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -44,7 +44,7 @@ func Test_newPVC_defaultValues(t *testing.T) {
 
 	assert.Len(t, pvc.Spec.AccessModes, 1)
 	assert.Equal(t, corev1.ReadWriteOnce, pvc.Spec.AccessModes[0])
-	assert.Equal(t, resource.MustParse(nexusVolumeSize), pvc.Spec.Resources.Requests["storage"])
+	assert.Equal(t, resource.MustParse(defaultVolumeSize), pvc.Spec.Resources.Requests["storage"])
 }
 
 func Test_newPVC_moreThanOneReplica(t *testing.T) {

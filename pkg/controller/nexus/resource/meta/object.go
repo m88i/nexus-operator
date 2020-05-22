@@ -1,4 +1,4 @@
-//     Copyright 2019 Nexus Operator and/or its authors
+//     Copyright 2020 Nexus Operator and/or its authors
 //
 //     This file is part of Nexus Operator.
 //
@@ -15,33 +15,25 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package meta
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Test_newService(t *testing.T) {
-	appName := "nexus3"
-	nexus := &v1alpha1.Nexus{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      appName,
-			Namespace: t.Name(),
-		},
-		Spec: v1alpha1.NexusSpec{
-			Replicas: 1,
-			Persistence: v1alpha1.NexusPersistence{
-				Persistent: false,
-			},
-		},
-	}
-	svc := newService(nexus)
+const AppLabel = "app"
 
-	assert.Len(t, svc.Spec.Ports, 1)
-	assert.Equal(t, int32(nexusServicePort), svc.Spec.Ports[0].Port)
-	assert.Equal(t, appName, svc.Labels[appLabel])
-	assert.Equal(t, appName, svc.Spec.Selector[appLabel])
+func DefaultObjectMeta(nexus *v1alpha1.Nexus) v1.ObjectMeta {
+	return v1.ObjectMeta{
+		Namespace: nexus.Namespace,
+		Name:      nexus.Name,
+		Labels:    GenerateLabels(nexus),
+	}
+}
+
+func GenerateLabels(nexus *v1alpha1.Nexus) map[string]string {
+	nexusAppLabels := map[string]string{}
+	nexusAppLabels[AppLabel] = nexus.Name
+	return nexusAppLabels
 }

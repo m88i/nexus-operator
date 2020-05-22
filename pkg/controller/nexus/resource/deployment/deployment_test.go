@@ -15,9 +15,10 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package deployment
 
 import (
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"strings"
 	"testing"
 
@@ -42,21 +43,21 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 			},
 		},
 	}
-	deployment := newDeployment(nexus, nil)
+	deployment := newDeployment(nexus)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, nexusCommunityLatestImage, deployment.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, int32(1), *deployment.Spec.Replicas)
 
-	assert.Equal(t, int32(nexusServicePort), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.HTTPGet.Port.IntVal)
-	assert.Equal(t, int32(nexusServicePort), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.HTTPGet.Port.IntVal)
+	assert.Equal(t, int32(NexusServicePort), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.HTTPGet.Port.IntVal)
+	assert.Equal(t, int32(NexusServicePort), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.HTTPGet.Port.IntVal)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 0)
 	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 0)
 
-	assert.Equal(t, appName, deployment.Labels[appLabel])
-	assert.Equal(t, appName, deployment.Spec.Template.Labels[appLabel])
-	assert.Equal(t, appName, deployment.Spec.Selector.MatchLabels[appLabel])
+	assert.Equal(t, appName, deployment.Labels[meta.AppLabel])
+	assert.Equal(t, appName, deployment.Spec.Template.Labels[meta.AppLabel])
+	assert.Equal(t, appName, deployment.Spec.Selector.MatchLabels[meta.AppLabel])
 }
 
 func Test_newDeployment_WithPersistence(t *testing.T) {
@@ -73,8 +74,7 @@ func Test_newDeployment_WithPersistence(t *testing.T) {
 			},
 		},
 	}
-	pvc := newPVC(nexus)
-	deployment := newDeployment(nexus, pvc)
+	deployment := newDeployment(nexus)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
 	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
@@ -152,13 +152,12 @@ func Test_customProbes(t *testing.T) {
 			},
 		},
 	}
-	pvc := newPVC(nexus)
-	deployment := newDeployment(nexus, pvc)
+	deployment := newDeployment(nexus)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, int32(1), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold)
 	assert.Equal(t, int32(0), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.InitialDelaySeconds)
-	assert.Equal(t, int32(probeInitialDelaySeconds), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds)
+	assert.Equal(t, probeInitialDelaySeconds, deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds)
 }
 
 func Test_applyJVMArgs_withRandomPassword(t *testing.T) {
@@ -176,8 +175,7 @@ func Test_applyJVMArgs_withRandomPassword(t *testing.T) {
 			GenerateRandomAdminPassword: true,
 		},
 	}
-	pvc := newPVC(nexus)
-	deployment := newDeployment(nexus, pvc)
+	deployment := newDeployment(nexus)
 
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgRandomPassword, "true"}, "="))
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXms, heapSizeDefault}, ""))
@@ -198,8 +196,7 @@ func Test_applyJVMArgs_withDefaultValues(t *testing.T) {
 			},
 		},
 	}
-	pvc := newPVC(nexus)
-	deployment := newDeployment(nexus, pvc)
+	deployment := newDeployment(nexus)
 
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgRandomPassword, "false"}, "="))
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXms, heapSizeDefault}, ""))

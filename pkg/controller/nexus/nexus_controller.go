@@ -154,18 +154,27 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return
 	}
 
+	// Initialize the resource managers
+	err = r.resourceManager.InitManagers(instance)
+	if err != nil {
+		return
+	}
 	// Create the objects as desired by the Nexus instance
-	requestedRes, err := r.resourceManager.CreateRequiredResources(instance)
+	requestedRes, err := r.resourceManager.GetRequiredResources()
 	if err != nil {
 		return
 	}
 	// Get the actual deployed objects
-	deployedRes, err := r.resourceManager.GetDeployedResources(instance)
+
+	deployedRes, err := r.resourceManager.GetDeployedResources()
 	if err != nil {
 		return
 	}
-
-	comparator := resource.GetComparator()
+	// Get the resource comparator
+	comparator, err := r.resourceManager.GetComparator()
+	if err != nil {
+		return
+	}
 	deltas := comparator.Compare(deployedRes, requestedRes)
 
 	writer := write.New(r.client).WithOwnerController(instance, r.scheme)

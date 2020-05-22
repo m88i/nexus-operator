@@ -15,10 +15,12 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package networking
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -44,22 +46,26 @@ var (
 	}
 
 	routeService = &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "nexus3",
+			Namespace: "nexus",
+		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
-				{TargetPort: intstr.IntOrString{IntVal: nexusServicePort}},
+				{TargetPort: intstr.FromInt(deployment.NexusServicePort)},
 			},
 		},
 	}
 )
 
 func TestNewRoute(t *testing.T) {
-	route, err := (&routeBuilder{}).newRoute(routeNexus, routeService).build()
+	route, err := newRouteBuilder(routeNexus).build()
 	assert.Nil(t, err)
 	assertRouteBasic(t, route)
 }
 
 func TestNewRouteWithRedirection(t *testing.T) {
-	route, err := (&routeBuilder{}).newRoute(routeNexus, routeService).withRedirect().build()
+	route, err := newRouteBuilder(routeNexus).withRedirect().build()
 	assert.Nil(t, err)
 	assertRouteBasic(t, route)
 	assertRouteRedirection(t, route)
@@ -68,11 +74,13 @@ func TestNewRouteWithRedirection(t *testing.T) {
 func assertRouteBasic(t *testing.T, route *v1.Route) {
 	assert.Equal(t, routeNexus.Name, route.Name)
 	assert.Equal(t, routeNexus.Namespace, route.Namespace)
+	assert.Len(t, route.Labels, 1)
+	assert.Equal(t, ingressNexus.Name, route.Labels[meta.AppLabel])
 
 	assert.NotNil(t, route.Spec)
 
 	assert.NotNil(t, route.Spec.To)
-	assert.Equal(t, kindService, route.Spec.To.Kind)
+	assert.Equal(t, serviceKind, route.Spec.To.Kind)
 	assert.Equal(t, routeService.Name, route.Spec.To.Name)
 
 	assert.NotNil(t, route.Spec.Port)

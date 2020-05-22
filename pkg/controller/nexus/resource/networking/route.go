@@ -15,20 +15,21 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package resource
+package networking
 
 import (
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	v1 "github.com/openshift/api/route/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/openshift/api/route/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
-	kindService  = "Service"
-	routeNotInit = "route not initialized"
+	serviceKind  = "Service"
+	routeNotInit = "route builder not initialized"
 )
 
 type routeBuilder struct {
@@ -36,27 +37,20 @@ type routeBuilder struct {
 	err   error
 }
 
-func (r *routeBuilder) newRoute(nexus *v1alpha1.Nexus, service *corev1.Service) *routeBuilder {
+func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
 	route := &v1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      nexus.Name,
-			Namespace: nexus.Namespace,
-		},
+		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Spec: v1.RouteSpec{
 			To: v1.RouteTargetReference{
-				Kind: kindService,
-				Name: service.Name,
+				Kind: serviceKind,
+				Name: nexus.Name,
 			},
 			Port: &v1.RoutePort{
-				TargetPort: service.Spec.Ports[0].TargetPort,
+				TargetPort: intstr.FromInt(deployment.NexusServicePort),
 			},
 		},
 	}
-
-	applyLabels(nexus, &route.ObjectMeta)
-	r.route = route
-
-	return r
+	return &routeBuilder{route: route}
 }
 
 func (r *routeBuilder) withRedirect() *routeBuilder {
