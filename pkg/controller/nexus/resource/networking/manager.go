@@ -43,8 +43,8 @@ const (
 
 var log = logger.GetLogger("networking_manager")
 
-// Manager is responsible for creating networking resources, fetching deployed ones and comparing them
-type Manager struct {
+// manager is responsible for creating networking resources, fetching deployed ones and comparing them
+type manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
 
@@ -52,7 +52,7 @@ type Manager struct {
 }
 
 // NewManager creates a networking resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*Manager, error) {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*manager, error) {
 	routeAvailable, err := openshift.IsRouteAvailable(disc)
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
@@ -63,7 +63,7 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.Disc
 		return nil, fmt.Errorf(discFailureFormat, "rngresses", err)
 	}
 
-	return &Manager{
+	return &manager{
 		nexus:            nexus,
 		client:           client,
 		routeAvailable:   routeAvailable,
@@ -72,7 +72,7 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.Disc
 }
 
 // GetRequiredResources returns the resources initialized by the manager
-func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	if m.nexus.Spec.Networking.Expose {
 		switch m.nexus.Spec.Networking.ExposeAs {
@@ -106,7 +106,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *Manager) createRoute() (*routev1.Route, error) {
+func (m *manager) createRoute() (*routev1.Route, error) {
 	builder := newRouteBuilder(m.nexus)
 	if m.nexus.Spec.Networking.TLS.Mandatory {
 		builder = builder.withRedirect()
@@ -114,7 +114,7 @@ func (m *Manager) createRoute() (*routev1.Route, error) {
 	return builder.build()
 }
 
-func (m *Manager) createIngress() (*networkingv1beta1.Ingress, error) {
+func (m *manager) createIngress() (*networkingv1beta1.Ingress, error) {
 	builder := newIngressBuilder(m.nexus)
 	if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
 		builder = builder.withCustomTLS()
@@ -123,7 +123,7 @@ func (m *Manager) createIngress() (*networkingv1beta1.Ingress, error) {
 }
 
 // GetDeployedResources returns the networking resources deployed on the cluster
-func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
@@ -148,7 +148,7 @@ func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *Manager) getDeployedRoute() (*routev1.Route, error) {
+func (m *manager) getDeployedRoute() (*routev1.Route, error) {
 	route := &routev1.Route{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	err := m.client.Get(ctx.TODO(), key, route)
@@ -161,7 +161,7 @@ func (m *Manager) getDeployedRoute() (*routev1.Route, error) {
 	return route, nil
 }
 
-func (m *Manager) getDeployedIngress() (*networkingv1beta1.Ingress, error) {
+func (m *manager) getDeployedIngress() (*networkingv1beta1.Ingress, error) {
 	ingress := &networkingv1beta1.Ingress{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	err := m.client.Get(ctx.TODO(), key, ingress)
@@ -176,7 +176,7 @@ func (m *Manager) getDeployedIngress() (*networkingv1beta1.Ingress, error) {
 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.
 // Returns nil if there is none
-func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	if t == reflect.TypeOf(networkingv1beta1.Ingress{}) {
 		return ingressEqual
 	}
@@ -185,7 +185,7 @@ func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.Kub
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
-func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	ingressType := reflect.TypeOf(networkingv1beta1.Ingress{})
 	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
 		ingressType: ingressEqual,

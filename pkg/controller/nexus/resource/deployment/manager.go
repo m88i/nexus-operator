@@ -35,22 +35,22 @@ const mgrNotInit = "the manager has not been initialized"
 
 var log = logger.GetLogger("deployment_manager")
 
-// Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
-type Manager struct {
+// manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
+type manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
 }
 
 // NewManager creates a deployment resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
-	return &Manager{
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) *manager {
+	return &manager{
 		nexus:  nexus,
 		client: client,
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the manager
-func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	log.Debugf("Creating Deployment (%s)", m.nexus.Name)
 	deployment := newDeployment(m.nexus)
 	log.Debugf("Creating Service (%s)", m.nexus.Name)
@@ -59,7 +59,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 }
 
 // GetDeployedResources returns the deployment-related resources deployed on the cluster
-func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
@@ -80,7 +80,7 @@ func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *Manager) getDeployedDeployment() (resource.KubernetesResource, error) {
+func (m *manager) getDeployedDeployment() (resource.KubernetesResource, error) {
 	dep := &appsv1.Deployment{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Deployment (%s)", m.nexus.Name)
@@ -94,7 +94,7 @@ func (m *Manager) getDeployedDeployment() (resource.KubernetesResource, error) {
 	return dep, nil
 }
 
-func (m *Manager) getDeployedService() (resource.KubernetesResource, error) {
+func (m *manager) getDeployedService() (resource.KubernetesResource, error) {
 	svc := &corev1.Service{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Service (%s)", m.nexus.Name)
@@ -110,14 +110,14 @@ func (m *Manager) getDeployedService() (resource.KubernetesResource, error) {
 
 // GetCustomComparator returns the custom comp function used to compare a deployment-related resource
 // Returns nil if there is none
-func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Deployments and Services have default comparators we just return nil here
 	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
-func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Deployments and Services have default comparators we just return nil here
 	return nil
 }

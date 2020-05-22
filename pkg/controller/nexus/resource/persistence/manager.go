@@ -34,22 +34,22 @@ const mgrNotInit = "the manager has not been initialized"
 
 var log = logger.GetLogger("persistence_manager")
 
-// Manager is responsible for creating persistence resources, fetching deployed ones and comparing them
-type Manager struct {
+// manager is responsible for creating persistence resources, fetching deployed ones and comparing them
+type manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
 }
 
 // NewManager creates a persistence resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
-	return &Manager{
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) *manager {
+	return &manager{
 		nexus:  nexus,
 		client: client,
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the manager
-func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	if m.nexus.Spec.Persistence.Persistent {
 		log.Debugf("Creating Persistent Volume Claim (%s)", m.nexus.Name)
@@ -60,7 +60,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 }
 
 // GetDeployedResources returns the persistence resources deployed on the cluster
-func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
@@ -75,7 +75,7 @@ func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *Manager) getDeployedPVC() (resource.KubernetesResource, error) {
+func (m *manager) getDeployedPVC() (resource.KubernetesResource, error) {
 	pvc := &corev1.PersistentVolumeClaim{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Persistent Volume Claim (%s)", m.nexus.Name)
@@ -91,14 +91,14 @@ func (m *Manager) getDeployedPVC() (resource.KubernetesResource, error) {
 
 // GetCustomComparator returns the custom comp function used to compare a persistence resource.
 // Returns nil if there is none
-func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As PVCs have a default comparator we just return nil here
 	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
-func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As PVCs have a default comparator we just return nil here
 	return nil
 }

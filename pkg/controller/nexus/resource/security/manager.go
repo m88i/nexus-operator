@@ -34,29 +34,29 @@ const mgrNotInit = "the manager has not been initialized"
 
 var log = logger.GetLogger("security_manager")
 
-// Manager is responsible for creating security resources, fetching deployed ones and comparing them
-type Manager struct {
+// manager is responsible for creating security resources, fetching deployed ones and comparing them
+type manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
 }
 
 // NewManager creates a security resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
-	return &Manager{
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) *manager {
+	return &manager{
 		nexus:  nexus,
 		client: client,
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the manager
-func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	log.Debugf("Creating Service Account (%s)", m.nexus.Name)
 	svcAccnt := defaultServiceAccount(m.nexus)
 	return []resource.KubernetesResource{svcAccnt}, nil
 }
 
 // GetDeployedResources returns the security resources deployed on the cluster
-func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
+func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
@@ -71,7 +71,7 @@ func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *Manager) getDeployedSvcAccnt() (resource.KubernetesResource, error) {
+func (m *manager) getDeployedSvcAccnt() (resource.KubernetesResource, error) {
 	account := &core.ServiceAccount{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Service Account (%s)", m.nexus.Name)
@@ -87,14 +87,14 @@ func (m *Manager) getDeployedSvcAccnt() (resource.KubernetesResource, error) {
 
 // GetCustomComparator returns the custom comp function used to compare a security resource.
 // Returns nil if there is none
-func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Service Accounts have a default comparator we just return nil here
 	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
-func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Service Accounts have a default comparator we just return nil here
 	return nil
 }
