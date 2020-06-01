@@ -89,7 +89,6 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: meta.DefaultObjectMeta(nexus),
 				Spec: corev1.PodSpec{
-					SecurityContext: &corev1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}},
 					Containers: []corev1.Container{
 						{
 							Name: nexusContainerName,
@@ -117,6 +116,7 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 	addProbes(nexus, deployment)
 	applyJVMArgs(nexus, deployment)
 	addServiceAccount(nexus, deployment)
+	applySecurityContext(nexus, deployment)
 
 	return deployment
 }
@@ -260,4 +260,12 @@ func addServiceAccount(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	} else {
 		deployment.Spec.Template.Spec.ServiceAccountName = nexus.Name
 	}
+}
+
+func applySecurityContext(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+	var podSecContext *corev1.PodSecurityContext
+	if !nexus.Spec.UseRedHatImage {
+		podSecContext = &corev1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}}
+	}
+	deployment.Spec.Template.Spec.SecurityContext = podSecContext
 }
