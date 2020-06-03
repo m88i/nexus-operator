@@ -56,11 +56,11 @@ If you're running on Kubernetes, edit the Nexus resource to add a [valid host fo
 
 ### Openshift
 
-If you're running the Operator on Openshift (3.11 or 4.x+) it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
+If you're running the Operator on Openshift (3.11 or 4.x+) and you're not using [Red Hat certified images](#red-hat-certified-images) it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
 
-This is necessary because the Nexus image requires its container to be ran as UID 200. The use of default SCC resources in Openshift results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41).
+This is necessary because the Nexus image requires its container to be ran as UID 200. The use of the `restricted` default SCC in Openshift results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41) and [Issue #51](https://github.com/m88i/nexus-operator/issues/51) (see this issue for more details on why can't the Operator handle this for you as things are now).
 
-Valid SCC resources can be found at the `examples/` directory. You must associate the SCC with the `ServiceAccount` in use. In the commands below it is assumed you'll be using the default `ServiceAccount` created when deploying a new Nexus CR.
+Valid SCC resources can be found at the `examples/` directory. You must associate the SCC with the `ServiceAccount` in use and change the SCC's `metadata.name` field (search for "<Change Me!>" in the file).
 
 For persistent configurations:
 
@@ -85,8 +85,6 @@ $ oc adm policy add-scc-to-user <SCCName> -z <ServiceAccountName>
 This command will bind the SCC we just created with the `ServiceAccount` being used to create the Pods.
 
 If you're [using a custom ServiceAccount](#service-account), replace "`<ServiceAccountName>`" with the name of that account. If you're not using a custom `ServiceAccount`, the operator has created a default one which has the same name as your Nexus CR, replace "`<ServiceAccountName>`" with that.
-
-[In future versions](https://github.com/m88i/nexus-operator/issues/51) the Operator will handle this for you.
 
 ### Clean up
 
