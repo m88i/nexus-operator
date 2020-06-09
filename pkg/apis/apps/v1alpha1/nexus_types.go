@@ -30,14 +30,14 @@ type NexusSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// Number of pods replicas desired
+	// Number of pod replicas desired. Defaults to 0.
 	// +kubebuilder:validation:Maximum=100
 	// +kubebuilder:validation:Minimum=0
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Replicas"
 	Replicas int32 `json:"replicas"`
 
-	// Full image tag name for this specific deployment
+	// Full image tag name for this specific deployment. Will be ignored if `spec.useRedHatImage` is set to `true`.
 	// Default: docker.io/sonatype/nexus3:latest
 	// +optional
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -57,16 +57,16 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Persistence"
 	Persistence NexusPersistence `json:"persistence"`
 
-	// If you have access to Red Hat Container Catalog, turn this to true to use the certified image provided by Sonatype
-	// Default: false
+	// If you have access to Red Hat Container Catalog, set this to `true` to use the certified image provided by Sonatype
+	// Defaults to `false`
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Use Red Hat Image"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
 	UseRedHatImage bool `json:"useRedHatImage"`
 
 	// GenerateRandomAdminPassword enables the random password generation.
-	// Defaults to 'false': the default password for a newly created instance is 'admin123', which should be changed in the first login.
-	// If set to 'true', you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.
+	// Defaults to `false`: the default password for a newly created instance is 'admin123', which should be changed in the first login.
+	// If set to `true`, you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Generate Random Admin Password"
 	// +optional
@@ -77,7 +77,7 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Networking"
 	Networking NexusNetworking `json:"networking,omitempty"`
 
-	// ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.
+	// ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR (`metadata.name`).
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Service Account"
 	// +optional
@@ -120,9 +120,10 @@ const (
 
 // NexusNetworking is the base structure for Nexus networking information
 type NexusNetworking struct {
-	// Set to `true` to expose the Nexus application. Default to false.
+	// Set to `true` to expose the Nexus application. Defaults to `false`.
 	Expose bool `json:"expose,omitempty"`
-	// Type of networking exposure: NodePort, Route or Ingress. Default to Route on OpenShift and Ingress on Kubernetes.
+	// Type of networking exposure: NodePort, Route or Ingress. Defaults to Route on OpenShift and Ingress on Kubernetes.
+	// Routes are only available on Openshift and Ingresses are only available on Kubernetes.
 	// +kubebuilder:validation:Enum=NodePort;Route;Ingress
 	ExposeAs NexusNetworkingExposeType `json:"exposeAs,omitempty"`
 	// Host where the Nexus service is exposed. This attribute is required if the service is exposed via Ingress.
@@ -139,15 +140,17 @@ type NexusNetworking struct {
 // +k8s:openapi-gen=true
 type NexusProbe struct {
 	// Number of seconds after the container has started before probes are initiated.
+	// Defaults to 240 seconds. Minimum value is 0.
 	// +optional
+	// +kubebuilder:validation:Minimum=0
 	InitialDelaySeconds int32 `json:"initialDelaySeconds,omitempty" protobuf:"varint,2,opt,name=initialDelaySeconds"`
 	// Number of seconds after which the probe times out.
-	// Defaults to 1 second. Minimum value is 1.
+	// Defaults to 15 seconds. Minimum value is 1.
 	// +optional
 	// +kubebuilder:validation:Minimum=1
 	TimeoutSeconds int32 `json:"timeoutSeconds,omitempty" protobuf:"varint,3,opt,name=timeoutSeconds"`
 	// How often (in seconds) to perform the probe.
-	// Default to 10 seconds. Minimum value is 1.
+	// Defaults to 10 seconds. Minimum value is 1.
 	// +optional
 	// +kubebuilder:validation:Minimum=1
 	PeriodSeconds int32 `json:"periodSeconds,omitempty" protobuf:"varint,4,opt,name=periodSeconds"`
@@ -165,7 +168,7 @@ type NexusProbe struct {
 
 // NexusNetworkingTLS defines TLS/SSL-related configuration
 type NexusNetworkingTLS struct {
-	// When exposing via Route, set to `true` to only allow encrypted traffic using TLS (disables HTTP in favor of HTTPS). Defaults to false.
+	// When exposing via Route, set to `true` to only allow encrypted traffic using TLS (disables HTTP in favor of HTTPS). Defaults to `false`.
 	// +optional
 	Mandatory bool `json:"mandatory,omitempty"`
 	// When exposing via Ingress, inform the name of the TLS secret containing certificate and private key for TLS encryption. It must be present in the same namespace as the Operator.

@@ -37,6 +37,7 @@ func Test_newPVC_defaultValues(t *testing.T) {
 			Replicas: 1,
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
+				VolumeSize: defaultVolumeSize,
 			},
 		},
 	}

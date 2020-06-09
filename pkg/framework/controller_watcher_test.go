@@ -18,64 +18,79 @@
 package framework
 
 import (
+	routev1 "github.com/openshift/api/route/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"testing"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/test"
-	obuildv1 "github.com/openshift/api/build/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func Test_controllerWatcher_WatchWithOCPObjectsOnKubernetes(t *testing.T) {
-	cli := test.NewFakeDiscoveryClient(false)
-	controller := test.NewController()
-	manager := test.NewManager()
-	requiredObjects := []WatchedObjects{
-		{
-			GroupVersion: obuildv1.GroupVersion,
-			AddToScheme:  obuildv1.Install,
-			Objects:      []runtime.Object{&obuildv1.BuildConfig{}},
-		},
-		{
-			Objects: []runtime.Object{&corev1.Service{}, &corev1.ConfigMap{}},
-		},
-	}
-
-	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
-	assert.NotNil(t, watcher)
-
-	err := watcher.Watch(requiredObjects...)
-	assert.NoError(t, err)
-	// we are not on OpenShift
-	assert.False(t, watcher.AreAllObjectsWatched())
-	// we should only have the objects from Kubernetes core
-	assert.Len(t, controller.GetWatchedSources(), 2)
+var requiredObjects = []WatchedObjects{
+	{
+		GroupVersion: routev1.GroupVersion,
+		AddToScheme:  routev1.Install,
+		Objects:      []runtime.Object{&routev1.Route{}},
+	},
+	{
+		GroupVersion: networkingv1beta1.SchemeGroupVersion,
+		AddToScheme:  networkingv1beta1.AddToScheme,
+		Objects:      []runtime.Object{&networkingv1beta1.Ingress{}},
+	},
+	{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}, &corev1.ServiceAccount{}}},
 }
 
-func Test_controllerWatcher_WatchWithOCPObjectsOnOpenShift(t *testing.T) {
-	cli := test.NewFakeDiscoveryClient(true)
+// K8s < 3.14
+func Test_controllerWatcher_WatchWithoutIngressOnKubernetes(t *testing.T) {
+	cli := test.NewFakeDiscoveryClient().Build()
 	controller := test.NewController()
 	manager := test.NewManager()
-	requiredObjects := []WatchedObjects{
-		{
-			GroupVersion: obuildv1.GroupVersion,
-			AddToScheme:  obuildv1.Install,
-			Objects:      []runtime.Object{&obuildv1.BuildConfig{}},
-		},
-		{
-			Objects: []runtime.Object{&corev1.Service{}, &corev1.ConfigMap{}},
-		},
-	}
 
 	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
 	assert.NotNil(t, watcher)
 
 	err := watcher.Watch(requiredObjects...)
 	assert.NoError(t, err)
-	// we are on OpenShift
-	assert.True(t, watcher.AreAllObjectsWatched())
+	// We're not watching Routes and Ingresses
+	assert.False(t, watcher.AreAllObjectsWatched())
 	// we should only have the objects from Kubernetes core
-	assert.Len(t, controller.GetWatchedSources(), 3)
+	assert.Len(t, controller.GetWatchedSources(), 4)
+}
+
+// K8s > 3.14
+func Test_controllerWatcher_WatchWithIngressOnKubernetes(t *testing.T) {
+	cli := test.NewFakeDiscoveryClient().WithIngress().Build()
+	controller := test.NewController()
+	manager := test.NewManager()
+
+	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
+	assert.NotNil(t, watcher)
+
+	err := watcher.Watch(requiredObjects...)
+	assert.NoError(t, err)
+	// We're not watching Routes
+	assert.False(t, watcher.AreAllObjectsWatched())
+	// we should only have the objects from Kubernetes core and Ingress (networking/v1beta1)
+	assert.Len(t, controller.GetWatchedSources(), 5)
+}
+
+// OCP
+func Test_controllerWatcher_WatchWithRouteOnOpenShift(t *testing.T) {
+	cli := test.NewFakeDiscoveryClient().OnOpenshift().Build()
+	controller := test.NewController()
+	manager := test.NewManager()
+
+	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
+	assert.NotNil(t, watcher)
+
+	err := watcher.Watch(requiredObjects...)
+	assert.NoError(t, err)
+	// We're not watching Ingresses
+	assert.False(t, watcher.AreAllObjectsWatched())
+	// we should only have the objects from Kubernetes core and Route (route/v1)
+	assert.Len(t, controller.GetWatchedSources(), 5)
 }

@@ -31,14 +31,14 @@ spec:
           properties:
             generateRandomAdminPassword:
               description: 'GenerateRandomAdminPassword enables the random password
-                generation. Defaults to ''false'': the default password for a newly
+                generation. Defaults to `false`: the default password for a newly
                 created instance is ''admin123'', which should be changed in the first
-                login. If set to ''true'', you must use the automatically generated
+                login. If set to `true`, you must use the automatically generated
                 ''admin'' password, stored in the container''s file system at `/nexus-data/admin.password`.'
               type: boolean
             image:
-              description: 'Full image tag name for this specific deployment Default:
-                docker.io/sonatype/nexus3:latest'
+              description: 'Full image tag name for this specific deployment. Will
+                be ignored if `spec.useRedHatImage` is set to `true`. Default: docker.io/sonatype/nexus3:latest'
               type: string
             livenessProbe:
               description: LivenessProbe describes how the Nexus container liveness
@@ -53,11 +53,13 @@ spec:
                   type: integer
                 initialDelaySeconds:
                   description: Number of seconds after the container has started before
-                    probes are initiated.
+                    probes are initiated. Defaults to 240 seconds. Minimum value is
+                    0.
                   format: int32
+                  minimum: 0
                   type: integer
                 periodSeconds:
-                  description: How often (in seconds) to perform the probe. Default
+                  description: How often (in seconds) to perform the probe. Defaults
                     to 10 seconds. Minimum value is 1.
                   format: int32
                   minimum: 1
@@ -71,7 +73,7 @@ spec:
                   type: integer
                 timeoutSeconds:
                   description: Number of seconds after which the probe times out.
-                    Defaults to 1 second. Minimum value is 1.
+                    Defaults to 15 seconds. Minimum value is 1.
                   format: int32
                   minimum: 1
                   type: integer
@@ -80,12 +82,14 @@ spec:
               description: Networking definition
               properties:
                 expose:
-                  description: Set to `true` to expose the Nexus application. Default
-                    to false.
+                  description: Set to `true` to expose the Nexus application. Defaults
+                    to `false`.
                   type: boolean
                 exposeAs:
                   description: 'Type of networking exposure: NodePort, Route or Ingress.
-                    Default to Route on OpenShift and Ingress on Kubernetes.'
+                    Defaults to Route on OpenShift and Ingress on Kubernetes. Routes
+                    are only available on Openshift and Ingresses are only available
+                    on Kubernetes.'
                   enum:
                   - NodePort
                   - Route
@@ -106,7 +110,7 @@ spec:
                     mandatory:
                       description: When exposing via Route, set to `true` to only
                         allow encrypted traffic using TLS (disables HTTP in favor
-                        of HTTPS). Defaults to false.
+                        of HTTPS). Defaults to `false`.
                       type: boolean
                     secretName:
                       description: When exposing via Ingress, inform the name of the
@@ -145,11 +149,13 @@ spec:
                   type: integer
                 initialDelaySeconds:
                   description: Number of seconds after the container has started before
-                    probes are initiated.
+                    probes are initiated. Defaults to 240 seconds. Minimum value is
+                    0.
                   format: int32
+                  minimum: 0
                   type: integer
                 periodSeconds:
-                  description: How often (in seconds) to perform the probe. Default
+                  description: How often (in seconds) to perform the probe. Defaults
                     to 10 seconds. Minimum value is 1.
                   format: int32
                   minimum: 1
@@ -163,13 +169,13 @@ spec:
                   type: integer
                 timeoutSeconds:
                   description: Number of seconds after which the probe times out.
-                    Defaults to 1 second. Minimum value is 1.
+                    Defaults to 15 seconds. Minimum value is 1.
                   format: int32
                   minimum: 1
                   type: integer
               type: object
             replicas:
-              description: Number of pods replicas desired
+              description: Number of pod replicas desired. Defaults to 0.
               format: int32
               maximum: 100
               minimum: 0
@@ -203,12 +209,12 @@ spec:
             serviceAccountName:
               description: ServiceAccountName is the name of the ServiceAccount used
                 to run the Pods. If left blank, a default ServiceAccount is created
-                with the same name as the Nexus CR.
+                with the same name as the Nexus CR (`metadata.name`).
               type: string
             useRedHatImage:
-              description: 'If you have access to Red Hat Container Catalog, turn
-                this to true to use the certified image provided by Sonatype Default:
-                false'
+              description: If you have access to Red Hat Container Catalog, set this
+                to `true` to use the certified image provided by Sonatype Defaults
+                to `false`
               type: boolean
           required:
           - persistence

@@ -145,16 +145,6 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	// In case of any errors from here, we should update the application status
 	defer r.updateNexusStatus(instance, cache, &err)
 
-	// default networking parameters
-	if err = r.setDefaultNetworking(instance); err != nil {
-		return
-	}
-
-	// check if TLS config is sane
-	if err = r.validateTLS(instance); err != nil {
-		return
-	}
-
 	// Initialize the resource managers
 	err = r.resourceSupervisor.InitManagers(instance)
 	if err != nil {
@@ -166,7 +156,6 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return
 	}
 	// Get the actual deployed objects
-
 	deployedRes, err := r.resourceSupervisor.GetDeployedResources()
 	if err != nil {
 		return
@@ -203,65 +192,6 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	}
 
 	return
-}
-
-// setDefaultNetworking verify given CR parameters for networking and set defaults
-func (r *ReconcileNexus) setDefaultNetworking(nexus *appsv1alpha1.Nexus) (err error) {
-	if !nexus.Spec.Networking.Expose {
-		return nil
-	}
-
-	ocp := false
-	if ocp, err = openshift.IsOpenShift(r.discoveryClient); err != nil {
-		return err
-	}
-
-	if ocp {
-		if nexus.Spec.Networking.ExposeAs == appsv1alpha1.IngressExposeType {
-			return fmt.Errorf("Ingress is only available on Kubernetes. Try '%s' as the expose type ", appsv1alpha1.RouteExposeType)
-		}
-		if len(nexus.Spec.Networking.ExposeAs) == 0 {
-			nexus.Spec.Networking.ExposeAs = appsv1alpha1.RouteExposeType
-		}
-	} else {
-		if nexus.Spec.Networking.ExposeAs == appsv1alpha1.RouteExposeType {
-			return fmt.Errorf("Routes is only available on OpenShift. Try '%s' as the expose type ", appsv1alpha1.IngressExposeType)
-		}
-		if len(nexus.Spec.Networking.ExposeAs) == 0 {
-			nexus.Spec.Networking.ExposeAs = appsv1alpha1.IngressExposeType
-		}
-	}
-
-	if nexus.Spec.Networking.ExposeAs == appsv1alpha1.NodePortExposeType && nexus.Spec.Networking.NodePort == 0 {
-		return fmt.Errorf("NodePort networking requires a port. Check Nexus resource 'spec.networking.nodePort' parameter ")
-	}
-
-	if nexus.Spec.Networking.ExposeAs == appsv1alpha1.IngressExposeType && len(nexus.Spec.Networking.Host) == 0 {
-		return fmt.Errorf("Ingress networking requires a host. Check Nexus resource 'spec.networking.host' parameter ")
-	}
-
-	return nil
-}
-
-// validateTLS ensures TLS configuration is valid
-func (r *ReconcileNexus) validateTLS(nexus *appsv1alpha1.Nexus) error {
-	if nexus.Spec.Networking.TLS.Mandatory || len(nexus.Spec.Networking.TLS.SecretName) > 0 {
-		if !nexus.Spec.Networking.Expose || nexus.Spec.Networking.ExposeAs == appsv1alpha1.NodePortExposeType {
-			return fmt.Errorf("TLS encryption is only available when using a Route or Ingress")
-		}
-
-		ocp, err := openshift.IsOpenShift(r.discoveryClient)
-		if err != nil {
-			return err
-		}
-
-		if ocp && len(nexus.Spec.Networking.TLS.SecretName) > 0 {
-			return fmt.Errorf("spec.networking.tls.secretName is only available when using an Ingress")
-		} else if !ocp && nexus.Spec.Networking.TLS.Mandatory {
-			return fmt.Errorf("spec.networking.tls.mandatory is only available when using a Route")
-		}
-	}
-	return nil
 }
 
 func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, cache *appsv1alpha1.Nexus, err *error) {

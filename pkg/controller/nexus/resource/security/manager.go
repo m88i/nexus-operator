@@ -42,9 +42,9 @@ type manager struct {
 }
 
 // NewManager creates a security resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client) infra.Manager {
+func NewManager(nexus v1alpha1.Nexus, client client.Client) infra.Manager {
 	return &manager{
-		nexus:  nexus,
+		nexus:  &nexus,
 		client: client,
 	}
 }
