@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"github.com/m88i/nexus-operator/pkg/test"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
@@ -126,7 +127,7 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 func newFakeReconcileNexus(cl client.Client, ocp bool) ReconcileNexus {
 	r := ReconcileNexus{client: cl, scheme: test.GetSchema()}
 	r.discoveryClient = newFakeDiscovery(ocp)
-	r.resourceManager = nexusres.New(r.client, r.discoveryClient)
+	r.resourceSupervisor = nexusres.NewSupervisor(r.client, r.discoveryClient)
 	return r
 }
 
@@ -145,10 +146,10 @@ func newFakeDiscovery(ocp bool) discovery.DiscoveryInterface {
 
 func TestReconcileNexus_setDefaultNetworking(t *testing.T) {
 	type fields struct {
-		client          client.Client
-		scheme          *runtime.Scheme
-		discoveryClient discovery.DiscoveryInterface
-		resourceManager nexusres.NexusResourceManager
+		client             client.Client
+		scheme             *runtime.Scheme
+		discoveryClient    discovery.DiscoveryInterface
+		resourceSupervisor infra.Supervisor
 	}
 	type args struct {
 		nexus *v1alpha1.Nexus
@@ -158,16 +159,16 @@ func TestReconcileNexus_setDefaultNetworking(t *testing.T) {
 	reconcileOcp := newFakeReconcileNexus(cli, true)
 	reconcileK8s := newFakeReconcileNexus(cli, false)
 	fieldOCP := fields{
-		client:          cli,
-		scheme:          test.GetSchema(),
-		discoveryClient: reconcileOcp.discoveryClient,
-		resourceManager: reconcileOcp.resourceManager,
+		client:             cli,
+		scheme:             test.GetSchema(),
+		discoveryClient:    reconcileOcp.discoveryClient,
+		resourceSupervisor: reconcileOcp.resourceSupervisor,
 	}
 	fieldK8s := fields{
-		client:          cli,
-		scheme:          test.GetSchema(),
-		discoveryClient: reconcileK8s.discoveryClient,
-		resourceManager: reconcileK8s.resourceManager,
+		client:             cli,
+		scheme:             test.GetSchema(),
+		discoveryClient:    reconcileK8s.discoveryClient,
+		resourceSupervisor: reconcileK8s.resourceSupervisor,
 	}
 
 	tests := []struct {
@@ -216,10 +217,10 @@ func TestReconcileNexus_setDefaultNetworking(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ReconcileNexus{
-				client:          tt.fields.client,
-				scheme:          tt.fields.scheme,
-				discoveryClient: tt.fields.discoveryClient,
-				resourceManager: tt.fields.resourceManager,
+				client:             tt.fields.client,
+				scheme:             tt.fields.scheme,
+				discoveryClient:    tt.fields.discoveryClient,
+				resourceSupervisor: tt.fields.resourceSupervisor,
 			}
 			if err := r.setDefaultNetworking(tt.args.nexus); (err != nil) != tt.wantErr {
 				t.Errorf("setDefaultNetworking() error = %v, wantErr %v", err, tt.wantErr)
@@ -233,7 +234,7 @@ func TestReconcileNexus_validateTLS(t *testing.T) {
 		client          client.Client
 		scheme          *runtime.Scheme
 		discoveryClient discovery.DiscoveryInterface
-		resourceManager nexusres.NexusResourceManager
+		resourceManager infra.Supervisor
 	}
 	type args struct {
 		nexus *v1alpha1.Nexus
@@ -246,13 +247,13 @@ func TestReconcileNexus_validateTLS(t *testing.T) {
 		client:          cli,
 		scheme:          test.GetSchema(),
 		discoveryClient: reconcileOcp.discoveryClient,
-		resourceManager: reconcileOcp.resourceManager,
+		resourceManager: reconcileOcp.resourceSupervisor,
 	}
 	fieldK8s := fields{
 		client:          cli,
 		scheme:          test.GetSchema(),
 		discoveryClient: reconcileK8s.discoveryClient,
-		resourceManager: reconcileK8s.resourceManager,
+		resourceManager: reconcileK8s.resourceSupervisor,
 	}
 
 	tests := []struct {
@@ -313,10 +314,10 @@ func TestReconcileNexus_validateTLS(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ReconcileNexus{
-				client:          tt.fields.client,
-				scheme:          tt.fields.scheme,
-				discoveryClient: tt.fields.discoveryClient,
-				resourceManager: tt.fields.resourceManager,
+				client:             tt.fields.client,
+				scheme:             tt.fields.scheme,
+				discoveryClient:    tt.fields.discoveryClient,
+				resourceSupervisor: tt.fields.resourceManager,
 			}
 			if err := r.validateTLS(tt.args.nexus); (err != nil) != tt.wantErr {
 				t.Errorf("validateTLS() error = %v, wantErr %v", err, tt.wantErr)

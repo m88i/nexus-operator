@@ -19,6 +19,7 @@ package resource
 
 import (
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
@@ -38,54 +39,28 @@ import (
 
 const mgrsNotInit = "resource managers have not been initialized"
 
-// NexusResourceManager is the resources manager for the nexus CR.
-// Handles the creation of every single resource needed to deploy a nexus server instance on Kubernetes
-type NexusResourceManager interface {
-	// InitManagers initializes the managers responsible for the resources life cycle
-	InitManagers(nexus *v1alpha1.Nexus) error
-	// GetDeployedResources will fetch for the resources managed by the nexus instance deployed in the cluster
-	GetDeployedResources() (resources map[reflect.Type][]resource.KubernetesResource, err error)
-	// GetRequiredResources will create the requests resources as it's supposed to be
-	GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error)
-	// GetComparator returns the comparator based on the active managers
-	GetComparator() (compare.MapComparator, error)
-}
-
-type Manager interface {
-	// GetRequiredResources returns the resources initialized by the manager
-	GetRequiredResources() ([]resource.KubernetesResource, error)
-	// GetDeployedResources returns the resources deployed on the cluster
-	GetDeployedResources() ([]resource.KubernetesResource, error)
-	// GetCustomComparator returns the custom comp function used to compare two resources of a specific type
-	// Returns nil if there is no custom comparator for that type
-	GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool
-	// GetCustomComparators returns all custom comp functions in a map indexed by the resource type
-	// Returns nil if there are none
-	GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool
-}
-
-type nexusResourceManager struct {
+type supervisor struct {
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
-	managers        []Manager
+	managers        []infra.Manager
 }
 
-// New creates a new resource manager for nexus CR
-func New(client client.Client, discoveryClient discovery.DiscoveryInterface) NexusResourceManager {
-	return &nexusResourceManager{
+// NewSupervisor creates a new resource manager for nexus CR
+func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInterface) infra.Supervisor {
+	return &supervisor{
 		client:          client,
 		discoveryClient: discoveryClient,
 	}
 }
 
 // InitManagers initializes the managers responsible for the resources life cycle
-func (r *nexusResourceManager) InitManagers(nexus *v1alpha1.Nexus) error {
+func (r *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
 	networkManager, err := networking.NewManager(nexus, r.client, r.discoveryClient)
 	if err != nil {
 		return fmt.Errorf("unable to create networking manager: %v", err)
 	}
 
-	r.managers = []Manager{
+	r.managers = []infra.Manager{
 		deployment.NewManager(nexus, r.client),
 		persistence.NewManager(nexus, r.client),
 		security.NewManager(nexus, r.client),
@@ -94,7 +69,7 @@ func (r *nexusResourceManager) InitManagers(nexus *v1alpha1.Nexus) error {
 	return nil
 }
 
-func (r *nexusResourceManager) GetDeployedResources() (map[reflect.Type][]resource.KubernetesResource, error) {
+func (r *supervisor) GetDeployedResources() (map[reflect.Type][]resource.KubernetesResource, error) {
 	if len(r.managers) == 0 {
 		return nil, fmt.Errorf(mgrsNotInit)
 	}
@@ -111,7 +86,7 @@ func (r *nexusResourceManager) GetDeployedResources() (map[reflect.Type][]resour
 	return builder.ResourceMap(), nil
 }
 
-func (r *nexusResourceManager) GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error) {
+func (r *supervisor) GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error) {
 	if len(r.managers) == 0 {
 		return nil, fmt.Errorf(mgrsNotInit)
 	}
@@ -130,7 +105,7 @@ func (r *nexusResourceManager) GetRequiredResources() (resources map[reflect.Typ
 
 // GetComparator will create the comparator for the Nexus instance
 // The comparator can be used to compare two different sets of resources and update them accordingly
-func (r *nexusResourceManager) GetComparator() (compare.MapComparator, error) {
+func (r *supervisor) GetComparator() (compare.MapComparator, error) {
 	if len(r.managers) == 0 {
 		return compare.MapComparator{}, fmt.Errorf(mgrsNotInit)
 	}

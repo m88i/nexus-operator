@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -42,7 +43,7 @@ type manager struct {
 }
 
 // NewManager creates a deployment resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client) *manager {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) infra.Manager {
 	return &manager{
 		nexus:  nexus,
 		client: client,
