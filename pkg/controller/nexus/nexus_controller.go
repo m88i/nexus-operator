@@ -20,6 +20,7 @@ package nexus
 import (
 	"context"
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"reflect"
 
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
@@ -79,7 +80,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		discoveryClient: discovery.NewDiscoveryClientForConfigOrDie(mgr.GetConfig()),
 		scheme:          mgr.GetScheme(),
 	}
-	reconcileNexus.resourceManager = resource.New(reconcileNexus.client, reconcileNexus.discoveryClient)
+	reconcileNexus.resourceSupervisor = resource.NewSupervisor(reconcileNexus.client, reconcileNexus.discoveryClient)
 	return reconcileNexus
 }
 
@@ -111,10 +112,10 @@ var _ reconcile.Reconciler = &ReconcileNexus{}
 type ReconcileNexus struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client          client.Client
-	scheme          *runtime.Scheme
-	discoveryClient discovery.DiscoveryInterface
-	resourceManager resource.NexusResourceManager
+	client             client.Client
+	scheme             *runtime.Scheme
+	discoveryClient    discovery.DiscoveryInterface
+	resourceSupervisor infra.Supervisor
 }
 
 // Reconcile reads that state of the cluster for a Nexus object and makes changes based on the state read
@@ -155,23 +156,23 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	}
 
 	// Initialize the resource managers
-	err = r.resourceManager.InitManagers(instance)
+	err = r.resourceSupervisor.InitManagers(instance)
 	if err != nil {
 		return
 	}
 	// Create the objects as desired by the Nexus instance
-	requestedRes, err := r.resourceManager.GetRequiredResources()
+	requestedRes, err := r.resourceSupervisor.GetRequiredResources()
 	if err != nil {
 		return
 	}
 	// Get the actual deployed objects
 
-	deployedRes, err := r.resourceManager.GetDeployedResources()
+	deployedRes, err := r.resourceSupervisor.GetDeployedResources()
 	if err != nil {
 		return
 	}
 	// Get the resource comparator
-	comparator, err := r.resourceManager.GetComparator()
+	comparator, err := r.resourceSupervisor.GetComparator()
 	if err != nil {
 		return
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -52,7 +53,7 @@ type manager struct {
 }
 
 // NewManager creates a networking resources manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*manager, error) {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (infra.Manager, error) {
 	routeAvailable, err := openshift.IsRouteAvailable(disc)
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
