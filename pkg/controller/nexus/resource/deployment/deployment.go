@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -47,11 +46,7 @@ const (
 	jvmArgRandomPassword       = "-Dnexus.security.randompassword"
 	heapSizeDefault            = "1718m"
 	maxDirectMemorySizeDefault = "2148m"
-	probeInitialDelaySeconds   = int32(240)
-	probeTimeoutSeconds        = int32(15)
 	nexusDataDir               = "/nexus-data"
-	nexusCommunityLatestImage  = "docker.io/sonatype/nexus3:latest"
-	nexusCertifiedLatestImage  = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
 	nexusContainerName         = "nexus-server"
 )
 
@@ -65,17 +60,6 @@ var (
 	}
 
 	nexusUID = int64(200)
-
-	nexusPodReq = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("2"),
-			corev1.ResourceMemory: resource.MustParse("2Gi"),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("1"),
-			corev1.ResourceMemory: resource.MustParse("2Gi"),
-		},
-	}
 )
 
 func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
@@ -89,6 +73,7 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: meta.DefaultObjectMeta(nexus),
 				Spec: corev1.PodSpec{
+					ServiceAccountName: nexus.Spec.ServiceAccountName,
 					Containers: []corev1.Container{
 						{
 							Name: nexusContainerName,
@@ -100,6 +85,8 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 								},
 							},
 							ImagePullPolicy: corev1.PullAlways,
+							Resources:       nexus.Spec.Resources,
+							Image:           nexus.Spec.Image,
 						},
 					},
 				},
@@ -110,37 +97,16 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 		},
 	}
 
-	applyDefaultImage(nexus, deployment)
-	applyDefaultResourceReqs(nexus, deployment)
 	addVolume(nexus, deployment)
 	addProbes(nexus, deployment)
 	applyJVMArgs(nexus, deployment)
-	addServiceAccount(nexus, deployment)
 	applySecurityContext(nexus, deployment)
 
 	return deployment
 }
 
-func applyDefaultImage(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	if nexus.Spec.UseRedHatImage {
-		nexus.Spec.Image = nexusCertifiedLatestImage
-	} else if len(nexus.Spec.Image) == 0 {
-		nexus.Spec.UseRedHatImage = false
-		nexus.Spec.Image = nexusCommunityLatestImage
-	}
-
-	deployment.Spec.Template.Spec.Containers[0].Image = nexus.Spec.Image
-}
-
-func applyDefaultResourceReqs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	if nexus.Spec.Resources.Limits == nil && nexus.Spec.Resources.Requests == nil {
-		nexus.Spec.Resources = nexusPodReq
-	}
-	deployment.Spec.Template.Spec.Containers[0].Resources = nexus.Spec.Resources
-}
-
 func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	defaultProbe := &corev1.Probe{
+	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
@@ -150,38 +116,32 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 				Scheme: corev1.URISchemeHTTP,
 			},
 		},
-		InitialDelaySeconds: probeInitialDelaySeconds,
-		TimeoutSeconds:      probeTimeoutSeconds,
+		InitialDelaySeconds: nexus.Spec.LivenessProbe.InitialDelaySeconds,
+		TimeoutSeconds:      nexus.Spec.LivenessProbe.TimeoutSeconds,
+		FailureThreshold:    nexus.Spec.LivenessProbe.FailureThreshold,
+		PeriodSeconds:       nexus.Spec.LivenessProbe.PeriodSeconds,
+		SuccessThreshold:    nexus.Spec.LivenessProbe.SuccessThreshold,
 	}
 
-	deployment.Spec.Template.Spec.Containers[0].LivenessProbe = defaultProbe.DeepCopy()
-	deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = defaultProbe.DeepCopy()
-
-	if nexus.Spec.LivenessProbe != nil {
-		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold =
-			util.EnsureMinimum(nexus.Spec.LivenessProbe.FailureThreshold, 1)
-		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.InitialDelaySeconds =
-			util.EnsureMinimum(nexus.Spec.LivenessProbe.InitialDelaySeconds, 0)
-		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.PeriodSeconds =
-			util.EnsureMinimum(nexus.Spec.LivenessProbe.PeriodSeconds, 1)
-		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.SuccessThreshold =
-			util.EnsureMinimum(nexus.Spec.LivenessProbe.SuccessThreshold, 1)
-		deployment.Spec.Template.Spec.Containers[0].LivenessProbe.TimeoutSeconds =
-			util.EnsureMinimum(nexus.Spec.LivenessProbe.TimeoutSeconds, 1)
+	readinessProbe := &corev1.Probe{
+		Handler: corev1.Handler{
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.IntOrString{
+					IntVal: NexusServicePort,
+				},
+				Scheme: corev1.URISchemeHTTP,
+			},
+		},
+		InitialDelaySeconds: nexus.Spec.ReadinessProbe.InitialDelaySeconds,
+		TimeoutSeconds:      nexus.Spec.ReadinessProbe.TimeoutSeconds,
+		FailureThreshold:    nexus.Spec.ReadinessProbe.FailureThreshold,
+		PeriodSeconds:       nexus.Spec.ReadinessProbe.PeriodSeconds,
+		SuccessThreshold:    nexus.Spec.ReadinessProbe.SuccessThreshold,
 	}
 
-	if nexus.Spec.ReadinessProbe != nil {
-		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.FailureThreshold =
-			util.EnsureMinimum(nexus.Spec.ReadinessProbe.FailureThreshold, 1)
-		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds =
-			util.EnsureMinimum(nexus.Spec.ReadinessProbe.InitialDelaySeconds, 0)
-		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.PeriodSeconds =
-			util.EnsureMinimum(nexus.Spec.ReadinessProbe.PeriodSeconds, 1)
-		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.SuccessThreshold =
-			util.EnsureMinimum(nexus.Spec.ReadinessProbe.SuccessThreshold, 1)
-		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.TimeoutSeconds =
-			util.EnsureMinimum(nexus.Spec.ReadinessProbe.TimeoutSeconds, 1)
-	}
+	deployment.Spec.Template.Spec.Containers[0].LivenessProbe = livenessProbe
+	deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = readinessProbe
 }
 
 func addVolume(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
@@ -252,14 +212,6 @@ func calculateJVMMemory(limits corev1.ResourceList) (jvmMemory, directMemSize st
 	jvmMemory = heapSizeDefault
 	directMemSize = maxDirectMemorySizeDefault
 	return
-}
-
-func addServiceAccount(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	if len(nexus.Spec.ServiceAccountName) > 0 {
-		deployment.Spec.Template.Spec.ServiceAccountName = nexus.Spec.ServiceAccountName
-	} else {
-		deployment.Spec.Template.Spec.ServiceAccountName = nexus.Name
-	}
 }
 
 func applySecurityContext(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {

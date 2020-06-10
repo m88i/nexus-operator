@@ -55,15 +55,15 @@ func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInte
 
 // InitManagers initializes the managers responsible for the resources life cycle
 func (r *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
-	networkManager, err := networking.NewManager(nexus, r.client, r.discoveryClient)
+	networkManager, err := networking.NewManager(*nexus, r.client, r.discoveryClient)
 	if err != nil {
 		return fmt.Errorf("unable to create networking manager: %v", err)
 	}
 
 	r.managers = []infra.Manager{
-		deployment.NewManager(nexus, r.client),
-		persistence.NewManager(nexus, r.client),
-		security.NewManager(nexus, r.client),
+		deployment.NewManager(*nexus, r.client),
+		persistence.NewManager(*nexus, r.client),
+		security.NewManager(*nexus, r.client),
 		networkManager,
 	}
 	return nil

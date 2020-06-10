@@ -125,21 +125,21 @@ func schema_pkg_apis_apps_v1alpha1_NexusProbe(ref common.ReferenceCallback) comm
 				Properties: map[string]spec.Schema{
 					"initialDelaySeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Number of seconds after the container has started before probes are initiated.",
+							Description: "Number of seconds after the container has started before probes are initiated. Defaults to 240 seconds. Minimum value is 0.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
 					},
 					"timeoutSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1.",
+							Description: "Number of seconds after which the probe times out. Defaults to 15 seconds. Minimum value is 1.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
 					},
 					"periodSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+							Description: "How often (in seconds) to perform the probe. Defaults to 10 seconds. Minimum value is 1.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -173,14 +173,14 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 				Properties: map[string]spec.Schema{
 					"replicas": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Number of pods replicas desired",
+							Description: "Number of pod replicas desired. Defaults to 0.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
 					},
 					"image": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Full image tag name for this specific deployment Default: docker.io/sonatype/nexus3:latest",
+							Description: "Full image tag name for this specific deployment. Will be ignored if `spec.useRedHatImage` is set to `true`. Default: docker.io/sonatype/nexus3:latest",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -199,14 +199,14 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 					},
 					"useRedHatImage": {
 						SchemaProps: spec.SchemaProps{
-							Description: "If you have access to Red Hat Container Catalog, turn this to true to use the certified image provided by Sonatype Default: false",
+							Description: "If you have access to Red Hat Container Catalog, set this to `true` to use the certified image provided by Sonatype Defaults to `false`",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 					"generateRandomAdminPassword": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GenerateRandomAdminPassword enables the random password generation. Defaults to 'false': the default password for a newly created instance is 'admin123', which should be changed in the first login. If set to 'true', you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.",
+							Description: "GenerateRandomAdminPassword enables the random password generation. Defaults to `false`: the default password for a newly created instance is 'admin123', which should be changed in the first login. If set to `true`, you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -219,7 +219,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 					},
 					"serviceAccountName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR.",
+							Description: "ServiceAccountName is the name of the ServiceAccount used to run the Pods. If left blank, a default ServiceAccount is created with the same name as the Nexus CR (`metadata.name`).",
 							Type:        []string{"string"},
 							Format:      "",
 						},

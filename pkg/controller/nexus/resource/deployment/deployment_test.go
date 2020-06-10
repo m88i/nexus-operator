@@ -41,6 +41,11 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: false,
 			},
+			// a valid Liveness Probe should have successThreshold == 1
+			// but we don't care about that here (this is tested on the manager's tests)
+			LivenessProbe:  defaultProbe,
+			ReadinessProbe: defaultProbe,
+			Image:          nexusCommunityLatestImage,
 		},
 	}
 	deployment := newDeployment(nexus)
@@ -72,6 +77,10 @@ func Test_newDeployment_WithPersistence(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
+			// a valid Liveness Probe should have successThreshold == 1
+			// but we don't care about that here (this is tested on the manager's tests)
+			LivenessProbe:  defaultProbe,
+			ReadinessProbe: defaultProbe,
 		},
 	}
 	deployment := newDeployment(nexus)
@@ -144,12 +153,13 @@ func Test_customProbes(t *testing.T) {
 				Persistent: true,
 			},
 			LivenessProbe: &v1alpha1.NexusProbe{
-				FailureThreshold:    0,
+				FailureThreshold:    1,
 				PeriodSeconds:       10,
 				InitialDelaySeconds: 0,
 				SuccessThreshold:    3,
 				TimeoutSeconds:      15,
 			},
+			ReadinessProbe: defaultProbe,
 		},
 	}
 	deployment := newDeployment(nexus)
@@ -157,7 +167,7 @@ func Test_customProbes(t *testing.T) {
 	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
 	assert.Equal(t, int32(1), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.FailureThreshold)
 	assert.Equal(t, int32(0), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.InitialDelaySeconds)
-	assert.Equal(t, probeInitialDelaySeconds, deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds)
+	assert.Equal(t, probeDefaultInitialDelaySeconds, deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.InitialDelaySeconds)
 }
 
 func Test_applyJVMArgs_withRandomPassword(t *testing.T) {
@@ -173,6 +183,10 @@ func Test_applyJVMArgs_withRandomPassword(t *testing.T) {
 				Persistent: true,
 			},
 			GenerateRandomAdminPassword: true,
+			// a valid Liveness Probe should have successThreshold == 1
+			// but we don't care about that here (this is tested on the manager's tests)
+			LivenessProbe:  defaultProbe,
+			ReadinessProbe: defaultProbe,
 		},
 	}
 	deployment := newDeployment(nexus)
@@ -194,6 +208,10 @@ func Test_applyJVMArgs_withDefaultValues(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
+			// a valid Liveness Probe should have successThreshold == 1
+			// but we don't care about that here (this is tested on the manager's tests)
+			LivenessProbe:  defaultProbe,
+			ReadinessProbe: defaultProbe,
 		},
 	}
 	deployment := newDeployment(nexus)

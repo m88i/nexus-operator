@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/m88i/nexus-operator/pkg/util"
-	"k8s.io/api/extensions/v1beta1"
 	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -57,7 +56,7 @@ func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
 
 // GetIngressURI discover the URI for Ingress
 func GetIngressURI(cli client.Client, ingressName types.NamespacedName) (string, error) {
-	ingress := &v1beta1.Ingress{}
+	ingress := &networking.Ingress{}
 	if err := cli.Get(context.TODO(), ingressName, ingress); err != nil && !errors.IsNotFound(err) {
 		return "", err
 	} else if errors.IsNotFound(err) {

@@ -24,13 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-const defaultVolumeSize = "10Gi"
-
 func newPVC(nexus *v1alpha1.Nexus) *corev1.PersistentVolumeClaim {
-	if len(nexus.Spec.Persistence.VolumeSize) == 0 {
-		nexus.Spec.Persistence.VolumeSize = defaultVolumeSize
-	}
-
 	accessMode := corev1.ReadWriteOnce
 	if nexus.Spec.Replicas > 1 {
 		accessMode = corev1.ReadWriteMany
