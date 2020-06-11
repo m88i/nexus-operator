@@ -36,7 +36,7 @@ const (
 	monitoringGroupVersion = "monitoring.coreos.com/v1alpha1"
 )
 
-type fakeDiscBuilder struct {
+type FakeDiscBuilder struct {
 	*discfake.FakeDiscovery
 }
 
@@ -54,8 +54,8 @@ func GetSchema() *runtime.Scheme {
 }
 
 // NewFakeDiscoveryClient creates a fake discovery client
-func NewFakeDiscoveryClient() *fakeDiscBuilder {
-	return &fakeDiscBuilder{&discfake.FakeDiscovery{
+func NewFakeDiscoveryClient() *FakeDiscBuilder {
+	return &FakeDiscBuilder{&discfake.FakeDiscovery{
 		Fake: &clienttesting.Fake{
 			Resources: []*metav1.APIResourceList{
 				{GroupVersion: monitoringGroupVersion},
@@ -65,7 +65,7 @@ func NewFakeDiscoveryClient() *fakeDiscBuilder {
 }
 
 // OnOpenshift sets Openshift related server groups to the fake discovery
-func (d *fakeDiscBuilder) OnOpenshift() *fakeDiscBuilder {
+func (d *FakeDiscBuilder) OnOpenshift() *FakeDiscBuilder {
 	d.Fake.Resources = append(d.Fake.Resources,
 		&metav1.APIResourceList{GroupVersion: openshiftGroupVersion},
 		&metav1.APIResourceList{GroupVersion: routev1.GroupVersion.String()})
@@ -73,12 +73,12 @@ func (d *fakeDiscBuilder) OnOpenshift() *fakeDiscBuilder {
 }
 
 // WithIngress sets Ingress the server group to the fake discovery
-func (d *fakeDiscBuilder) WithIngress() *fakeDiscBuilder {
+func (d *FakeDiscBuilder) WithIngress() *FakeDiscBuilder {
 	d.Fake.Resources = append(d.Fake.Resources, &metav1.APIResourceList{GroupVersion: v1beta1.SchemeGroupVersion.String()})
 	return d
 }
 
 // Build returns the fake discovery client
-func (d *fakeDiscBuilder) Build() discovery.DiscoveryInterface {
+func (d *FakeDiscBuilder) Build() discovery.DiscoveryInterface {
 	return d
 }
