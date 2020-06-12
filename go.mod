@@ -5,17 +5,17 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.8
 	github.com/openshift/api v3.9.0+incompatible
-	github.com/operator-framework/operator-sdk v0.17.1
+	github.com/operator-framework/operator-sdk v0.18.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 	go.uber.org/zap v1.15.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	k8s.io/api v0.17.4
-	k8s.io/apimachinery v0.17.4
+	k8s.io/api v0.18.3
+	k8s.io/apimachinery v0.18.3
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	sigs.k8s.io/controller-runtime v0.5.2
+	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
+	sigs.k8s.io/controller-runtime v0.6.0
 )
 
 replace (
@@ -25,6 +25,6 @@ replace (
 
 replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 
-replace k8s.io/client-go => k8s.io/client-go v0.17.4 // Required by prometheus-operator
+replace k8s.io/client-go => k8s.io/client-go v0.18.3 // Required by prometheus-operator
 
 go 1.14

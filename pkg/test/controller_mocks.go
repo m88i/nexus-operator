@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
+	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -72,6 +73,14 @@ func NewManager() manager.Manager {
 
 type managerMock struct {
 	scheme *runtime.Scheme
+}
+
+func (m managerMock) AddMetricsExtraHandler(path string, handler http.Handler) error {
+	panic("implement me")
+}
+
+func (m managerMock) Elected() <-chan struct{} {
+	panic("implement me")
 }
 
 func (m managerMock) Add(manager.Runnable) error {
