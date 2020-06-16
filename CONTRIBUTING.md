@@ -17,4 +17,4 @@ Regarding your local development environment:
 1. We use [golint-ci](https://golangci-lint.run/) to check the code. Consider [integrating it in your favorite IDE](https://golangci-lint.run/usage/integrations/) to avoid failing in the CI
 2. **Always** run `make test` before sending a PR to make sure the license headers and the manifests are updated (and of course the unit tests are passing)
 3. Consider adding a new [end-to-end](https://sdk.operatorframework.io/docs/golang/e2e-tests/) test case covering your scenario and make sure to run `make test-e2e` before sending the PR
-4. Make sure to always keep your version of `Go` and the `operator-sdk` on par with the project. The current version information can be found at [the go.mod file](../go.mod)
+4. Make sure to always keep your version of `Go` and the `operator-sdk` on par with the project. The current version information can be found at [the go.mod file](go.mod)
