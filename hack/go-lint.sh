@@ -17,7 +17,7 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 # it's expected to have GOPATH in your PATH
-# see this link to understand why we are using a different go.mod file: https://github.com/golang/go/issues/34506
-which golangci-lint >/dev/null || go get -modfile=go.tools.mod github.com/golangci/golangci-lint/cmd/golangci-lint@v1.27.0
+# The command in or will fetch the latest tag available for golangci-lint and install in $GOPATH/bin/
+which golangci-lint > /dev/null || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
 
 golangci-lint run ./pkg/... ./test/...
