@@ -75,6 +75,13 @@ spec:
         path: image
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes:image
+      - description: 'The image pull policy for the Nexus image. If left blank behavior
+          will be determined by the image tag (`Always` if "latest" and `IfNotPresent`
+          otherwise). Possible values: `Always`, `IfNotPresent` or `Never`.'
+        displayName: Image Pull Policy
+        path: imagePullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
       - description: Number of pod replicas desired. Defaults to 0.
         displayName: Replicas
         path: replicas

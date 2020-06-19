@@ -113,6 +113,15 @@ func (m *manager) setImageDefaults() {
 	} else if len(m.nexus.Spec.Image) == 0 {
 		m.nexus.Spec.Image = nexusCommunityLatestImage
 	}
+
+	if len(m.nexus.Spec.ImagePullPolicy) > 0 &&
+		m.nexus.Spec.ImagePullPolicy != corev1.PullAlways &&
+		m.nexus.Spec.ImagePullPolicy != corev1.PullIfNotPresent &&
+		m.nexus.Spec.ImagePullPolicy != corev1.PullNever {
+
+		log.Warnf("Invalid 'spec.imagePullPolicy', unsetting the value. The pull policy will be determined by the image tag. Consider setting this value to '%s', '%s' or '%s'", corev1.PullAlways, corev1.PullIfNotPresent, corev1.PullNever)
+		m.nexus.Spec.ImagePullPolicy = ""
+	}
 }
 
 func (m *manager) setProbeDefaults() {

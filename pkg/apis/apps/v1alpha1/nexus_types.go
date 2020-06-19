@@ -45,6 +45,14 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes:image"
 	Image string `json:"image,omitempty"`
 
+	// The image pull policy for the Nexus image. If left blank behavior will be determined by the image tag (`Always` if "latest" and `IfNotPresent` otherwise).
+	// Possible values: `Always`, `IfNotPresent` or `Never`.
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Image Pull Policy"
+	// +optional
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+
 	// Defined Resources for the Nexus instance
 	// +optional
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true

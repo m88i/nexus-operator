@@ -118,6 +118,15 @@ func TestNewManager_setDefaults(t *testing.T) {
 				return nexus
 			}(),
 		},
+		{
+			"Invalid 'spec.imagePullPolicy'",
+			func() *v1alpha1.Nexus {
+				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus.Spec.ImagePullPolicy = "invalid"
+				return nexus
+			}(),
+			allDefaultsCommunityNexus.DeepCopy(),
+		},
 	}
 
 	for _, tt := range tests {

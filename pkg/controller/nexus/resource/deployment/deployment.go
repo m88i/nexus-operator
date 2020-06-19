@@ -84,9 +84,8 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
-							ImagePullPolicy: corev1.PullAlways,
-							Resources:       nexus.Spec.Resources,
-							Image:           nexus.Spec.Image,
+							Resources: nexus.Spec.Resources,
+							Image:     nexus.Spec.Image,
 						},
 					},
 				},
@@ -101,8 +100,15 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 	addProbes(nexus, deployment)
 	applyJVMArgs(nexus, deployment)
 	applySecurityContext(nexus, deployment)
+	applyPullPolicy(nexus, deployment)
 
 	return deployment
+}
+
+func applyPullPolicy(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+	if len(nexus.Spec.ImagePullPolicy) > 0 {
+		deployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = nexus.Spec.ImagePullPolicy
+	}
 }
 
 func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
