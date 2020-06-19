@@ -25,8 +25,8 @@ import (
 )
 
 const (
+	NexusPortName    = "http"
 	NexusServicePort = 8081
-	nexusPortName    = "http"
 )
 
 func newService(nexus *v1alpha1.Nexus) *corev1.Service {
@@ -35,7 +35,7 @@ func newService(nexus *v1alpha1.Nexus) *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
-					Name:     nexusPortName,
+					Name:     NexusPortName,
 					Protocol: corev1.ProtocolTCP,
 					Port:     NexusServicePort,
 					TargetPort: intstr.IntOrString{

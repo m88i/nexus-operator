@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	jvmArgsEnvKey = "INSTALL4J_ADD_VM_PARAMS"
+	JvmArgsEnvKey = "INSTALL4J_ADD_VM_PARAMS"
 	/*
 		1. Xms
 		2. Xmx
@@ -79,7 +79,7 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 							Name: nexusContainerName,
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          "http",
+									Name:          NexusPortName,
 									ContainerPort: NexusServicePort,
 									Protocol:      corev1.ProtocolTCP,
 								},
@@ -200,7 +200,7 @@ func applyJVMArgs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	deployment.Spec.Template.Spec.Containers[0].Env =
 		append(deployment.Spec.Template.Spec.Containers[0].Env,
 			corev1.EnvVar{
-				Name:  jvmArgsEnvKey,
+				Name:  JvmArgsEnvKey,
 				Value: jvmArgs.String(),
 			})
 }

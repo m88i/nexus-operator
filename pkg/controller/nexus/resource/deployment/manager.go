@@ -35,8 +35,8 @@ import (
 )
 
 const (
-	nexusCommunityLatestImage       = "docker.io/sonatype/nexus3:latest"
-	nexusCertifiedLatestImage       = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
+	NexusCommunityLatestImage       = "docker.io/sonatype/nexus3:latest"
+	NexusCertifiedLatestImage       = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
 	mgrNotInit                      = "the manager has not been initialized"
 	probeDefaultInitialDelaySeconds = int32(240)
 	probeDefaultTimeoutSeconds      = int32(15)
@@ -46,9 +46,7 @@ const (
 )
 
 var (
-	log = logger.GetLogger("deployment_manager")
-
-	defaultResources = corev1.ResourceRequirements{
+	DefaultResources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			corev1.ResourceCPU:    k8sres.MustParse("2"),
 			corev1.ResourceMemory: k8sres.MustParse("2Gi"),
@@ -59,13 +57,15 @@ var (
 		},
 	}
 
-	defaultProbe = &v1alpha1.NexusProbe{
+	DefaultProbe = &v1alpha1.NexusProbe{
 		InitialDelaySeconds: probeDefaultInitialDelaySeconds,
 		TimeoutSeconds:      probeDefaultTimeoutSeconds,
 		PeriodSeconds:       probeDefaultPeriodSeconds,
 		SuccessThreshold:    probeDefaultSuccessThreshold,
 		FailureThreshold:    probeDefaultFailureThreshold,
 	}
+
+	log = logger.GetLogger("deployment_manager")
 )
 
 // manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
@@ -100,7 +100,7 @@ func (m *manager) setSvcAccntDefaults() {
 
 func (m *manager) setResourcesDefaults() {
 	if m.nexus.Spec.Resources.Requests == nil && m.nexus.Spec.Resources.Limits == nil {
-		m.nexus.Spec.Resources = defaultResources
+		m.nexus.Spec.Resources = DefaultResources
 	}
 }
 
@@ -109,9 +109,9 @@ func (m *manager) setImageDefaults() {
 		if len(m.nexus.Spec.Image) > 0 {
 			log.Warnf("Nexus CR configured to the use Red Hat Certified Image, ignoring 'spec.image' field.")
 		}
-		m.nexus.Spec.Image = nexusCertifiedLatestImage
+		m.nexus.Spec.Image = NexusCertifiedLatestImage
 	} else if len(m.nexus.Spec.Image) == 0 {
-		m.nexus.Spec.Image = nexusCommunityLatestImage
+		m.nexus.Spec.Image = NexusCommunityLatestImage
 	}
 
 	if len(m.nexus.Spec.ImagePullPolicy) > 0 &&
@@ -135,7 +135,7 @@ func (m *manager) setProbeDefaults() {
 		m.nexus.Spec.LivenessProbe.TimeoutSeconds =
 			util.EnsureMinimum(m.nexus.Spec.LivenessProbe.TimeoutSeconds, 1)
 	} else {
-		m.nexus.Spec.LivenessProbe = defaultProbe.DeepCopy()
+		m.nexus.Spec.LivenessProbe = DefaultProbe.DeepCopy()
 	}
 
 	// SuccessThreshold for Liveness Probes must be 1
@@ -153,7 +153,7 @@ func (m *manager) setProbeDefaults() {
 		m.nexus.Spec.ReadinessProbe.TimeoutSeconds =
 			util.EnsureMinimum(m.nexus.Spec.ReadinessProbe.TimeoutSeconds, 1)
 	} else {
-		m.nexus.Spec.ReadinessProbe = defaultProbe.DeepCopy()
+		m.nexus.Spec.ReadinessProbe = DefaultProbe.DeepCopy()
 	}
 }
 
