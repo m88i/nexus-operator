@@ -22,6 +22,7 @@ Table of Contents
       * [Service Account](#service-account)
       * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
+      * [Image Pull Policy](#image-pull-policy)
       * [Contributing](#contributing)
 
 # Nexus Operator
@@ -208,6 +209,18 @@ If you have access to [Red Hat Catalog](https://access.redhat.com/containers/#/r
 **You'll have to set your Red Hat credentials** in the namespace where Nexus is deployed to be able to pull the image.
 
 [In future versions](https://github.com/m88i/nexus-operator/issues/14) the Operator will handle this step for you.
+
+## Image Pull Policy
+
+You can control the pods Image Pull Policy using the `spec.imagePullPolicy` field. It accepts either of the following values:
+
+  - `Always`
+  - `IfNotPresent`
+  - `Never` 
+
+If this field is set to an invalid value this configuration will be omitted, deferring to [Kubernetes default behavior](https://kubernetes.io/docs/concepts/containers/images/#updating-images), which is `Always` if the image's tag is "latest" and `IfNotPresent` otherwise.
+
+Leaving this field blank will also result in deferring to Kubernetes default behavior.
 
 ## Contributing
 

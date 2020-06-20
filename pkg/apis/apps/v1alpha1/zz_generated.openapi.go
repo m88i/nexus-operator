@@ -185,6 +185,13 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 							Format:      "",
 						},
 					},
+					"imagePullPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The image pull policy for the Nexus image. If left blank behavior will be determined by the image tag (`Always` if \"latest\" and `IfNotPresent` otherwise). Possible values: `Always`, `IfNotPresent` or `Never`.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Defined Resources for the Nexus instance",
