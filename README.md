@@ -218,7 +218,7 @@ You can control the pods Image Pull Policy using the `spec.imagePullPolicy` fiel
   - `IfNotPresent`
   - `Never` 
 
-If this field is set to an invalid value this configuration will be omitted, deferring the behavior to Kubernetes default, which is `Always` if the image's tag is "latest" and `IfNotPresent` otherwise.
+If this field is set to an invalid value this configuration will be omitted, deferring to [Kubernetes default behavior](https://kubernetes.io/docs/concepts/containers/images/#updating-images), which is `Always` if the image's tag is "latest" and `IfNotPresent` otherwise.
 
 Leaving this field blank will also result in deferring to Kubernetes default behavior.
 
