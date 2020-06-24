@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	corev1 "k8s.io/api/core/v1"
 	"testing"
 	"time"
 
@@ -24,6 +25,7 @@ var (
 		spec := v1alpha1.NexusSpec{
 			Replicas:                    1,
 			Image:                       deployment.NexusCommunityLatestImage,
+			ImagePullPolicy:             corev1.PullIfNotPresent,
 			Resources:                   deployment.DefaultResources,
 			Persistence:                 v1alpha1.NexusPersistence{Persistent: false},
 			UseRedHatImage:              false,
