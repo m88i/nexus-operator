@@ -50,11 +50,11 @@ testCases := []struct {
 	},
 ```
 
-> (1): the test case's name. In this scenario we're testing a deployment with all default values, no persistence and exposed via Node Port.
-> (2): the Nexus CR which the Operator will use to orchestrate and maintain your Nexus3 deployment
-> (3): a cleanup function which should be ran after the test has been completed
-> (4): additional checks your test case may need
-> (5): the base, default Nexus CR specification which should be used for testing. Modify this to test your own features
+> (1): the test case's name. In this scenario we're testing a deployment with all default values, no persistence and exposed via Node Port.<br>
+> (2): the Nexus CR which the Operator will use to orchestrate and maintain your Nexus3 deployment<br>
+> (3): a cleanup function which should be ran after the test has been completed<br>
+> (4): additional checks your test case may need<br>
+> (5): the base, default Nexus CR specification which should be used for testing. Modify this to test your own features<br>
 
 **Important**: although the operator will set the defaults on the Nexus CR you provide it with, the tests will use your original CR for comparison, so be sure to make a completely valid Nexus CR for your test case as it *will not* be modified to insert default values.
 
