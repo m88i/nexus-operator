@@ -93,20 +93,20 @@ In previous examples, `tester.defaultCleanup` was used, which simply deletes all
 
 ```go
 {
-	name: "Test Example: this counts to 5 during cleanup and uses the default cleanup once done",
-	input: &v1alpha1.Nexus{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      nexusName,
-			Namespace: namespace,
-		},
-		Spec: defaultNexusSpec,
-	},
-	cleanup: func() error {
+    name: "Test Example: this counts to 5 during cleanup and uses the default cleanup once done",
+    input: &v1alpha1.Nexus{
+        ObjectMeta: metav1.ObjectMeta{
+            Name:      nexusName,
+            Namespace: namespace,
+        },
+        Spec: defaultNexusSpec,
+    },
+    cleanup: func() error {
         for i := 0; i < 5; i++ {
             tester.t.Logf("Count: %d", i)
         }
-		return tester.defaultCleanup()
-	},
+        return tester.defaultCleanup()
+    },
     additionalChecks: nil,
 },
 ```
