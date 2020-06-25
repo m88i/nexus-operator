@@ -16,8 +16,13 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-
+# The git command will fetch the most recent tag across all branches
+LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
 NAMESPACE=nexus
+
+echo "[INFO]  The repository will be checked out at the latest release"
+echo "....... Checkout code at ${LATEST_TAG} ......"
+git checkout tags/${LATEST_TAG}
 
 echo "....... Creating namespace ......."
 kubectl create namespace ${NAMESPACE}
