@@ -30,15 +30,15 @@ func TestNewManager_setDefaults(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "nexus-test"},
 		Spec: v1alpha1.NexusSpec{
 			ServiceAccountName: "nexus-test",
-			Resources:          defaultResources,
-			Image:              nexusCommunityLatestImage,
-			LivenessProbe:      defaultProbe.DeepCopy(),
-			ReadinessProbe:     defaultProbe.DeepCopy(),
+			Resources:          DefaultResources,
+			Image:              NexusCommunityLatestImage,
+			LivenessProbe:      DefaultProbe.DeepCopy(),
+			ReadinessProbe:     DefaultProbe.DeepCopy(),
 		},
 	}
 	allDefaultsRedHatNexus := allDefaultsCommunityNexus.DeepCopy()
 	allDefaultsRedHatNexus.Spec.UseRedHatImage = true
-	allDefaultsRedHatNexus.Spec.Image = nexusCertifiedLatestImage
+	allDefaultsRedHatNexus.Spec.Image = NexusCertifiedLatestImage
 
 	minimumDefaultProbe := &v1alpha1.NexusProbe{
 		InitialDelaySeconds: 0,
