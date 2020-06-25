@@ -115,7 +115,7 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/",
+				Path: "/service/rest/v1/status",
 				Port: intstr.IntOrString{
 					IntVal: NexusServicePort,
 				},
@@ -132,7 +132,7 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	readinessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/",
+				Path: "/service/rest/v1/status",
 				Port: intstr.IntOrString{
 					IntVal: NexusServicePort,
 				},
