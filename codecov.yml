@@ -1,0 +1,11 @@
+flags:
+  operator:
+    paths:
+      - pkg/
+coverage:
+  status:
+    project:
+      operator:
+        target: 54
+        flags:
+          - operator
