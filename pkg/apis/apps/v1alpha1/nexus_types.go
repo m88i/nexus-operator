@@ -15,6 +15,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+// Just a test to see if codecov will trigger the report without the action step
 package v1alpha1
 
 import (
