@@ -4,6 +4,7 @@ require (
 	github.com/RHsyseng/operator-utils v0.0.0-20200417223319-07e65f1aaddd
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.8
+	github.com/googleapis/gnostic v0.3.1
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/operator-sdk v0.18.1
 	github.com/spf13/pflag v1.0.5
