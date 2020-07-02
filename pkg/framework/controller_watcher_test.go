@@ -46,7 +46,7 @@ var requiredObjects = []WatchedObjects{
 
 // K8s < 3.14
 func Test_controllerWatcher_WatchWithoutIngressOnKubernetes(t *testing.T) {
-	cli := test.NewFakeDiscoveryClient().Build()
+	cli := test.NewFakeClientBuilder().Build()
 	controller := test.NewController()
 	manager := test.NewManager()
 
@@ -63,7 +63,7 @@ func Test_controllerWatcher_WatchWithoutIngressOnKubernetes(t *testing.T) {
 
 // K8s > 3.14
 func Test_controllerWatcher_WatchWithIngressOnKubernetes(t *testing.T) {
-	cli := test.NewFakeDiscoveryClient().WithIngress().Build()
+	cli := test.NewFakeClientBuilder().WithIngress().Build()
 	controller := test.NewController()
 	manager := test.NewManager()
 
@@ -80,7 +80,7 @@ func Test_controllerWatcher_WatchWithIngressOnKubernetes(t *testing.T) {
 
 // OCP
 func Test_controllerWatcher_WatchWithRouteOnOpenShift(t *testing.T) {
-	cli := test.NewFakeDiscoveryClient().OnOpenshift().Build()
+	cli := test.NewFakeClientBuilder().OnOpenshift().Build()
 	controller := test.NewController()
 	manager := test.NewManager()
 

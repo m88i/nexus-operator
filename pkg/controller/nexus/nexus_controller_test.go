@@ -26,14 +26,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/fake"
-	clienttesting "k8s.io/client-go/testing"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"testing"
 )
@@ -55,8 +53,8 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 	}
 
 	// create objects to run reconcile
-	cl := test.NewFakeClient(nexus)
-	r := newFakeReconcileNexus(cl, true)
+	cl := test.NewFakeClientBuilder(nexus).OnOpenshift().Build()
+	r := newFakeReconcileNexus(cl)
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
 		Namespace: ns,
 		Name:      appName,
@@ -98,8 +96,8 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 	}
 
 	// create objects to run reconcile
-	cl := test.NewFakeClient(nexus)
-	r := newFakeReconcileNexus(cl, false)
+	cl := test.NewFakeClientBuilder(nexus).Build()
+	r := newFakeReconcileNexus(cl)
 
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
 		Namespace: ns,
@@ -116,28 +114,17 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, resource.MustParse("10Gi"), pvc.Spec.Resources.Requests[corev1.ResourceStorage])
 	// networking is disabled
-	route := &routev1.Route{}
-	err = r.client.Get(context.TODO(), req.NamespacedName, route)
+	ingress := &v1beta1.Ingress{}
+	err = r.client.Get(context.TODO(), req.NamespacedName, ingress)
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 }
 
-func newFakeReconcileNexus(cl client.Client, ocp bool) ReconcileNexus {
-	r := ReconcileNexus{client: cl, scheme: test.GetSchema()}
-	r.discoveryClient = newFakeDiscovery(ocp)
-	r.resourceSupervisor = nexusres.NewSupervisor(r.client, r.discoveryClient)
-	return r
-}
-
-func newFakeDiscovery(ocp bool) discovery.DiscoveryInterface {
-	if ocp {
-		return &fake.FakeDiscovery{
-			Fake: &clienttesting.Fake{
-				Resources: []*v1.APIResourceList{
-					{GroupVersion: routev1.GroupVersion.String()},
-				},
-			},
-		}
+func newFakeReconcileNexus(cl *test.FakeClient) ReconcileNexus {
+	return ReconcileNexus{
+		client:             cl,
+		scheme:             scheme.Scheme,
+		discoveryClient:    cl,
+		resourceSupervisor: nexusres.NewSupervisor(cl, cl),
 	}
-	return &fake.FakeDiscovery{Fake: &clienttesting.Fake{}}
 }
