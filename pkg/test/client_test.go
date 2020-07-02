@@ -40,7 +40,7 @@ func TestNewFakeClientBuilder(t *testing.T) {
 	b := NewFakeClientBuilder(nexus)
 
 	// client.Client
-	assert.Len(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), 2)
+	assert.Len(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), 10)
 	assert.Contains(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), strings.Split(reflect.TypeOf(&v1alpha1.Nexus{}).String(), ".")[1])
 	assert.Contains(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), strings.Split(reflect.TypeOf(&v1alpha1.NexusList{}).String(), ".")[1])
 
@@ -56,7 +56,7 @@ func TestFakeClientBuilder_OnOpenshift(t *testing.T) {
 	b := NewFakeClientBuilder().OnOpenshift()
 
 	// client.Client
-	assert.Len(t, b.scheme.KnownTypes(routev1.GroupVersion), 2)
+	assert.Len(t, b.scheme.KnownTypes(routev1.GroupVersion), 10)
 	assert.Contains(t, b.scheme.KnownTypes(routev1.GroupVersion), strings.Split(reflect.TypeOf(&routev1.Route{}).String(), ".")[1])
 	assert.Contains(t, b.scheme.KnownTypes(routev1.GroupVersion), strings.Split(reflect.TypeOf(&routev1.RouteList{}).String(), ".")[1])
 

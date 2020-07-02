@@ -21,6 +21,7 @@ import (
 	"context"
 	openapi_v2 "github.com/googleapis/gnostic/OpenAPIv2"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/util"
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,8 +52,7 @@ type FakeClientBuilder struct {
 // and stores initObjs for initialization later
 func NewFakeClientBuilder(initObjs ...runtime.Object) *FakeClientBuilder {
 	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, &v1alpha1.Nexus{}, &v1alpha1.NexusList{})
-
+	util.Must(minimumSchemeBuilder().AddToScheme(s))
 	res := []*metav1.APIResourceList{{GroupVersion: v1alpha1.SchemeGroupVersion.String()}}
 
 	return &FakeClientBuilder{
@@ -64,7 +64,7 @@ func NewFakeClientBuilder(initObjs ...runtime.Object) *FakeClientBuilder {
 
 // OnOpenshift makes the fake client aware of resources from Openshift
 func (b *FakeClientBuilder) OnOpenshift() *FakeClientBuilder {
-	b.scheme.AddKnownTypes(routev1.GroupVersion, &routev1.Route{}, &routev1.RouteList{})
+	util.Must(schemeBuilderOnOCP().AddToScheme(b.scheme))
 	b.resources = append(b.resources,
 		&metav1.APIResourceList{GroupVersion: openshiftGroupVersion},
 		&metav1.APIResourceList{GroupVersion: routev1.GroupVersion.String()})
@@ -73,7 +73,7 @@ func (b *FakeClientBuilder) OnOpenshift() *FakeClientBuilder {
 
 // WithIngress makes the fake client aware of Ingresses
 func (b *FakeClientBuilder) WithIngress() *FakeClientBuilder {
-	b.scheme.AddKnownTypes(v1beta1.SchemeGroupVersion, &v1beta1.Ingress{}, &v1beta1.IngressList{})
+	util.Must(schemeBuilderWithIngress().AddToScheme(b.scheme))
 	b.resources = append(b.resources, &metav1.APIResourceList{GroupVersion: v1beta1.SchemeGroupVersion.String()})
 	return b
 }
@@ -90,6 +90,18 @@ func (b *FakeClientBuilder) Build() *FakeClient {
 	}
 	c.this = c
 	return c
+}
+
+func minimumSchemeBuilder() *runtime.SchemeBuilder {
+	return &runtime.SchemeBuilder{v1alpha1.SchemeBuilder.AddToScheme}
+}
+
+func schemeBuilderOnOCP() *runtime.SchemeBuilder {
+	return &runtime.SchemeBuilder{routev1.Install}
+}
+
+func schemeBuilderWithIngress() *runtime.SchemeBuilder {
+	return &runtime.SchemeBuilder{v1beta1.AddToScheme}
 }
 
 // FakeClient wraps an API fake client to allow mocked error responses
