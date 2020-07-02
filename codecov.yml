@@ -6,6 +6,6 @@ coverage:
   status:
     project:
       operator:
-        target: 54
+        target: 58
         flags:
           - operator
