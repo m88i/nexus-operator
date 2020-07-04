@@ -84,7 +84,6 @@ func TestFakeClientBuilder_Build(t *testing.T) {
 
 	b := NewFakeClientBuilder(nexus)
 	c := b.Build()
-	assert.Equal(t, c, c.this)
 	assert.NotNil(t, c.disc)
 	assert.NotNil(t, c.client)
 	assert.NoError(t, c.client.Get(ctx.TODO(), client.ObjectKey{

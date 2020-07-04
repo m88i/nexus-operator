@@ -80,7 +80,7 @@ func (b *FakeClientBuilder) WithIngress() *FakeClientBuilder {
 
 // Build returns the fake discovery client
 func (b *FakeClientBuilder) Build() *FakeClient {
-	c := &FakeClient{
+	return &FakeClient{
 		client: fake.NewFakeClientWithScheme(b.scheme, b.initObjs...),
 		disc: &discfake.FakeDiscovery{
 			Fake: &clienttesting.Fake{
@@ -88,8 +88,6 @@ func (b *FakeClientBuilder) Build() *FakeClient {
 			},
 		},
 	}
-	c.this = c
-	return c
 }
 
 func minimumSchemeBuilder() *runtime.SchemeBuilder {
@@ -113,10 +111,6 @@ type FakeClient struct {
 	disc             discovery.DiscoveryInterface
 	mockErr          error
 	shouldClearError bool
-	// sometimes we need to call pointer receiver methods from value receiver methods
-	// we can't turn the value receivers into pointer receivers without breaking interfaces
-	// this allows us to always hold a reference to the original struct so we can modify it
-	this *FakeClient
 }
 
 // SetMockError sets the error which should be returned for the following requests
@@ -143,20 +137,20 @@ func (c FakeClient) RESTClient() rest.Interface {
 	return c.disc.RESTClient()
 }
 
-func (c FakeClient) ServerGroups() (*metav1.APIGroupList, error) {
+func (c *FakeClient) ServerGroups() (*metav1.APIGroupList, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
 	return c.disc.ServerGroups()
 }
 
-func (c FakeClient) ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error) {
+func (c *FakeClient) ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
@@ -164,130 +158,130 @@ func (c FakeClient) ServerResourcesForGroupVersion(groupVersion string) (*metav1
 }
 
 // Deprecated: use ServerGroupsAndResources instead.
-func (c FakeClient) ServerResources() ([]*metav1.APIResourceList, error) {
+func (c *FakeClient) ServerResources() ([]*metav1.APIResourceList, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
 	return c.disc.ServerResources()
 }
 
-func (c FakeClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+func (c *FakeClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, nil, c.mockErr
 	}
 	return c.disc.ServerGroupsAndResources()
 }
 
-func (c FakeClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
+func (c *FakeClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
 	return c.disc.ServerPreferredResources()
 }
 
-func (c FakeClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {
+func (c *FakeClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
 	return c.disc.ServerPreferredNamespacedResources()
 }
 
-func (c FakeClient) ServerVersion() (*version.Info, error) {
+func (c *FakeClient) ServerVersion() (*version.Info, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
 	return c.disc.ServerVersion()
 }
 
-func (c FakeClient) OpenAPISchema() (*openapi_v2.Document, error) {
+func (c *FakeClient) OpenAPISchema() (*openapi_v2.Document, error) {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return nil, c.mockErr
 	}
 	return c.disc.OpenAPISchema()
 }
 
-func (c FakeClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+func (c *FakeClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
 	return c.client.Get(ctx, key, obj)
 }
 
-func (c FakeClient) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error {
+func (c *FakeClient) List(ctx context.Context, list runtime.Object, opts ...client.ListOption) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
 	return c.client.List(ctx, list, opts...)
 }
 
-func (c FakeClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+func (c *FakeClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
 	return c.client.Create(ctx, obj, opts...)
 }
 
-func (c FakeClient) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error {
+func (c *FakeClient) Delete(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
 	return c.client.Delete(ctx, obj, opts...)
 }
 
-func (c FakeClient) Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error {
+func (c *FakeClient) Update(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
 	return c.client.Update(ctx, obj, opts...)
 }
 
-func (c FakeClient) Patch(ctx context.Context, obj runtime.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (c *FakeClient) Patch(ctx context.Context, obj runtime.Object, patch client.Patch, opts ...client.PatchOption) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
 	return c.client.Patch(ctx, obj, patch, opts...)
 }
 
-func (c FakeClient) DeleteAllOf(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error {
+func (c *FakeClient) DeleteAllOf(ctx context.Context, obj runtime.Object, opts ...client.DeleteAllOfOption) error {
 	if c.mockErr != nil {
 		if c.shouldClearError {
-			defer c.this.ClearMockError()
+			defer c.ClearMockError()
 		}
 		return c.mockErr
 	}
