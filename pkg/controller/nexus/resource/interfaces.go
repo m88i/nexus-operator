@@ -15,7 +15,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package infra
+package resource
 
 import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"

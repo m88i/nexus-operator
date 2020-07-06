@@ -20,7 +20,6 @@ package nexus
 import (
 	"context"
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"reflect"
 
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
@@ -115,7 +114,7 @@ type ReconcileNexus struct {
 	client             client.Client
 	scheme             *runtime.Scheme
 	discoveryClient    discovery.DiscoveryInterface
-	resourceSupervisor infra.Supervisor
+	resourceSupervisor resource.Supervisor
 }
 
 // Reconcile reads that state of the cluster for a Nexus object and makes changes based on the state read

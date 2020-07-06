@@ -19,8 +19,6 @@ package resource
 
 import (
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
-
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/networking"
@@ -42,11 +40,11 @@ const mgrsNotInit = "resource managers have not been initialized"
 type supervisor struct {
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
-	managers        []infra.Manager
+	managers        []Manager
 }
 
 // NewSupervisor creates a new resource manager for nexus CR
-func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInterface) infra.Supervisor {
+func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInterface) Supervisor {
 	return &supervisor{
 		client:          client,
 		discoveryClient: discoveryClient,
@@ -60,7 +58,7 @@ func (r *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
 		return fmt.Errorf("unable to create networking manager: %v", err)
 	}
 
-	r.managers = []infra.Manager{
+	r.managers = []Manager{
 		deployment.NewManager(*nexus, r.client),
 		persistence.NewManager(*nexus, r.client),
 		security.NewManager(*nexus, r.client),
