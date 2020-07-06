@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -35,15 +34,15 @@ const mgrNotInit = "the manager has not been initialized"
 
 var log = logger.GetLogger("security_manager")
 
-// manager is responsible for creating security resources, fetching deployed ones and comparing them
-type manager struct {
+// Manager is responsible for creating security resources, fetching deployed ones and comparing them
+type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
 }
 
-// NewManager creates a security resources manager
-func NewManager(nexus v1alpha1.Nexus, client client.Client) infra.Manager {
-	mgr := &manager{
+// NewManager creates a security resources Manager
+func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
+	mgr := &Manager{
 		nexus:  &nexus,
 		client: client,
 	}
@@ -52,21 +51,31 @@ func NewManager(nexus v1alpha1.Nexus, client client.Client) infra.Manager {
 }
 
 // setDefaults destructively sets default for unset values in the Nexus CR
-func (m *manager) setDefaults() {
+func (m *Manager) setDefaults() {
 	if len(m.nexus.Spec.ServiceAccountName) == 0 {
 		m.nexus.Spec.ServiceAccountName = m.nexus.Name
 	}
 }
 
-// GetRequiredResources returns the resources initialized by the manager
-func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+type Script string
+type ScriptRepository interface {
+	Scripts() ([]Script, error)
+	ScriptByID(id int) (Script, error)
+}
+
+// GetRequiredResources returns the resources initialized by the Manager
+func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+	if m.nexus == nil || m.client == nil {
+		return nil, fmt.Errorf(mgrNotInit)
+	}
+
 	log.Debugf("Creating Service Account (%s)", m.nexus.Name)
 	svcAccnt := defaultServiceAccount(m.nexus)
 	return []resource.KubernetesResource{svcAccnt}, nil
 }
 
 // GetDeployedResources returns the security resources deployed on the cluster
-func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
+func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
@@ -81,7 +90,7 @@ func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *manager) getDeployedSvcAccnt() (resource.KubernetesResource, error) {
+func (m *Manager) getDeployedSvcAccnt() (resource.KubernetesResource, error) {
 	account := &core.ServiceAccount{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Service Account (%s)", m.nexus.Name)
@@ -97,14 +106,14 @@ func (m *manager) getDeployedSvcAccnt() (resource.KubernetesResource, error) {
 
 // GetCustomComparator returns the custom comp function used to compare a security resource.
 // Returns nil if there is none
-func (m *manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Service Accounts have a default comparator we just return nil here
 	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
-func (m *manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Service Accounts have a default comparator we just return nil here
 	return nil
 }

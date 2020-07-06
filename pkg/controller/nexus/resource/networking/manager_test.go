@@ -123,7 +123,7 @@ func TestManager_validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		manager := &manager{
+		manager := &Manager{
 			nexus:            &tt.input,
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
@@ -171,7 +171,7 @@ func TestNewManager_setDefaults(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		manager := &manager{
+		manager := &Manager{
 			nexus:            &tt.input,
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
