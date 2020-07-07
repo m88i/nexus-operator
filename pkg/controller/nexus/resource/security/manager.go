@@ -57,12 +57,6 @@ func (m *Manager) setDefaults() {
 	}
 }
 
-type Script string
-type ScriptRepository interface {
-	Scripts() ([]Script, error)
-	ScriptByID(id int) (Script, error)
-}
-
 // GetRequiredResources returns the resources initialized by the Manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {

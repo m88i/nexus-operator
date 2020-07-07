@@ -18,8 +18,8 @@
 package networking
 
 import (
-	"fmt"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
@@ -27,14 +27,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const (
-	serviceKind  = "Service"
-	routeNotInit = "route builder not initialized"
-)
+var serviceKind = (&corev1.Service{}).GroupVersionKind().Kind
 
 type routeBuilder struct {
-	route *v1.Route
-	err   error
+	*v1.Route
 }
 
 func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
@@ -50,22 +46,17 @@ func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
 			},
 		},
 	}
-	return &routeBuilder{route: route}
+	return &routeBuilder{route}
 }
 
 func (r *routeBuilder) withRedirect() *routeBuilder {
-	if r == nil {
-		r.err = fmt.Errorf(routeNotInit)
-		return r
-	}
-
-	r.route.Spec.TLS = &v1.TLSConfig{
+	r.Spec.TLS = &v1.TLSConfig{
 		Termination:                   v1.TLSTerminationEdge,
 		InsecureEdgeTerminationPolicy: v1.InsecureEdgeTerminationPolicyRedirect,
 	}
 	return r
 }
 
-func (r *routeBuilder) build() (*v1.Route, error) {
-	return r.route, r.err
+func (r *routeBuilder) build() *v1.Route {
+	return r.Route
 }
