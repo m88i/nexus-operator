@@ -19,9 +19,45 @@ package networking
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/test"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
+
+func TestManager_IngressAvailable(t *testing.T) {
+	// let's try without correctly creating a manager first
+	mgr := &Manager{}
+	_, err := mgr.IngressAvailable()
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), mgrNotInit)
+
+	// now with a proper manager
+	client := test.NewFakeClientBuilder().Build()
+	nexus := v1alpha1.Nexus{}
+	mgr, err = NewManager(nexus, client, client)
+	assert.Nil(t, err)
+	available, err := mgr.IngressAvailable()
+	assert.Nil(t, err)
+	assert.Equal(t, mgr.ingressAvailable, available)
+}
+
+func TestManager_RouteAvailable(t *testing.T) {
+	// let's try without correctly creating a manager first
+	mgr := &Manager{}
+	_, err := mgr.RouteAvailable()
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), mgrNotInit)
+
+	// now with a proper manager
+	client := test.NewFakeClientBuilder().Build()
+	nexus := v1alpha1.Nexus{}
+	mgr, err = NewManager(nexus, client, client)
+	assert.Nil(t, err)
+	available, err := mgr.RouteAvailable()
+	assert.Nil(t, err)
+	assert.Equal(t, mgr.ingressAvailable, available)
+}
 
 func TestManager_validate(t *testing.T) {
 	tests := []struct {
@@ -123,7 +159,7 @@ func TestManager_validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		manager := &manager{
+		manager := &Manager{
 			nexus:            &tt.input,
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
@@ -171,7 +207,7 @@ func TestNewManager_setDefaults(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		manager := &manager{
+		manager := &Manager{
 			nexus:            &tt.input,
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,

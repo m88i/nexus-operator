@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/infra"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -68,15 +67,15 @@ var (
 	log = logger.GetLogger("deployment_manager")
 )
 
-// manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
-type manager struct {
+// Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
+type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
 }
 
 // NewManager creates a deployment resources manager
-func NewManager(nexus v1alpha1.Nexus, client client.Client) infra.Manager {
-	mgr := &manager{
+func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
+	mgr := &Manager{
 		nexus:  &nexus,
 		client: client,
 	}
@@ -85,26 +84,26 @@ func NewManager(nexus v1alpha1.Nexus, client client.Client) infra.Manager {
 }
 
 // setDefaults destructively sets default for unset values or ensure valid ranges for set values in the Nexus CR
-func (m *manager) setDefaults() {
+func (m *Manager) setDefaults() {
 	m.setSvcAccntDefaults()
 	m.setResourcesDefaults()
 	m.setImageDefaults()
 	m.setProbeDefaults()
 }
 
-func (m *manager) setSvcAccntDefaults() {
+func (m *Manager) setSvcAccntDefaults() {
 	if len(m.nexus.Spec.ServiceAccountName) == 0 {
 		m.nexus.Spec.ServiceAccountName = m.nexus.Name
 	}
 }
 
-func (m *manager) setResourcesDefaults() {
+func (m *Manager) setResourcesDefaults() {
 	if m.nexus.Spec.Resources.Requests == nil && m.nexus.Spec.Resources.Limits == nil {
 		m.nexus.Spec.Resources = DefaultResources
 	}
 }
 
-func (m *manager) setImageDefaults() {
+func (m *Manager) setImageDefaults() {
 	if m.nexus.Spec.UseRedHatImage {
 		if len(m.nexus.Spec.Image) > 0 {
 			log.Warnf("Nexus CR configured to the use Red Hat Certified Image, ignoring 'spec.image' field.")
@@ -124,7 +123,7 @@ func (m *manager) setImageDefaults() {
 	}
 }
 
-func (m *manager) setProbeDefaults() {
+func (m *Manager) setProbeDefaults() {
 	if m.nexus.Spec.LivenessProbe != nil {
 		m.nexus.Spec.LivenessProbe.FailureThreshold =
 			util.EnsureMinimum(m.nexus.Spec.LivenessProbe.FailureThreshold, 1)
@@ -158,7 +157,11 @@ func (m *manager) setProbeDefaults() {
 }
 
 // GetRequiredResources returns the resources initialized by the manager
-func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+	if m.nexus == nil || m.client == nil {
+		return nil, fmt.Errorf(mgrNotInit)
+	}
+
 	log.Debugf("Creating Deployment (%s)", m.nexus.Name)
 	deployment := newDeployment(m.nexus)
 	log.Debugf("Creating Service (%s)", m.nexus.Name)
@@ -167,7 +170,7 @@ func (m *manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 }
 
 // GetDeployedResources returns the deployment-related resources deployed on the cluster
-func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
+func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
@@ -188,7 +191,7 @@ func (m *manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 	return resources, nil
 }
 
-func (m *manager) getDeployedDeployment() (resource.KubernetesResource, error) {
+func (m *Manager) getDeployedDeployment() (resource.KubernetesResource, error) {
 	dep := &appsv1.Deployment{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Deployment (%s)", m.nexus.Name)
@@ -202,7 +205,7 @@ func (m *manager) getDeployedDeployment() (resource.KubernetesResource, error) {
 	return dep, nil
 }
 
-func (m *manager) getDeployedService() (resource.KubernetesResource, error) {
+func (m *Manager) getDeployedService() (resource.KubernetesResource, error) {
 	svc := &corev1.Service{}
 	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
 	log.Debugf("Attempting to fetch deployed Service (%s)", m.nexus.Name)
@@ -218,14 +221,14 @@ func (m *manager) getDeployedService() (resource.KubernetesResource, error) {
 
 // GetCustomComparator returns the custom comp function used to compare a deployment-related resource
 // Returns nil if there is none
-func (m *manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Deployments and Services have default comparators we just return nil here
 	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
-func (m *manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	// As Deployments and Services have default comparators we just return nil here
 	return nil
 }
