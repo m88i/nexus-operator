@@ -167,7 +167,6 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 	if m.nexus == nil || m.client == nil {
 		return nil, fmt.Errorf(mgrNotInit)
 	}
-
 	if !m.nexus.Spec.Networking.Expose {
 		return nil, nil
 	}
@@ -180,11 +179,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 		}
 
 		log.Debugf("Creating Route (%s)", m.nexus.Name)
-		route, err := m.createRoute()
-		if err != nil {
-			log.Errorf("Could not create Route: %v", err)
-			return nil, fmt.Errorf("could not create route: %v", err)
-		}
+		route := m.createRoute()
 		resources = append(resources, route)
 
 	case v1alpha1.IngressExposeType:
@@ -193,17 +188,13 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 		}
 
 		log.Debugf("Creating Ingress (%s)", m.nexus.Name)
-		ingress, err := m.createIngress()
-		if err != nil {
-			log.Errorf("Could not create Ingress: %v", err)
-			return nil, fmt.Errorf("could not create ingress: %v", err)
-		}
+		ingress := m.createIngress()
 		resources = append(resources, ingress)
 	}
 	return resources, nil
 }
 
-func (m *Manager) createRoute() (*routev1.Route, error) {
+func (m *Manager) createRoute() *routev1.Route {
 	builder := newRouteBuilder(m.nexus)
 	if m.nexus.Spec.Networking.TLS.Mandatory {
 		builder = builder.withRedirect()
@@ -211,7 +202,7 @@ func (m *Manager) createRoute() (*routev1.Route, error) {
 	return builder.build()
 }
 
-func (m *Manager) createIngress() (*networkingv1beta1.Ingress, error) {
+func (m *Manager) createIngress() *networkingv1beta1.Ingress {
 	builder := newIngressBuilder(m.nexus)
 	if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
 		builder = builder.withCustomTLS()
