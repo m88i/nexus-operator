@@ -36,7 +36,9 @@ var (
 		},
 		Spec: v1alpha1.NexusSpec{
 			Networking: v1alpha1.NexusNetworking{
-				Host: "ingress.tls.test.com",
+				Expose:   true,
+				ExposeAs: v1alpha1.IngressExposeType,
+				Host:     "ingress.tls.test.com",
 				TLS: v1alpha1.NexusNetworkingTLS{
 					SecretName: "test-tls",
 				},

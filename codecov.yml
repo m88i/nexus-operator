@@ -6,6 +6,7 @@ coverage:
   status:
     project:
       operator:
-        target: 58
+        target: auto
+        threshold: 5%
         flags:
           - operator

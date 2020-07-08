@@ -18,12 +18,11 @@
 package networking
 
 import (
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	"github.com/openshift/api/route/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 

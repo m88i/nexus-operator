@@ -15,7 +15,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-package persistence
+package security
 
 import (
 	ctx "context"
@@ -30,7 +30,7 @@ import (
 	"testing"
 )
 
-var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}}
+var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}, Spec: v1alpha1.NexusSpec{ServiceAccountName: "nexus"}}
 
 func TestNewManager(t *testing.T) {
 	// default-setting logic is tested elsewhere
@@ -48,15 +48,24 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestManager_setDefaults(t *testing.T) {
+	nexusName := "nexus"
+	saName := "my-custom-sa"
+
 	tests := []struct {
 		name  string
 		input *v1alpha1.Nexus
 		want  *v1alpha1.Nexus
 	}{
 		{
-			"'spec.persistence.volumeSize' left blank",
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Persistence: v1alpha1.NexusPersistence{Persistent: true}}},
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Persistence: v1alpha1.NexusPersistence{Persistent: true, VolumeSize: defaultVolumeSize}}},
+			"unset 'spec.serviceAccountName",
+			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{}},
+			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{ServiceAccountName: nexusName}},
+		},
+		{
+
+			"unset 'spec.serviceAccountName",
+			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{ServiceAccountName: saName}},
+			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{ServiceAccountName: saName}},
 		},
 	}
 
@@ -85,21 +94,12 @@ func TestManager_GetRequiredResources(t *testing.T) {
 		client: test.NewFakeClientBuilder().Build(),
 	}
 
-	// first, let's test without persistence
-	mgr.nexus.Spec.Persistence.Persistent = false
+	// the default service accout is _always_ created
+	// even if the user specified a different one
 	resources, err = mgr.GetRequiredResources()
 	assert.Nil(t, err)
-	// there should be no PVC without persistence
-	assert.Len(t, resources, 0)
-
-	// now, let's enable persistence
-	mgr.nexus.Spec.Persistence.Persistent = true
-	mgr.nexus.Spec.Persistence.VolumeSize = "10Gi"
-	resources, err = mgr.GetRequiredResources()
-	assert.Nil(t, err)
-	// there should be a PVC with persistence
 	assert.Len(t, resources, 1)
-	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.PersistentVolumeClaim{})))
+	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.ServiceAccount{})))
 }
 
 func TestManager_GetDeployedResources(t *testing.T) {
@@ -120,14 +120,14 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	assert.Len(t, resources, 0)
 	assert.NoError(t, err)
 
-	// now a valid mgr with a deployed PVC
-	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
+	// now a valid mgr with a deployed Service Account
+	pvc := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), pvc))
 
 	resources, err = mgr.GetDeployedResources()
 	assert.NoError(t, err)
 	assert.Len(t, resources, 1)
-	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.PersistentVolumeClaim{})))
+	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.ServiceAccount{})))
 
 	// make the client return a mocked 500 response to test errors other than NotFound
 	mockErrorMsg := "mock 500"
@@ -137,22 +137,22 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	assert.Contains(t, err.Error(), mockErrorMsg)
 }
 
-func TestManager_getDeployedPVC(t *testing.T) {
+func TestManager_getDeployedSvcAccnt(t *testing.T) {
 	mgr := &Manager{
 		nexus:  baseNexus,
 		client: test.NewFakeClientBuilder().Build(),
 	}
 
-	// first, test without creating the pvc
-	pvc, err := mgr.getDeployedPVC()
-	assert.Nil(t, pvc)
+	// first, test without creating the svcAccnt
+	svcAccnt, err := mgr.getDeployedSvcAccnt()
+	assert.Nil(t, svcAccnt)
 	assert.True(t, errors.IsNotFound(err))
 
-	// now test after creating the pvc
-	pvc = &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), pvc))
-	pvc, err = mgr.getDeployedPVC()
-	assert.NotNil(t, pvc)
+	// now test after creating the svcAccnt
+	svcAccnt = &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
+	assert.NoError(t, mgr.client.Create(ctx.TODO(), svcAccnt))
+	svcAccnt, err = mgr.getDeployedSvcAccnt()
+	assert.NotNil(t, svcAccnt)
 	assert.NoError(t, err)
 }
 
@@ -161,8 +161,8 @@ func TestManager_GetCustomComparator(t *testing.T) {
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
-	// there is no custom comparator function for PVCs
-	pvcComp := mgr.GetCustomComparator(reflect.TypeOf(&corev1.PersistentVolumeClaim{}))
+	// there is no custom comparator function for Service Accounts
+	pvcComp := mgr.GetCustomComparator(reflect.TypeOf(&corev1.ServiceAccount{}))
 	assert.Nil(t, pvcComp)
 }
 
@@ -171,7 +171,7 @@ func TestManager_GetCustomComparators(t *testing.T) {
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
-	// there is no custom comparator function for PVCs
+	// there is no custom comparator function for Service Accounts
 	comparators := mgr.GetCustomComparators()
 	assert.Nil(t, comparators)
 }
