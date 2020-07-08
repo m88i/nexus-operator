@@ -19,6 +19,31 @@ Regarding your local development environment:
 3. Consider adding a new [end-to-end](https://sdk.operatorframework.io/docs/golang/e2e-tests/) test case covering your scenario and make sure to run `make test-e2e` before sending the PR
 4. Make sure to always keep your version of `Go` and the `operator-sdk` on par with the project. The current version information can be found at [the go.mod file](go.mod)
 
+To run all unit tests, build the image, run the E2E tests with that image and push, all in one go, you may run `make pr-prep`. If any tests fail or if the build fails, the process will be terminated so that you make the necessary adjustments. If they are all successful, you'll be prompted to push your commited changes.
+
+```shell
+$ make pr-prep
+# (output omitted)
+All tests were successful!
+Do you wish to push? (y/n) y
+Insert the remote name: [origin] 
+Insert branch: [pr-prep] 
+Pushing to origin/pr-prep
+# (output omitted)
+```
+
+If you don't inform remote name and branch, it will use "origin" as the remote and your current branch (the defaults, which appear between "[]"). Double check if the information is correct.
+
+If you don't want to go over the interactive prompt every time, you can push with the defaults using the `PUSH_WITH_DEFAULTS` environment variable:
+
+```shell
+$ PUSH_WITH_DEFAULTS=TRUE make pr-prep
+# (output omitted)
+All tests were successful!
+Pushing to origin/pr-prep
+# (output omitted)
+```
+
 ## E2E Testing
 
 If you added a new functionality and are willing to add some end-to-end (E2E) testing of your own, please add a test case to `test/e2e/nexus_test.go`.
