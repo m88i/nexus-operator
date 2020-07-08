@@ -32,7 +32,7 @@ push_with_defaults_or_die () {
     confirm_git_or_die
     curr_branch=$(git rev-parse --abbrev-ref HEAD)
     echo "Pushing to origin/${curr_branch}"
-    git push -u origin "${curr_branch}" || echo "${UNABLE_TO_PUSH_ERR}" >&2; exit 1
+    git push origin "${curr_branch}" || echo "${UNABLE_TO_PUSH_ERR}" >&2; exit 1
 }
 
 prompt_and_push_or_die () {
@@ -49,7 +49,7 @@ prompt_and_push_or_die () {
     fi
 
     echo "Pushing to ${remote}/${branch}"
-    git push -u "${remote}" "${branch}" || echo "${UNABLE_TO_PUSH_ERR}" >&2; exit 1
+    git push "${remote}" "${branch}" || echo "${UNABLE_TO_PUSH_ERR}" >&2; exit 1
 }
 
 ./hack/go-test.sh
