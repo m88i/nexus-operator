@@ -37,7 +37,9 @@ var (
 		},
 		Spec: v1alpha1.NexusSpec{
 			Networking: v1alpha1.NexusNetworking{
-				Host: "route.tls.test.com",
+				Expose:   true,
+				ExposeAs: v1alpha1.RouteExposeType,
+				Host:     "route.tls.test.com",
 				TLS: v1alpha1.NexusNetworkingTLS{
 					Mandatory: true,
 				},

@@ -175,7 +175,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 	switch m.nexus.Spec.Networking.ExposeAs {
 	case v1alpha1.RouteExposeType:
 		if !m.routeAvailable {
-			return nil, fmt.Errorf(resUnavailableFormat, "Routes")
+			return nil, fmt.Errorf(resUnavailableFormat, "routes")
 		}
 
 		log.Debugf("Creating Route (%s)", m.nexus.Name)
@@ -265,7 +265,7 @@ func (m *Manager) getDeployedIngress() (*networkingv1beta1.Ingress, error) {
 // GetCustomComparator returns the custom comp function used to compare a networking resource.
 // Returns nil if there is none
 func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-	if t == reflect.TypeOf(networkingv1beta1.Ingress{}) {
+	if t == reflect.TypeOf(&networkingv1beta1.Ingress{}) {
 		return ingressEqual
 	}
 	return nil
