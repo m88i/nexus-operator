@@ -64,31 +64,29 @@ func TestHosts(t *testing.T) {
 		},
 	}
 
-	h := hosts(ingress)
+	h := hosts(ingress.Spec.Rules)
 	assert.Len(t, h, 0)
 
 	host := "a"
 	ingress.Spec.Rules = append(ingress.Spec.Rules, v1beta1.IngressRule{Host: host})
-	h = hosts(ingress)
+	h = hosts(ingress.Spec.Rules)
 	assert.Len(t, h, 1)
 	assert.Equal(t, h[0], host)
 
 	host = "b"
 	ingress.Spec.Rules = append(ingress.Spec.Rules, v1beta1.IngressRule{Host: host})
-	h = hosts(ingress)
+	h = hosts(ingress.Spec.Rules)
 	assert.Len(t, h, 2)
 	assert.Equal(t, h[1], host)
 }
 
 func TestNewIngress(t *testing.T) {
-	ingress, err := newIngressBuilder(ingressNexus).build()
-	assert.Nil(t, err)
+	ingress := newIngressBuilder(ingressNexus).build()
 	assertIngressBasic(t, ingress)
 }
 
 func TestNewIngressWithSecretName(t *testing.T) {
-	ingress, err := newIngressBuilder(ingressNexus).withCustomTLS().build()
-	assert.Nil(t, err)
+	ingress := newIngressBuilder(ingressNexus).withCustomTLS().build()
 	assertIngressBasic(t, ingress)
 	assertIngressSecretName(t, ingress)
 }

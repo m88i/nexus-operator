@@ -18,7 +18,6 @@
 package networking
 
 import (
-	"fmt"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
@@ -28,13 +27,11 @@ import (
 
 const (
 	ingressBasePath = "/"
-	ingressNotInit  = "ingress builder not initialized"
 )
 
 type ingressBuilder struct {
-	ingress *v1beta1.Ingress
-	err     error
-	nexus   *v1alpha1.Nexus
+	*v1beta1.Ingress
+	nexus *v1alpha1.Nexus
 }
 
 func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
@@ -60,43 +57,26 @@ func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 		},
 	}
 
-	return &ingressBuilder{
-		ingress: ingress,
-		err:     nil,
-		nexus:   nexus,
-	}
+	return &ingressBuilder{Ingress: ingress, nexus: nexus}
 }
 
 func (i *ingressBuilder) withCustomTLS() *ingressBuilder {
-	if i == nil {
-		i.err = fmt.Errorf(ingressNotInit)
-		return i
-	}
-
-	i.ingress.Spec.TLS = []v1beta1.IngressTLS{
+	i.Spec.TLS = []v1beta1.IngressTLS{
 		{
-			Hosts:      hosts(i.ingress),
+			Hosts:      hosts(i.Spec.Rules),
 			SecretName: i.nexus.Spec.Networking.TLS.SecretName,
 		},
 	}
 	return i
 }
 
-func (i *ingressBuilder) build() (*v1beta1.Ingress, error) {
-	if i == nil {
-		return nil, fmt.Errorf(ingressNotInit)
-	}
-
-	if i.err != nil {
-		return nil, i.err
-	}
-
-	return i.ingress, nil
+func (i *ingressBuilder) build() *v1beta1.Ingress {
+	return i.Ingress
 }
 
-func hosts(ingress *v1beta1.Ingress) []string {
+func hosts(rules []v1beta1.IngressRule) []string {
 	var hosts []string
-	for _, rule := range ingress.Spec.Rules {
+	for _, rule := range rules {
 		hosts = append(hosts, rule.Host)
 	}
 	return hosts

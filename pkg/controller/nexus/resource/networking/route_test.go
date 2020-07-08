@@ -59,14 +59,12 @@ var (
 )
 
 func TestNewRoute(t *testing.T) {
-	route, err := newRouteBuilder(routeNexus).build()
-	assert.Nil(t, err)
+	route := newRouteBuilder(routeNexus).build()
 	assertRouteBasic(t, route)
 }
 
 func TestNewRouteWithRedirection(t *testing.T) {
-	route, err := newRouteBuilder(routeNexus).withRedirect().build()
-	assert.Nil(t, err)
+	route := newRouteBuilder(routeNexus).withRedirect().build()
 	assertRouteBasic(t, route)
 	assertRouteRedirection(t, route)
 }
