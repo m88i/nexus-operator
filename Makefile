@@ -68,3 +68,9 @@ namespace="nexus-e2e"
 create_namespace=true
 test-e2e:
 	NAMESPACE_E2E=$(namespace) CREATE_NAMESPACE=$(create_namespace) ./hack/run-e2e-test.sh
+
+.PHONY: pr-prep
+create_namespace=true
+run_with_image=true
+pr-prep:
+	CREATE_NAMESPACE=$(create_namespace) RUN_WITH_IMAGE=$(run_with_image) ./hack/pr-prep.sh
