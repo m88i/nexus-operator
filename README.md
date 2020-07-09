@@ -27,7 +27,7 @@ Table of Contents
 
 # Nexus Operator
 
-A Nexus OSS Kubernetes Operator based on Operators SDK.
+A Nexus OSS Kubernetes Operator based on the [Operator SDK](https://github.com/operator-framework/operator-sdk).
 
 You can find us at [OperatorHub](https://operatorhub.io/operator/nexus-operator-m88i) or at the ["Operators" tab in your OpenShift 4.x web console](https://docs.openshift.com/container-platform/4.4/operators/olm-adding-operators-to-cluster.html), just search for "Nexus". If you don't have access to [OLM](https://github.com/operator-framework/operator-lifecycle-manager), try installing it manually [following our quick installation guide](#quick-install).
 
