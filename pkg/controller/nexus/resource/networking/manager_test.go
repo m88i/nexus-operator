@@ -41,37 +41,21 @@ var nodePortNexus = &v1alpha1.Nexus{
 }
 
 func TestManager_IngressAvailable(t *testing.T) {
-	// let's try without correctly creating a manager first
-	mgr := &Manager{}
-	_, err := mgr.IngressAvailable()
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), mgrNotInit)
-
-	// now with a proper manager
 	client := test.NewFakeClientBuilder().Build()
 	nexus := v1alpha1.Nexus{}
-	mgr, err = NewManager(nexus, client, client)
+	mgr, err := NewManager(nexus, client, client)
 	assert.Nil(t, err)
-	available, err := mgr.IngressAvailable()
-	assert.Nil(t, err)
-	assert.Equal(t, mgr.ingressAvailable, available)
+
+	assert.Equal(t, mgr.ingressAvailable, mgr.IngressAvailable())
 }
 
 func TestManager_RouteAvailable(t *testing.T) {
-	// let's try without correctly creating a manager first
-	mgr := &Manager{}
-	_, err := mgr.RouteAvailable()
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), mgrNotInit)
-
-	// now with a proper manager
 	client := test.NewFakeClientBuilder().Build()
 	nexus := v1alpha1.Nexus{}
-	mgr, err = NewManager(nexus, client, client)
+	mgr, err := NewManager(nexus, client, client)
 	assert.Nil(t, err)
-	available, err := mgr.RouteAvailable()
-	assert.Nil(t, err)
-	assert.Equal(t, mgr.ingressAvailable, available)
+
+	assert.Equal(t, mgr.ingressAvailable, mgr.IngressAvailable())
 }
 
 func TestNewManager(t *testing.T) {
@@ -330,20 +314,14 @@ func TestManager_validate(t *testing.T) {
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
-	// first, let's test with mgr that has not been init
-	mgr := &Manager{}
-	resources, err := mgr.GetRequiredResources()
-	assert.Nil(t, resources)
-	assert.EqualError(t, err, mgrNotInit)
-
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned
 	// first, let's test a Nexus which does not expose
-	mgr = &Manager{
+	mgr := &Manager{
 		nexus:  &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: false}}},
 		client: test.NewFakeClientBuilder().Build(),
 	}
-	resources, err = mgr.GetRequiredResources()
+	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, resources)
 	assert.Nil(t, err)
 
@@ -416,27 +394,21 @@ func TestManager_createIngress(t *testing.T) {
 }
 
 func TestManager_GetDeployedResources(t *testing.T) {
-	// first, let's test with mgr that has not been init
-	mgr := &Manager{}
-	resources, err := mgr.GetDeployedResources()
-	assert.Nil(t, resources)
-	assert.EqualError(t, err, mgrNotInit)
-
-	// now a valid mgr, but no deployed resources
+	// first with no deployed resources
 	fakeClient := test.NewFakeClientBuilder().WithIngress().OnOpenshift().Build()
-	mgr = &Manager{
+	mgr := &Manager{
 		nexus:            nodePortNexus,
 		client:           fakeClient,
 		ingressAvailable: true,
 		routeAvailable:   true,
 		ocp:              true,
 	}
-	resources, err = mgr.GetDeployedResources()
+	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Len(t, resources, 0)
 	assert.NoError(t, err)
 
-	// now a valid mgr with deployed resources
+	// now with deployed resources
 	route := &routev1.Route{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), route))
 

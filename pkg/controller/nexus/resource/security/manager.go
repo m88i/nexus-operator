@@ -30,11 +30,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const mgrNotInit = "the manager has not been initialized"
-
 var log = logger.GetLogger("security_manager")
 
 // Manager is responsible for creating security resources, fetching deployed ones and comparing them
+// Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
@@ -59,10 +58,6 @@ func (m *Manager) setDefaults() {
 
 // GetRequiredResources returns the resources initialized by the Manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	log.Debugf("Creating Service Account (%s)", m.nexus.Name)
 	svcAccnt := defaultServiceAccount(m.nexus)
 	return []resource.KubernetesResource{svcAccnt}, nil
@@ -70,10 +65,6 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 
 // GetDeployedResources returns the security resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	var resources []resource.KubernetesResource
 	if svcAccnt, err := m.getDeployedSvcAccnt(); err == nil {
 		resources = append(resources, svcAccnt)
