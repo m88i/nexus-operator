@@ -8,5 +8,6 @@ coverage:
       operator:
         target: auto
         threshold: 5%
+        base: auto
         flags:
           - operator
