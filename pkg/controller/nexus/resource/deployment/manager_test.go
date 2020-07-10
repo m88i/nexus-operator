@@ -178,19 +178,13 @@ func TestManager_setDefaults(t *testing.T) {
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
-	// first, let's test with mgr that has not been init
-	mgr := &Manager{}
-	resources, err := mgr.GetDeployedResources()
-	assert.Nil(t, resources)
-	assert.EqualError(t, err, mgrNotInit)
-
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned
-	mgr = &Manager{
+	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
 		client: test.NewFakeClientBuilder().Build(),
 	}
-	resources, err = mgr.GetRequiredResources()
+	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)
 	// a deployment and a service are _always_ created, so both should always be present
 	assert.Len(t, resources, 2)
@@ -199,24 +193,18 @@ func TestManager_GetRequiredResources(t *testing.T) {
 }
 
 func TestManager_GetDeployedResources(t *testing.T) {
-	// first, let's test with mgr that has not been init
-	mgr := &Manager{}
-	resources, err := mgr.GetDeployedResources()
-	assert.Nil(t, resources)
-	assert.EqualError(t, err, mgrNotInit)
-
-	// now a valid mgr, but no deployed resources
+	// first no deployed resources
 	fakeClient := test.NewFakeClientBuilder().Build()
-	mgr = &Manager{
+	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
 		client: fakeClient,
 	}
-	resources, err = mgr.GetDeployedResources()
+	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Len(t, resources, 0)
 	assert.NoError(t, err)
 
-	// now a valid mgr with deployed resources
+	// now with deployed resources
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), deployment))
 

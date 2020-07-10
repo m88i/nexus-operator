@@ -32,12 +32,12 @@ import (
 
 const (
 	defaultVolumeSize = "10Gi"
-	mgrNotInit        = "the manager has not been initialized"
 )
 
 var log = logger.GetLogger("persistence_manager")
 
-// manager is responsible for creating persistence resources, fetching deployed ones and comparing them
+// Manager is responsible for creating persistence resources, fetching deployed ones and comparing them
+// Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
@@ -62,10 +62,6 @@ func (m *Manager) setDefaults() {
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	var resources []resource.KubernetesResource
 	if m.nexus.Spec.Persistence.Persistent {
 		log.Debugf("Creating Persistent Volume Claim (%s)", m.nexus.Name)
@@ -77,10 +73,6 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 
 // GetDeployedResources returns the persistence resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	var resources []resource.KubernetesResource
 	if pvc, err := m.getDeployedPVC(); err == nil {
 		resources = append(resources, pvc)

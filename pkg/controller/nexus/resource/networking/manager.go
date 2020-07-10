@@ -39,13 +39,13 @@ const (
 	discOCPFailureFormat      = "unable to determine if cluster is Openshift: %v"
 	discFailureFormat         = "unable to determine if %s are available: %v" // resource type, error
 	resUnavailableFormat      = "%s are not available in this cluster"        // resource type
-	mgrNotInit                = "the manager has not been initialized"
 	unspecifiedExposeAsFormat = "'spec.exposeAs' left unspecified, setting it to %s"
 )
 
 var log = logger.GetLogger("networking_manager")
 
 // Manager is responsible for creating networking resources, fetching deployed ones and comparing them
+// Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
@@ -85,18 +85,12 @@ func NewManager(nexus v1alpha1.Nexus, client client.Client, disc discovery.Disco
 	return mgr, nil
 }
 
-func (m *Manager) IngressAvailable() (bool, error) {
-	if m.nexus == nil || m.client == nil {
-		return false, fmt.Errorf(mgrNotInit)
-	}
-	return m.ingressAvailable, nil
+func (m *Manager) IngressAvailable() bool {
+	return m.ingressAvailable
 }
 
-func (m *Manager) RouteAvailable() (bool, error) {
-	if m.nexus == nil || m.client == nil {
-		return false, fmt.Errorf(mgrNotInit)
-	}
-	return m.routeAvailable, nil
+func (m *Manager) RouteAvailable() bool {
+	return m.routeAvailable
 }
 
 // setDefaults destructively sets default for unset values in the Nexus CR
@@ -164,9 +158,6 @@ func (m *Manager) validate() error {
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
 	if !m.nexus.Spec.Networking.Expose {
 		return nil, nil
 	}
@@ -212,10 +203,6 @@ func (m *Manager) createIngress() *networkingv1beta1.Ingress {
 
 // GetDeployedResources returns the networking resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	var resources []resource.KubernetesResource
 	if m.routeAvailable {
 		if route, err := m.getDeployedRoute(); err == nil {

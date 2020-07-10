@@ -72,22 +72,16 @@ func TestManager_setDefaults(t *testing.T) {
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
-	// first, let's test with mgr that has not been init
-	mgr := &Manager{}
-	resources, err := mgr.GetDeployedResources()
-	assert.Nil(t, resources)
-	assert.EqualError(t, err, mgrNotInit)
-
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned
-	mgr = &Manager{
+	mgr := &Manager{
 		nexus:  baseNexus.DeepCopy(),
 		client: test.NewFakeClientBuilder().Build(),
 	}
 
 	// first, let's test without persistence
 	mgr.nexus.Spec.Persistence.Persistent = false
-	resources, err = mgr.GetRequiredResources()
+	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)
 	// there should be no PVC without persistence
 	assert.Len(t, resources, 0)
@@ -103,24 +97,18 @@ func TestManager_GetRequiredResources(t *testing.T) {
 }
 
 func TestManager_GetDeployedResources(t *testing.T) {
-	// first, let's test with mgr that has not been init
-	mgr := &Manager{}
-	resources, err := mgr.GetDeployedResources()
-	assert.Nil(t, resources)
-	assert.EqualError(t, err, mgrNotInit)
-
-	// now a valid mgr, but no deployed resources
+	// first with no deployed resources
 	fakeClient := test.NewFakeClientBuilder().Build()
-	mgr = &Manager{
+	mgr := &Manager{
 		nexus:  baseNexus,
 		client: fakeClient,
 	}
-	resources, err = mgr.GetDeployedResources()
+	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Len(t, resources, 0)
 	assert.NoError(t, err)
 
-	// now a valid mgr with a deployed PVC
+	// now with a deployed PVC
 	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), pvc))
 

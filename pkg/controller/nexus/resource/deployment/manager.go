@@ -36,7 +36,6 @@ import (
 const (
 	NexusCommunityLatestImage       = "docker.io/sonatype/nexus3:latest"
 	NexusCertifiedLatestImage       = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
-	mgrNotInit                      = "the manager has not been initialized"
 	probeDefaultInitialDelaySeconds = int32(240)
 	probeDefaultTimeoutSeconds      = int32(15)
 	probeDefaultPeriodSeconds       = int32(10)
@@ -68,6 +67,7 @@ var (
 )
 
 // Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
+// Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
@@ -158,10 +158,6 @@ func (m *Manager) setProbeDefaults() {
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	log.Debugf("Creating Deployment (%s)", m.nexus.Name)
 	deployment := newDeployment(m.nexus)
 	log.Debugf("Creating Service (%s)", m.nexus.Name)
@@ -171,10 +167,6 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 
 // GetDeployedResources returns the deployment-related resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	if m.nexus == nil || m.client == nil {
-		return nil, fmt.Errorf(mgrNotInit)
-	}
-
 	var resources []resource.KubernetesResource
 	if deployment, err := m.getDeployedDeployment(); err == nil {
 		resources = append(resources, deployment)
