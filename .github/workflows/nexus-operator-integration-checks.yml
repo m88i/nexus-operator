@@ -62,9 +62,15 @@ jobs:
 
       - name: Test Packages
         run: go test ./pkg/... -count=1 -coverprofile=coverage.txt -covermode=atomic
-
+      - name: Validate codcov yaml file
+        run: curl -vvv --data-binary @codecov.yml https://codecov.io/validate
       - name: Send Coverage Report
-        run: bash <(curl -s https://codecov.io/bash) -F operator
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.txt
+          flags: operator
+          name: operator-test
+          fail_ci_if_error: true
 
   integration_tests:
     name: Integration Tests
