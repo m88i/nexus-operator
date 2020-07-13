@@ -17,19 +17,21 @@
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
 set -e
-default_kind_version="v0.8.1"
+default_kind_version=v0.8.1
 
 if [[ -z ${KIND_VERSION+x} ]]; then
     KIND_VERSION=$default_kind_version
     echo "Using default KIND version ${KIND_VERSION}"
 fi
+GOPATH=$(go env GOPATH)
 
-if [ ! -f ./bin/kind ]; then
-    echo "Installing KIND"
-    curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64
-    chmod +x ${PWD}/kind &&
-        mkdir -p ./bin &&
-        mv ${PWD}/kind ./bin/kind
+if [[ $(which kind) ]]; then
+  echo "---> kind is already installed. Please make sure it is the required ${KIND_VERSION} version before proceeding"
 else
-    echo "KIND already installed, skipping"
+  echo "---> kind not found, installing it in \$GOPATH/bin/"
+  curl -L https://kind.sigs.k8s.io/dl/$KIND_VERSION/kind-$(uname)-amd64 -o "$GOPATH"/bin/kind
+  chmod +x "$GOPATH"/bin/kind
 fi
+
+#for verification
+kind version

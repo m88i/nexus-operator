@@ -18,22 +18,22 @@
 
 set -e
 
-if [ -z "${KUBE_VERSION}" ]; then
-    KIND_KUBE_VERSION=""
-else
-    KIND_KUBE_VERSION="--image kindest/node:${KUBE_VERSION}"
-fi
+#Make sure docker is installed before proceeding
+which docker > /dev/null || (echo "docker is not installed. Please install it before proceeding exiting...." && exit 1)
 
-if [ ! -z ${VERBOSE+x} ] && [ "${VERBOSE}" == "1" ]; then
-    KIND_VERBOSITY="--verbosity 1"
-else
-    KIND_VERBOSITY="--verbosity 0"
-fi
+#make sure kind is installed before proceeding
+which kind > /dev/null || (echo "kind is not installed. Please install it before proceeding exiting...." && exit 1)
 
-if [[ ! "$(./bin/kind get clusters)" =~ "${CLUSTER_NAME}" ]]; then
-    ./bin/kind create cluster --name ${CLUSTER_NAME} --wait 1m ${KIND_KUBE_VERSION} ${KIND_VERBOSITY}
+default_cluster_name="operator-test"
+
+if [[ -z ${CLUSTER_NAME} ]]; then
+    CLUSTER_NAME=$default_cluster_name
+fi
+if [[ $(kind get clusters | grep ${CLUSTER_NAME}) ]]; then
+  echo "---> Cluster ${CLUSTER_NAME} already present"
 else
-    echo "---> Already found cluster named '${CLUSTER_NAME}'"
+  echo "---> Provisioning new cluster"
+  kind create cluster  --name ${CLUSTER_NAME} --wait 1m
 fi
 
 echo "---> Checking KIND cluster conditions"

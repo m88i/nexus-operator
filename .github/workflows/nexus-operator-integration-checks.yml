@@ -85,7 +85,11 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
       - name: Cache dependencies
         uses: actions/cache@v1
         with:
@@ -94,10 +98,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-cache-
 
-      - name: Cache Operator SDK Binary
+      - name: Cache Binaries
         uses: actions/cache@v1
         with:
-          path: ./bin
+          path: ~/go/bin/
           key: ${{ runner.os }}-operator-sdk-${{ env.OPERATOR_SDK_VERSION }}
           restore-keys: |
             ${{ runner.os }}-operator-sdk-${{ env.OPERATOR_SDK_VERSION }}
@@ -105,15 +109,6 @@ jobs:
       - name: Install Operator SDK
         run: |
           ./hack/ci/install-operator-sdk.sh
-          echo "::add-path::$GITHUB_WORKSPACE/bin"
-
-      - name: Cacke KIND Binary
-        uses: actions/cache@v1
-        with:
-          path: ./bin
-          key: ${{ runner.os }}-kind-${{ env.KIND_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-kind-${{ env.KIND_VERSION }}
 
       - name: Install KIND
         run: |
