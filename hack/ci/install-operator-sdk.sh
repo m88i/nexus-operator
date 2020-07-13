@@ -16,18 +16,23 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
+set -e
+
+default_operator_sdk_version=v0.18.1
+
 if [[ -z ${OPERATOR_SDK_VERSION} ]]; then
-    OPERATOR_SDK_VERSION=0.17.0
+    OPERATOR_SDK_VERSION=$default_operator_sdk_version
 fi
 
-if [ ! -f ./bin/operator-sdk ]; then
-    echo "Installing Operator SDK version ${OPERATOR_SDK_VERSION}"
-    curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v${OPERATOR_SDK_VERSION}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu
+GOPATH=$(go env GOPATH)
 
-    chmod +x ${PWD}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu &&
-        mkdir -p ./bin &&
-        cp ${PWD}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu ./bin/operator-sdk &&
-        rm ${PWD}/operator-sdk-v${OPERATOR_SDK_VERSION}-x86_64-linux-gnu
+if [[ $(which operator-sdk) ]]; then
+  echo "---> operator-sdk is already installed. Please make sure it is the required ${OPERATOR_SDK_VERSION} version before proceeding"
 else
-    echo "Operator already installed, skipping"
+  echo "---> operator-sdk not found, installing it in \$GOPATH/bin/"
+  curl -L https://github.com/operator-framework/operator-sdk/releases/download/$OPERATOR_SDK_VERSION/operator-sdk-$OPERATOR_SDK_VERSION-x86_64-linux-gnu -o "$GOPATH"/bin/operator-sdk
+  chmod +x "$GOPATH"/bin/operator-sdk
 fi
+
+##For verification
+operator-sdk version
