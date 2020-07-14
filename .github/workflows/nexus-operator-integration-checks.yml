@@ -75,7 +75,6 @@ jobs:
   integration_tests:
     name: Integration Tests
     # we should wait for an ok from the other two
-    needs: [golint, unit_test]
     runs-on: ubuntu-latest
     env:
       CLUSTER_NAME: operator-test
@@ -131,11 +130,6 @@ jobs:
       - name: Load Operator Image
         run: ./hack/ci/load-operator-image.sh
 
-      - name: Run e2e test
-        env:
-          RUN_WITH_IMAGE: true
-          TIMEOUT_E2E: 20m
-        run: ./hack/run-e2e-test.sh
 
       - name: Run Operator OLM Integration Test
         run: ./hack/ci/operator-olm-test.sh
