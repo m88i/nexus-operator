@@ -11,3 +11,5 @@ coverage:
         base: auto
         flags:
           - operator
+comment:
+  require_changes: true
