@@ -117,8 +117,6 @@ jobs:
       - name: Start KIND
         run: ./hack/ci/start-kind.sh
 
-      - name: Generate Manifests
-        run: ./hack/generate-manifests.sh
 
       - name: Build Operator Image
         env:
