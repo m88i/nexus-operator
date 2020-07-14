@@ -1,3 +1,5 @@
+comment:
+  require_changes: true
 flags:
   operator:
     paths:
