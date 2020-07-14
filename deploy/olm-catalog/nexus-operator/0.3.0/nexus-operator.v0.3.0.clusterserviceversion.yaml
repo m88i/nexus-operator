@@ -106,6 +106,7 @@ spec:
         displayName: appsv1.DeploymentStatus
         path: deploymentStatus
       version: v1alpha1
+    version: v1alpha1
   description: |-
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:
 
