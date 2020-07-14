@@ -26,7 +26,7 @@ fi
 
 GOPATH=$(go env GOPATH)
 
-if [[ $(which operator-sdk) ]]; then
+if [[ $(command -v operator-sdk) ]]; then
   echo "---> operator-sdk is already installed. Please make sure it is the required ${OPERATOR_SDK_VERSION} version before proceeding"
 else
   echo "---> operator-sdk not found, installing it in \$GOPATH/bin/"
