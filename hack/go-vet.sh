@@ -16,18 +16,19 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-if [[ -z ${CI} ]]; then
-    ./hack/go-mod.sh
-    ./hack/addheaders.sh
+set -e
+GOPATH=$(go env GOPATH)
+./hack/go-mod.sh
+./hack/addheaders.sh
 
-    operator-sdk generate k8s
-    operator-sdk generate crds
+operator-sdk generate k8s
+operator-sdk generate crds
 
-    # get the openapi binary
-    which ./bin/openapi-gen >/dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
-    echo "Generating openapi files"
-    ./bin/openapi-gen --logtostderr=true -o "" -i ./pkg/apis/apps/v1alpha1 -O zz_generated.openapi -p ./pkg/apis/apps/v1alpha1 -h ./hack/boilerplate.go.txt -r "-"
+# get the openapi binary
+command -v openapi-gen >/dev/null || go build -o $GOPATH/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+echo "Generating openapi files"
+openapi-gen --logtostderr=true -o "" -i ./pkg/apis/apps/v1alpha1 -O zz_generated.openapi -p ./pkg/apis/apps/v1alpha1 -h ./hack/boilerplate.go.txt -r "-"
 
-    ./hack/generate-manifests.sh
-fi
+./hack/generate-manifests.sh
+
 go vet ./...
