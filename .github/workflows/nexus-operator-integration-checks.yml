@@ -1,7 +1,6 @@
 name: Nexus Operator Integration Checks
 on:
   pull_request:
-  push:
     paths-ignore:
       - "docs/**"
       - "README.md"
