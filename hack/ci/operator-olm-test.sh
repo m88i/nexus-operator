@@ -22,11 +22,7 @@ source ./hack/export-version.sh
 CATALOG_IMAGE="operatorhubio-catalog:temp"
 OP_PATH="community-operators/nexus-operator-m88i"
 INSTALL_MODE="SingleNamespace"
-# Changed image with older version of operator-courier
-# See: https://github.com/operator-framework/operator-courier/issues/188
-# Needs to be changed back to quay.io/operator-framework/operator-testing:latest
-# after the issue has been resolved and the new image has been built
-OPERATOR_TESTING_IMAGE="docker.io/tarun18/operator-testing:latest"
+OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
 
 if [ -z ${KUBECONFIG} ]; then
     KUBECONFIG=${HOME}/.kube/config
