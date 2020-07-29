@@ -155,6 +155,39 @@ Just make sure that that the host resolves to your cluster.
 
 If you're running on Minikube, take a look in the article ["Set up Ingress on Minikube with the NGINX Ingress Controller"](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/)
 
+If you've deployed the NGINX Ingress controller, you might see `413 ERROR - Entity too large` in uploading the artifacts to the nexus server.
+ 
+ You would need to enter the maximum size allowed for the data packet in the configMap for the controller.
+
+If you've deployed the Ingress controller in minikube it'll be available in the `kube-system` namespace
+
+```
+$ kubectl get deploy -n kube-system
+                                                              
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+coredns                    1/1     1            1           47h
+ingress-nginx-controller   1/1     1            1           47h
+``` 
+For checking out the name of the configMap you can run:
+
+```
+$ kubectl get deploy/ingress-nginx-controller -o yaml -n kube-system | grep "\--configmap" 
+
+- --configmap=$(POD_NAMESPACE)/nginx-load-balancer-conf
+```
+
+Now you would need to edit the config map:
+
+`$  kubectl edit configmaps nginx-load-balancer-conf -n kube-system `
+
+In the root of the opened yaml add,
+
+```
+data:
+     proxy-body-size: 10m
+```
+Note: If you want to have no limit for the data packet you can specify the `proxy-body-size: 0m`
+
 ### TLS/SSL
 
 For details about TLS configuration check out our [TLS guide](https://github.com/m88i/nexus-operator/tree/master/docs/TLS.md).
