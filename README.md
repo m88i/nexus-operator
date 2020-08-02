@@ -16,6 +16,7 @@ Table of Contents
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
          * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
+           * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
          * [TLS/SSL](#tlsssl)
       * [Persistence](#persistence)
          * [Minikube](#minikube)
@@ -154,6 +155,8 @@ Please note that `host` is a required parameter when exposing via `Ingress`.
 Just make sure that that the host resolves to your cluster.
 
 If you're running on Minikube, take a look in the article ["Set up Ingress on Minikube with the NGINX Ingress Controller"](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/)
+
+#### NGINX Ingress troubleshooting
 
 If you've deployed the [NGINX Ingress controller](https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/), you might see [`413 ERROR - Entity too large`](https://github.com/kubernetes/ingress-nginx/issues/4825) in uploading the artifacts to the Nexus server.
  
