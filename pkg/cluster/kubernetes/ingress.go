@@ -35,6 +35,7 @@ const ingressGroup = networking.GroupName
 var ingressVersion = networking.SchemeGroupVersion.Version
 
 // IsIngressAvailable checks if th cluster supports Ingresses from k8s.io/api/networking/v1beta1
+// <lcaparelli> TODO: consider an implementation on which callers don't need a discovery interface and that caches results from calls (these don't usually change, so a high TTL should be ok). Same applies to similar functions on this package
 func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
 	serverGroups, err := d.ServerGroups()
 	if err != nil {

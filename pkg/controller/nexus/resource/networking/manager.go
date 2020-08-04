@@ -36,10 +36,9 @@ import (
 )
 
 const (
-	discOCPFailureFormat      = "unable to determine if cluster is Openshift: %v"
-	discFailureFormat         = "unable to determine if %s are available: %v" // resource type, error
-	resUnavailableFormat      = "%s are not available in this cluster"        // resource type
-	unspecifiedExposeAsFormat = "'spec.exposeAs' left unspecified, setting it to %s"
+	discOCPFailureFormat = "unable to determine if cluster is Openshift: %v"
+	discFailureFormat    = "unable to determine if %s are available: %v" // resource type, error
+	resUnavailableFormat = "%s are not available in this cluster"        // resource type
 )
 
 var log = logger.GetLogger("networking_manager")
@@ -54,6 +53,7 @@ type Manager struct {
 }
 
 // NewManager creates a networking resources manager
+// It is expected that the Nexus has been previously validated.
 func NewManager(nexus v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*Manager, error) {
 	routeAvailable, err := openshift.IsRouteAvailable(disc)
 	if err != nil {
@@ -70,19 +70,13 @@ func NewManager(nexus v1alpha1.Nexus, client client.Client, disc discovery.Disco
 		return nil, fmt.Errorf(discOCPFailureFormat, err)
 	}
 
-	mgr := &Manager{
+	return &Manager{
 		nexus:            &nexus,
 		client:           client,
 		routeAvailable:   routeAvailable,
 		ingressAvailable: ingressAvailable,
 		ocp:              ocp,
-	}
-
-	mgr.setDefaults()
-	if err := mgr.validate(); err != nil {
-		return nil, fmt.Errorf("unable to validate provided CR: %v", err)
-	}
-	return mgr, nil
+	}, nil
 }
 
 func (m *Manager) IngressAvailable() bool {
@@ -91,69 +85,6 @@ func (m *Manager) IngressAvailable() bool {
 
 func (m *Manager) RouteAvailable() bool {
 	return m.routeAvailable
-}
-
-// setDefaults destructively sets default for unset values in the Nexus CR
-func (m *Manager) setDefaults() {
-	if !m.nexus.Spec.Networking.Expose {
-		return
-	}
-
-	if len(m.nexus.Spec.Networking.ExposeAs) == 0 {
-		if m.ocp {
-			log.Infof(unspecifiedExposeAsFormat, v1alpha1.RouteExposeType)
-			m.nexus.Spec.Networking.ExposeAs = v1alpha1.RouteExposeType
-		} else if m.ingressAvailable {
-			log.Infof(unspecifiedExposeAsFormat, v1alpha1.IngressExposeType)
-			m.nexus.Spec.Networking.ExposeAs = v1alpha1.IngressExposeType
-		} else {
-			// we're on kubernetes < 1.14
-			// try setting nodePort, validation will catch it if impossible
-			log.Info("On Kubernetes, but Ingresses are not available")
-			log.Infof(unspecifiedExposeAsFormat, v1alpha1.NodePortExposeType)
-			m.nexus.Spec.Networking.ExposeAs = v1alpha1.NodePortExposeType
-		}
-	}
-}
-
-// validate checks if the networking parameters from the Nexus CR are sane
-func (m *Manager) validate() error {
-	if !m.nexus.Spec.Networking.Expose {
-		log.Debugf("'spec.networking.expose' set to 'false', ignoring networking configuration")
-		return nil
-	}
-
-	if !m.ingressAvailable && m.nexus.Spec.Networking.ExposeAs == v1alpha1.IngressExposeType {
-		log.Errorf("Ingresses are not available on your cluster. Make sure to be running Kubernetes > 1.14 or if you're running Openshift set 'spec.networking.exposeAs' to '%s'. Alternatively you may also try '%s'", v1alpha1.IngressExposeType, v1alpha1.NodePortExposeType)
-		return fmt.Errorf("ingress expose required, but unavailable")
-	}
-
-	if !m.routeAvailable && m.nexus.Spec.Networking.ExposeAs == v1alpha1.RouteExposeType {
-		log.Errorf("Routes are not available on your cluster. If you're running Kubernetes 1.14 or higher try setting 'spec.networking.exposeAs' to '%s'. Alternatively you may also try '%s'", v1alpha1.IngressExposeType, v1alpha1.NodePortExposeType)
-		return fmt.Errorf("route expose required, but unavailable")
-	}
-
-	if m.nexus.Spec.Networking.ExposeAs == v1alpha1.NodePortExposeType && m.nexus.Spec.Networking.NodePort == 0 {
-		log.Errorf("NodePort networking requires a port. Check the Nexus resource 'spec.networking.nodePort' parameter")
-		return fmt.Errorf("nodeport expose required, but no port informed")
-	}
-
-	if m.nexus.Spec.Networking.ExposeAs == v1alpha1.IngressExposeType && len(m.nexus.Spec.Networking.Host) == 0 {
-		log.Errorf("Ingress networking requires a host. Check the Nexus resource 'spec.networking.host' parameter")
-		return fmt.Errorf("ingress expose required, but no host informed")
-	}
-
-	if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 && m.nexus.Spec.Networking.ExposeAs != v1alpha1.IngressExposeType {
-		log.Errorf("'spec.networking.tls.secretName' is only available when using an Ingress. Try setting 'spec.networking.exposeAs' to '%s'", v1alpha1.IngressExposeType)
-		return fmt.Errorf("tls secret name informed, but using route")
-	}
-
-	if m.nexus.Spec.Networking.TLS.Mandatory && m.nexus.Spec.Networking.ExposeAs != v1alpha1.RouteExposeType {
-		log.Errorf("'spec.networking.tls.mandatory' is only available when using a Route. Try setting 'spec.networking.exposeAs' to '%s'", v1alpha1.RouteExposeType)
-		return fmt.Errorf("tls set to mandatory, but using ingress")
-	}
-
-	return nil
 }
 
 // GetRequiredResources returns the resources initialized by the manager

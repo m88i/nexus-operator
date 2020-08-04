@@ -20,6 +20,7 @@ package nexus
 import (
 	"context"
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	"reflect"
 
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
@@ -139,13 +140,22 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		// Error reading the object - requeue the request.
 		return result, err
 	}
-	cache := instance.DeepCopy()
 
-	// In case of any errors from here, we should update the application status
-	defer r.updateNexusStatus(instance, cache, &err)
+	v, err := validation.NewValidator(r.discoveryClient)
+	if err != nil {
+		// Error using the discovery API - requeue the request.
+		return
+	}
+
+	validatedNexus, err := v.SetDefaultsAndValidate(instance)
+	// In case of any errors from here, we should update the Nexus CR and its status
+	defer r.updateNexus(validatedNexus, instance, &err)
+	if err != nil {
+		return
+	}
 
 	// Initialize the resource managers
-	err = r.resourceSupervisor.InitManagers(instance)
+	err = r.resourceSupervisor.InitManagers(validatedNexus)
 	if err != nil {
 		return
 	}
@@ -166,7 +176,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	}
 	deltas := comparator.Compare(deployedRes, requestedRes)
 
-	writer := write.New(r.client).WithOwnerController(instance, r.scheme)
+	writer := write.New(r.client).WithOwnerController(validatedNexus, r.scheme)
 	for resourceType, delta := range deltas {
 		if !delta.HasChanges() {
 			continue
@@ -193,7 +203,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	return
 }
 
-func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, cache *appsv1alpha1.Nexus, err *error) {
+func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *appsv1alpha1.Nexus, err *error) {
 	log.Info("Updating application status before leaving")
 
 	if *err != nil {
@@ -210,7 +220,7 @@ func (r *ReconcileNexus) updateNexusStatus(nexus *appsv1alpha1.Nexus, cache *app
 		log.Error(urlErr, "Error while fetching Nexus URL status")
 	}
 
-	if !reflect.DeepEqual(cache, nexus) {
+	if !reflect.DeepEqual(originalNexus, nexus) {
 		log.Info("Updating nexus status")
 		if updateErr := r.client.Update(context.TODO(), nexus); updateErr != nil {
 			log.Error(updateErr, "Error while updating Nexus status")

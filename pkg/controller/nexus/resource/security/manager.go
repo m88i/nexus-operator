@@ -41,18 +41,9 @@ type Manager struct {
 
 // NewManager creates a security resources Manager
 func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
-	mgr := &Manager{
+	return &Manager{
 		nexus:  &nexus,
 		client: client,
-	}
-	mgr.setDefaults()
-	return mgr
-}
-
-// setDefaults destructively sets default for unset values in the Nexus CR
-func (m *Manager) setDefaults() {
-	if len(m.nexus.Spec.ServiceAccountName) == 0 {
-		m.nexus.Spec.ServiceAccountName = m.nexus.Name
 	}
 }
 
