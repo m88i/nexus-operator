@@ -30,10 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	defaultVolumeSize = "10Gi"
-)
-
 var log = logger.GetLogger("persistence_manager")
 
 // Manager is responsible for creating persistence resources, fetching deployed ones and comparing them
@@ -43,20 +39,12 @@ type Manager struct {
 	client client.Client
 }
 
-// NewManager creates a persistence resources manager
+// NewManager creates a persistence resources manager.
+// It is expected that the Nexus has been previously validated.
 func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
-	mgr := &Manager{
+	return &Manager{
 		nexus:  &nexus,
 		client: client,
-	}
-	mgr.setDefaults()
-	return mgr
-}
-
-// setDefaults destructively sets default for unset values in the Nexus CR
-func (m *Manager) setDefaults() {
-	if m.nexus.Spec.Persistence.Persistent && len(m.nexus.Spec.Persistence.VolumeSize) == 0 {
-		m.nexus.Spec.Persistence.VolumeSize = defaultVolumeSize
 	}
 }
 

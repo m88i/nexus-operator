@@ -47,39 +47,6 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
-func TestManager_setDefaults(t *testing.T) {
-	nexusName := "nexus"
-	saName := "my-custom-sa"
-
-	tests := []struct {
-		name  string
-		input *v1alpha1.Nexus
-		want  *v1alpha1.Nexus
-	}{
-		{
-			"unset 'spec.serviceAccountName",
-			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{}},
-			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{ServiceAccountName: nexusName}},
-		},
-		{
-
-			"unset 'spec.serviceAccountName",
-			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{ServiceAccountName: saName}},
-			&v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: nexusName}, Spec: v1alpha1.NexusSpec{ServiceAccountName: saName}},
-		},
-	}
-
-	for _, tt := range tests {
-		manager := &Manager{
-			nexus: tt.input,
-		}
-		manager.setDefaults()
-		if !reflect.DeepEqual(manager.nexus, tt.want) {
-			t.Errorf("TestManager_setDefaults() - %s\nWant: %v\tGot: %v", tt.name, tt.want, *manager.nexus)
-		}
-	}
-}
-
 func TestManager_GetRequiredResources(t *testing.T) {
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned

@@ -19,6 +19,7 @@ package persistence
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,7 +38,7 @@ func Test_newPVC_defaultValues(t *testing.T) {
 			Replicas: 1,
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
-				VolumeSize: defaultVolumeSize,
+				VolumeSize: validation.DefaultVolumeSize,
 			},
 		},
 	}
@@ -45,7 +46,7 @@ func Test_newPVC_defaultValues(t *testing.T) {
 
 	assert.Len(t, pvc.Spec.AccessModes, 1)
 	assert.Equal(t, corev1.ReadWriteOnce, pvc.Spec.AccessModes[0])
-	assert.Equal(t, resource.MustParse(defaultVolumeSize), pvc.Spec.Resources.Requests["storage"])
+	assert.Equal(t, resource.MustParse(validation.DefaultVolumeSize), pvc.Spec.Resources.Requests["storage"])
 }
 
 func Test_newPVC_moreThanOneReplica(t *testing.T) {

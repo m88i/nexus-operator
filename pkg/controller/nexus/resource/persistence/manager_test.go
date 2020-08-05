@@ -47,30 +47,6 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
-func TestManager_setDefaults(t *testing.T) {
-	tests := []struct {
-		name  string
-		input *v1alpha1.Nexus
-		want  *v1alpha1.Nexus
-	}{
-		{
-			"'spec.persistence.volumeSize' left blank",
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Persistence: v1alpha1.NexusPersistence{Persistent: true}}},
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Persistence: v1alpha1.NexusPersistence{Persistent: true, VolumeSize: defaultVolumeSize}}},
-		},
-	}
-
-	for _, tt := range tests {
-		manager := &Manager{
-			nexus: tt.input,
-		}
-		manager.setDefaults()
-		if !reflect.DeepEqual(manager.nexus, tt.want) {
-			t.Errorf("TestManager_setDefaults() - %s\nWant: %v\tGot: %v", tt.name, tt.want, *manager.nexus)
-		}
-	}
-}
-
 func TestManager_GetRequiredResources(t *testing.T) {
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned

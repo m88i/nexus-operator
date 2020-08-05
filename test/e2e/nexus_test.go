@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	corev1 "k8s.io/api/core/v1"
 	"testing"
 	"time"
@@ -24,16 +24,16 @@ var (
 	defaultNexusSpec = func() v1alpha1.NexusSpec {
 		spec := v1alpha1.NexusSpec{
 			Replicas:                    1,
-			Image:                       deployment.NexusCommunityLatestImage,
+			Image:                       validation.NexusCommunityLatestImage,
 			ImagePullPolicy:             corev1.PullIfNotPresent,
-			Resources:                   deployment.DefaultResources,
+			Resources:                   validation.DefaultResources,
 			Persistence:                 v1alpha1.NexusPersistence{Persistent: false},
 			UseRedHatImage:              false,
 			GenerateRandomAdminPassword: false,
 			Networking:                  v1alpha1.NexusNetworking{Expose: true, NodePort: 31031, ExposeAs: v1alpha1.NodePortExposeType},
 			ServiceAccountName:          nexusName,
-			LivenessProbe:               deployment.DefaultProbe.DeepCopy(),
-			ReadinessProbe:              deployment.DefaultProbe.DeepCopy(),
+			LivenessProbe:               validation.DefaultProbe.DeepCopy(),
+			ReadinessProbe:              validation.DefaultProbe.DeepCopy(),
 		}
 		spec.LivenessProbe.InitialDelaySeconds = 240
 		return spec
