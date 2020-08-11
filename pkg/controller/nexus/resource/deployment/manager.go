@@ -21,6 +21,7 @@ import (
 	ctx "context"
 	"fmt"
 	"github.com/RHsyseng/operator-utils/pkg/resource"
+	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 var log = logger.GetLogger("deployment_manager")
@@ -107,13 +109,56 @@ func (m *Manager) getDeployedService() (resource.KubernetesResource, error) {
 // GetCustomComparator returns the custom comp function used to compare a deployment-related resource
 // Returns nil if there is none
 func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-	// As Deployments and Services have default comparators we just return nil here
+	if t == reflect.TypeOf(&appsv1.Deployment{}) {
+		return deploymentEqual
+	}
 	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
 func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-	// As Deployments and Services have default comparators we just return nil here
-	return nil
+	deploymentType := reflect.TypeOf(appsv1.Deployment{})
+	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
+		deploymentType: deploymentEqual,
+	}
+}
+
+func deploymentEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	depDeployment := deployed.(*appsv1.Deployment)
+	reqDeployment := requested.(*appsv1.Deployment)
+	var pairs [][2]interface{}
+	pairs = append(pairs, [2]interface{}{depDeployment.Name, reqDeployment.Name})
+	pairs = append(pairs, [2]interface{}{depDeployment.Namespace, reqDeployment.Namespace})
+	pairs = append(pairs, [2]interface{}{depDeployment.Labels, reqDeployment.Labels})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Replicas, reqDeployment.Spec.Replicas})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Selector, reqDeployment.Spec.Selector})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.ObjectMeta, reqDeployment.Spec.Template.ObjectMeta})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Volumes, reqDeployment.Spec.Template.Spec.Volumes})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.ServiceAccountName, reqDeployment.Spec.Template.Spec.ServiceAccountName})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.SecurityContext, reqDeployment.Spec.Template.Spec.SecurityContext})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].Name, reqDeployment.Spec.Template.Spec.Containers[0].Name})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].Ports, reqDeployment.Spec.Template.Spec.Containers[0].Ports})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].Resources, reqDeployment.Spec.Template.Spec.Containers[0].Resources})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].Image, reqDeployment.Spec.Template.Spec.Containers[0].Image})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].LivenessProbe, reqDeployment.Spec.Template.Spec.Containers[0].LivenessProbe})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].ReadinessProbe, reqDeployment.Spec.Template.Spec.Containers[0].ReadinessProbe})
+	pairs = append(pairs, [2]interface{}{depDeployment.Spec.Template.Spec.Containers[0].Env, reqDeployment.Spec.Template.Spec.Containers[0].Env})
+
+	equal := compare.EqualPairs(pairs)
+	equal = equal && equalPullPolicies(depDeployment, reqDeployment)
+	return equal
+}
+
+func equalPullPolicies(depDeployment, reqDeployment *appsv1.Deployment) bool {
+	if len(reqDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy) > 0 {
+		return reqDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy == depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy
+	}
+
+	reqImageParts := strings.Split(reqDeployment.Spec.Template.Spec.Containers[0].Image, ":")
+	if len(reqImageParts) == 1 || reqImageParts[1] == "latest" {
+		return depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy == corev1.PullAlways
+	}
+
+	return depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy == corev1.PullIfNotPresent
 }

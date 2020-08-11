@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	NexusCommunityLatestImage = "docker.io/sonatype/nexus3:latest"
+	NexusCommunityLatestImage = "docker.io/sonatype/nexus3"
 	NexusCertifiedLatestImage = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
 
 	DefaultVolumeSize = "10Gi"

@@ -90,9 +90,6 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 					},
 				},
 			},
-			Strategy: appsv1.DeploymentStrategy{
-				Type: appsv1.RecreateDeploymentStrategyType,
-			},
 		},
 	}
 
