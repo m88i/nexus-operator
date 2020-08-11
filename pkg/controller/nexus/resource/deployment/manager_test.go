@@ -172,6 +172,7 @@ func TestManager_GetCustomComparators(t *testing.T) {
 
 func Test_deploymentEqual(t *testing.T) {
 	baseDeployment := newDeployment(allDefaultsCommunityNexus)
+	baseDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
 	tests := []struct {
 		name      string
 		req       *appsv1.Deployment
