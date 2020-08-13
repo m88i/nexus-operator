@@ -153,9 +153,9 @@ func TestManager_GetCustomComparator(t *testing.T) {
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
-	// there is no custom comparator function for services or deployments
+	// there is a custom comparator function for deployments, but not services
 	deploymentComp := mgr.GetCustomComparator(reflect.TypeOf(&appsv1.Deployment{}))
-	assert.Nil(t, deploymentComp)
+	assert.NotNil(t, deploymentComp)
 	svcComp := mgr.GetCustomComparator(reflect.TypeOf(&corev1.Service{}))
 	assert.Nil(t, svcComp)
 }
@@ -165,7 +165,233 @@ func TestManager_GetCustomComparators(t *testing.T) {
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
-	// there is no custom comparator function for services or deployments
+	// there is a custom comparator for deployments
 	comparators := mgr.GetCustomComparators()
-	assert.Nil(t, comparators)
+	assert.Len(t, comparators, 1)
+}
+
+func Test_deploymentEqual(t *testing.T) {
+	baseDeployment := newDeployment(allDefaultsCommunityNexus)
+	baseDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
+	tests := []struct {
+		name      string
+		req       *appsv1.Deployment
+		dep       *appsv1.Deployment
+		wantEqual bool
+	}{
+		{
+			"Completely equal deployments",
+			baseDeployment.DeepCopy(),
+			baseDeployment.DeepCopy(),
+			true,
+		},
+		{
+			"Different name",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Name = "different"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different namespace",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Namespace = "different"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different labels",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Labels["different key"] = "different value"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different replicas",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				r := int32(10)
+				d.Spec.Replicas = &r
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different selector",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Selector = &metav1.LabelSelector{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different template object meta",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Name = "different"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different volumes",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Volumes = []corev1.Volume{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different service account name",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.ServiceAccountName = "different"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different pod security context",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container name",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].Name = "different"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container ports",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].Ports = []corev1.ContainerPort{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container resources",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].Resources = corev1.ResourceRequirements{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container image",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].Image = "different"
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container liveness probe",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container readiness probe",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].ReadinessProbe = &corev1.Probe{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different container env",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			false,
+		},
+		{
+			"Different field we don't care about (deployment strategy)",
+			func() *appsv1.Deployment {
+				d := baseDeployment.DeepCopy()
+				d.Spec.Strategy = appsv1.DeploymentStrategy{Type: appsv1.RollingUpdateDeploymentStrategyType}
+				return d
+			}(),
+			baseDeployment.DeepCopy(),
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		gotEqual := deploymentEqual(tt.dep, tt.req)
+		if gotEqual != tt.wantEqual {
+			t.Errorf("%s - wantEqual: %v\tgotEqual: %v", tt.name, tt.wantEqual, gotEqual)
+		}
+	}
+}
+
+func Test_equalPullPolicies(t *testing.T) {
+	depDeployment := newDeployment(allDefaultsCommunityNexus)
+	reqDeployment := depDeployment.DeepCopy()
+
+	// first let's test an unspecified pull policy with no tag
+	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
+	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
+	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
+	assert.False(t, equalPullPolicies(depDeployment, reqDeployment))
+
+	// now let's set the latest tag on the images so we can test for the PullAways pull policy in that scenario as well
+	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
+	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityLatestImage, "latest")
+	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
+
+	// now with an actual tag and empty pullPolicy on the required deployment
+	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityLatestImage, "3.25.0")
+	depDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityLatestImage, "3.25.0")
+	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
+	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
+
+	// with the same pull policies
+	reqDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
+	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
+
+	// with different pull policies
+	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
+	assert.False(t, equalPullPolicies(depDeployment, reqDeployment))
 }
