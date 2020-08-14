@@ -20,14 +20,16 @@ package security
 import (
 	ctx "context"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"testing"
 )
 
 var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}, Spec: v1alpha1.NexusSpec{ServiceAccountName: "nexus"}}
@@ -41,7 +43,7 @@ func TestNewManager(t *testing.T) {
 		nexus:  nexus,
 		client: client,
 	}
-	got := NewManager(*nexus, client)
+	got := NewManager(nexus, client)
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
 	}
@@ -59,8 +61,9 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// even if the user specified a different one
 	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)
-	assert.Len(t, resources, 1)
+	assert.Len(t, resources, 2)
 	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.ServiceAccount{})))
+	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.Secret{})))
 }
 
 func TestManager_GetDeployedResources(t *testing.T) {
@@ -99,14 +102,13 @@ func TestManager_getDeployedSvcAccnt(t *testing.T) {
 	}
 
 	// first, test without creating the svcAccnt
-	svcAccnt, err := mgr.getDeployedSvcAccnt()
-	assert.Nil(t, svcAccnt)
+	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef["Service Account"])
 	assert.True(t, errors.IsNotFound(err))
 
 	// now test after creating the svcAccnt
-	svcAccnt = &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
+	svcAccnt := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), svcAccnt))
-	svcAccnt, err = mgr.getDeployedSvcAccnt()
+	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt)
 	assert.NotNil(t, svcAccnt)
 	assert.NoError(t, err)
 }
@@ -119,6 +121,10 @@ func TestManager_GetCustomComparator(t *testing.T) {
 	// there is no custom comparator function for Service Accounts
 	pvcComp := mgr.GetCustomComparator(reflect.TypeOf(&corev1.ServiceAccount{}))
 	assert.Nil(t, pvcComp)
+
+	// there is no custom comparator function for Service Accounts
+	secretComp := mgr.GetCustomComparator(reflect.TypeOf(&corev1.Secret{}))
+	assert.NotNil(t, secretComp)
 }
 
 func TestManager_GetCustomComparators(t *testing.T) {
@@ -128,5 +134,5 @@ func TestManager_GetCustomComparators(t *testing.T) {
 
 	// there is no custom comparator function for Service Accounts
 	comparators := mgr.GetCustomComparators()
-	assert.Nil(t, comparators)
+	assert.Len(t, comparators, 1)
 }

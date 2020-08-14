@@ -134,7 +134,16 @@ jobs:
         env:
           RUN_WITH_IMAGE: true
           TIMEOUT_E2E: 20m
+          ADDITIONAL_FLAGS: "-coverprofile=coverage_e2e.txt -covermode=atomic"
         run: ./hack/run-e2e-test.sh
+
+      - name: Send Coverage Report
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage_e2e.txt
+          flags: operator-e2e
+          name: operator-e2e-test
+          fail_ci_if_error: false
 
       - name: Run Operator OLM Integration Test
         run: ./hack/ci/operator-olm-test.sh

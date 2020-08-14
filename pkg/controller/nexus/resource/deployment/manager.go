@@ -20,6 +20,8 @@ package deployment
 import (
 	ctx "context"
 	"fmt"
+	"reflect"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -28,7 +30,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
@@ -42,11 +43,11 @@ type Manager struct {
 	client client.Client
 }
 
-// NewManager creates a deployment resources manager.
+// NewManager creates a deployment resources manager
 // It is expected that the Nexus has been previously validated.
-func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 	return &Manager{
-		nexus:  &nexus,
+		nexus:  nexus,
 		client: client,
 	}
 }

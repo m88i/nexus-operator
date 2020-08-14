@@ -24,6 +24,7 @@ Table of Contents
       * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
       * [Image Pull Policy](#image-pull-policy)
+      * [Repositories Auto Creation](#repositories-auto-creation)
       * [Contributing](#contributing)
 
 # Nexus Operator
@@ -257,6 +258,24 @@ You can control the pods Image Pull Policy using the `spec.imagePullPolicy` fiel
 If this field is set to an invalid value this configuration will be omitted, deferring to [Kubernetes default behavior](https://kubernetes.io/docs/concepts/containers/images/#updating-images), which is `Always` if the image's tag is "latest" and `IfNotPresent` otherwise.
 
 Leaving this field blank will also result in deferring to Kubernetes default behavior.
+
+## Repositories Auto Creation
+
+From 0.3.0 version, the Operator will try to create an administrator user to be used on internal operations, such as creating community Maven repositories.
+
+The default Nexus user `admin` is used to create the `nexus-operator` user, whose credentials are then stored in a secret with the same name as the Nexus CR.
+
+It's possible to disable the operator user creation by setting `spec.serverOperatons.disableOperatorUserCreation` to `true`. In this case, the `admin` user will be used instead. This configuration is **not recommended**, since you can track all the operations, change the operator user permissions and enable or disable it if you need. By disabling the operator user creation, the Operator will use the default `admin` credentials to perform all server operations, which will fail if you change the default credentials (something that must be done when aiming for a secure environment).
+
+The Operator also will create three Maven repositories by default:
+
+1. [Apache](https://repo.maven.apache.org/maven2/)
+2. [JBoss](https://repo.maven.apache.org/maven2/)
+3. [Red Hat](https://maven.repository.redhat.com/ga/)
+
+All of these repositories will be also added to the `maven-public` group. This group will gather the vast majority of jars needed by the most common use cases out there. If you won't need them, just disable this behavior by setting the attribute `spec.serverOperatons.disableRepositoryCreation` to `true` in the Nexus CR. 
+
+All of these operations are disabled if the attribute `spec.generateRandomAdminPassword` is set to `true`, since default credentials are needed to create the `nexus-operator` user. You can safely change the default credentials after this user has been created.
 
 ## Contributing
 

@@ -2,8 +2,13 @@ package e2e
 
 import (
 	"context"
+	"reflect"
+	"testing"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/server"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/assert"
@@ -12,10 +17,10 @@ import (
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 type tester struct {
@@ -43,6 +48,7 @@ func (tester *tester) runChecks(nexus *v1alpha1.Nexus, additionalChecks ...func(
 	tester.checkDeployment(nexus)
 	tester.checkServiceAccount(nexus)
 	tester.checkIngress(nexus)
+	tester.checkServerInteraction(nexus)
 
 	for _, check := range additionalChecks {
 		if err = check(nexus); err != nil {
@@ -199,4 +205,31 @@ func (tester *tester) ingressPointsToCorrectService(nexus *v1alpha1.Nexus, ingre
 		}
 	}
 	return false
+}
+
+// checkServerInteraction verifies if the secret holding operator user credentials has the credentials or not
+func (tester *tester) checkServerInteraction(nexus *v1alpha1.Nexus) {
+	tester.t.Log("Checking Nexus Server interactions")
+	if nexus.Spec.ServerOperations.DisableOperatorUserCreation || nexus.Spec.GenerateRandomAdminPassword {
+		tester.t.Log("Nexus Server interactions disabled, skipping")
+		return
+	}
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		secret := &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: nexus.Name, Namespace: nexus.Namespace}}
+		err = tester.f.Client.Get(context.TODO(), framework.Key(nexus), secret)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				tester.t.Log("Waiting for Nexus secret to be available")
+				return false, nil
+			}
+			return false, err
+		}
+		if len(secret.Data[server.SecretKeyUsername]) > 0 && len(secret.Data[server.SecretKeyPassword]) > 0 {
+			tester.t.Log("Nexus Operator credentials found! Test OK.")
+			return true, nil
+		}
+		tester.t.Log("Waiting for Nexus Operator to be created in the server")
+		return false, nil
+	})
+	assert.NoError(tester.t, err)
 }
