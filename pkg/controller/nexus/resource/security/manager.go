@@ -24,13 +24,10 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/framework"
-	"github.com/m88i/nexus-operator/pkg/logger"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-var log = logger.GetLogger("security_manager")
 
 var managedObjectsRef = map[string]resource.KubernetesResource{
 	"Secret":          &core.Secret{},
@@ -54,7 +51,6 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 
 // GetRequiredResources returns the resources initialized by the Manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	log.Debugf("Creating Service Account (%s)", m.nexus.Name)
 	return []resource.KubernetesResource{defaultServiceAccount(m.nexus), defaultSecret(m.nexus)}, nil
 }
 
