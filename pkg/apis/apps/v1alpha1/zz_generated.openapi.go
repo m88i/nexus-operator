@@ -213,7 +213,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 					},
 					"generateRandomAdminPassword": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GenerateRandomAdminPassword enables the random password generation. Defaults to `false`: the default password for a newly created instance is 'admin123', which should be changed in the first login. If set to `true`, you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.",
+							Description: "GenerateRandomAdminPassword enables the random password generation. Defaults to `false`: the default password for a newly created instance is 'admin123', which should be changed in the first login. If set to `true`, you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`. The operator uses the default credentials to create a user for itself to create default repositories. If set to `true`, the repositories won't be created since the operator won't fetch for the random password.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -243,12 +243,18 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 							Ref:         ref("./pkg/apis/apps/v1alpha1.NexusProbe"),
 						},
 					},
+					"serverOperations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServerOperations describes the options for the operations made in the deployed server instance",
+							Ref:         ref("./pkg/apis/apps/v1alpha1.ServerOperationsOpts"),
+						},
+					},
 				},
 				Required: []string{"replicas", "persistence", "useRedHatImage"},
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/apps/v1alpha1.NexusNetworking", "./pkg/apis/apps/v1alpha1.NexusPersistence", "./pkg/apis/apps/v1alpha1.NexusProbe", "k8s.io/api/core/v1.ResourceRequirements"},
+			"./pkg/apis/apps/v1alpha1.NexusNetworking", "./pkg/apis/apps/v1alpha1.NexusPersistence", "./pkg/apis/apps/v1alpha1.NexusProbe", "./pkg/apis/apps/v1alpha1.ServerOperationsOpts", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -267,7 +273,14 @@ func schema_pkg_apis_apps_v1alpha1_NexusStatus(ref common.ReferenceCallback) com
 					},
 					"nexusStatus": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Will be \"OK\" when all objects are created successfully",
+							Description: "Will be \"OK\" when this Nexus instance is up",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Gives more information about a failure status",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -279,10 +292,16 @@ func schema_pkg_apis_apps_v1alpha1_NexusStatus(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"serverOperationsStatus": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServerOperationsStatus describes the general status for the operations performed in the Nexus server instance",
+							Ref:         ref("./pkg/apis/apps/v1alpha1.OperationsStatus"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/apps/v1.DeploymentStatus"},
+			"./pkg/apis/apps/v1alpha1.OperationsStatus", "k8s.io/api/apps/v1.DeploymentStatus"},
 	}
 }

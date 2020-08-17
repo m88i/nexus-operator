@@ -20,6 +20,9 @@ package deployment
 import (
 	ctx "context"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	"github.com/m88i/nexus-operator/pkg/test"
@@ -28,8 +31,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"testing"
 )
 
 var (
@@ -54,7 +55,7 @@ func TestNewManager(t *testing.T) {
 		nexus:  nexus,
 		client: client,
 	}
-	got := NewManager(*nexus, client)
+	got := NewManager(nexus, client)
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
 	}
@@ -108,44 +109,6 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	resources, err = mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Contains(t, err.Error(), mockErrorMsg)
-}
-
-func TestManager_getDeployedDeployment(t *testing.T) {
-	mgr := &Manager{
-		nexus:  allDefaultsCommunityNexus,
-		client: test.NewFakeClientBuilder().Build(),
-	}
-
-	// first, test without creating the deployment
-	deployment, err := mgr.getDeployedDeployment()
-	assert.Nil(t, deployment)
-	assert.True(t, errors.IsNotFound(err))
-
-	// now test after creating the deployment
-	deployment = &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), deployment))
-	deployment, err = mgr.getDeployedDeployment()
-	assert.NotNil(t, deployment)
-	assert.NoError(t, err)
-}
-
-func TestManager_getDeployedService(t *testing.T) {
-	mgr := &Manager{
-		nexus:  allDefaultsCommunityNexus,
-		client: test.NewFakeClientBuilder().Build(),
-	}
-
-	// first, test without creating the service
-	svc, err := mgr.getDeployedService()
-	assert.Nil(t, svc)
-	assert.True(t, errors.IsNotFound(err))
-
-	// now test after creating the service
-	svc = &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), svc))
-	svc, err = mgr.getDeployedService()
-	assert.NotNil(t, svc)
-	assert.NoError(t, err)
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {

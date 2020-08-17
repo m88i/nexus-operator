@@ -75,6 +75,8 @@ type NexusSpec struct {
 	// GenerateRandomAdminPassword enables the random password generation.
 	// Defaults to `false`: the default password for a newly created instance is 'admin123', which should be changed in the first login.
 	// If set to `true`, you must use the automatically generated 'admin' password, stored in the container's file system at `/nexus-data/admin.password`.
+	// The operator uses the default credentials to create a user for itself to create default repositories.
+	// If set to `true`, the repositories won't be created since the operator won't fetch for the random password.
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Generate Random Admin Password"
 	// +optional
@@ -100,6 +102,11 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
 	// +optional
 	ReadinessProbe *NexusProbe `json:"readinessProbe,omitempty"`
+
+	// ServerOperations describes the options for the operations performed on the deployed server instance
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +optional
+	ServerOperations ServerOperationsOpts `json:"serverOperations,omitempty"`
 }
 
 // NexusPersistence is the structure for the data persistent
@@ -184,6 +191,18 @@ type NexusNetworkingTLS struct {
 	SecretName string `json:"secretName,omitempty"`
 }
 
+// ServerOperationsOpts describes the options for the operations performed in the Nexus server deployed instance
+type ServerOperationsOpts struct {
+	// DisableRepositoryCreation disables the auto-creation of Apache, JBoss and Red Hat repositories and their addition to
+	// the Maven Public group in this Nexus instance.
+	// Defaults to `false` (always try to create the repos). Set this to `true` to not create them. Only works if `spec.generateRandomAdminPassword` is `false`.
+	DisableRepositoryCreation bool `json:"disableRepositoryCreation,omitempty"`
+	// DisableOperatorUserCreation disables the auto-creation of the `nexus-operator` user on the deployed server. This user performs
+	// all the operations on the server (such as creating the community repos). If disabled, the Operator will use the default `admin` user.
+	// Defaults to `false` (always create the user). Setting this to `true` is not recommended as it grants the Operator more privileges than it needs and it would not be possible to tell apart operations performed by the `admin` and the Operator.
+	DisableOperatorUserCreation bool `json:"disableOperatorUserCreation,omitempty"`
+}
+
 // NexusStatus defines the observed state of Nexus
 // +k8s:openapi-gen=true
 type NexusStatus struct {
@@ -191,11 +210,35 @@ type NexusStatus struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="appsv1.DeploymentStatus"
 	DeploymentStatus v1.DeploymentStatus `json:"deploymentStatus,omitempty"`
-	// Will be "OK" when all objects are created successfully
-	NexusStatus string `json:"nexusStatus,omitempty"`
+	// Will be "OK" when this Nexus instance is up
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	NexusStatus NexusStatusType `json:"nexusStatus,omitempty"`
+	// Gives more information about a failure status
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	Reason string `json:"reason,omitempty"`
 	// Route for external service access
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	NexusRoute string `json:"nexusRoute,omitempty"`
+	// ServerOperationsStatus describes the general status for the operations performed in the Nexus server instance
+	ServerOperationsStatus OperationsStatus `json:"serverOperationsStatus,omitempty"`
 }
+
+// OperationsStatus describes the status for each operation made by the operator in the deployed Nexus Server
+type OperationsStatus struct {
+	ServerReady                  bool   `json:"serverReady,omitempty"`
+	OperatorUserCreated          bool   `json:"operatorUserCreated,omitempty"`
+	CommunityRepositoriesCreated bool   `json:"communityRepositoriesCreated,omitempty"`
+	MavenCentralUpdated          bool   `json:"mavenCentralUpdated,omitempty"`
+	Reason                       string `json:"reason,omitempty"`
+}
+
+type NexusStatusType string
+
+const (
+	NexusStatusOK      NexusStatusType = "OK"
+	NexusStatusFailure NexusStatusType = "Failure"
+	NexusStatusPending NexusStatusType = "Pending"
+)
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

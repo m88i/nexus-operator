@@ -20,11 +20,13 @@ package nexus
 import (
 	"context"
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	"reflect"
+
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/server"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	routev1 "github.com/openshift/api/route/v1"
@@ -50,22 +52,6 @@ import (
 )
 
 var log = logger.GetLogger("controller_nexus")
-
-var watchedObjects = []framework.WatchedObjects{
-	{
-		GroupVersion: routev1.GroupVersion,
-		AddToScheme:  routev1.Install,
-		Objects:      []runtime.Object{&routev1.Route{}},
-	},
-	{
-		GroupVersion: networking.SchemeGroupVersion,
-		AddToScheme:  networking.AddToScheme,
-		Objects:      []runtime.Object{&networking.Ingress{}},
-	},
-	{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}, &corev1.ServiceAccount{}}},
-}
-
-const okStatus = "OK"
 
 // Add creates a new Nexus Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -99,6 +85,19 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	controllerWatcher := framework.NewControllerWatcher(r.(*ReconcileNexus).discoveryClient, mgr, c, &appsv1alpha1.Nexus{})
+	watchedObjects := []framework.WatchedObjects{
+		{
+			GroupVersion: routev1.GroupVersion,
+			AddToScheme:  routev1.Install,
+			Objects:      []runtime.Object{&routev1.Route{}},
+		},
+		{
+			GroupVersion: networking.SchemeGroupVersion,
+			AddToScheme:  networking.AddToScheme,
+			Objects:      []runtime.Object{&networking.Ingress{}},
+		},
+		{Objects: []runtime.Object{&corev1.Service{}, &appsv1.Deployment{}, &corev1.PersistentVolumeClaim{}, &corev1.ServiceAccount{}}},
+	}
 	if err = controllerWatcher.Watch(watchedObjects...); err != nil {
 		return err
 	}
@@ -200,20 +199,41 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		}
 	}
 
+	if err = r.ensureServerUpdates(validatedNexus); err != nil {
+		return
+	}
+
 	return
+}
+
+func (r *ReconcileNexus) ensureServerUpdates(instance *appsv1alpha1.Nexus) error {
+	log.Info("Performing Nexus server operations if needed")
+	status, err := server.HandleServerOperations(instance, r.client)
+	if err != nil {
+		return err
+	}
+	log.Infof("Server Operations finished. Status is %v", status)
+	instance.Status.ServerOperationsStatus = status
+	return nil
 }
 
 func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *appsv1alpha1.Nexus, err *error) {
 	log.Info("Updating application status before leaving")
 
-	if *err != nil {
-		nexus.Status.NexusStatus = fmt.Sprintf("Failed to deploy Nexus: %s", *err)
-	} else {
-		nexus.Status.NexusStatus = okStatus
-	}
-
 	if statusErr := r.getNexusDeploymentStatus(nexus); statusErr != nil {
 		log.Error(statusErr, "Error while fetching Nexus Deployment status")
+	}
+
+	if *err != nil {
+		nexus.Status.Reason = fmt.Sprintf("Failed to deploy Nexus: %s", *err)
+		nexus.Status.NexusStatus = appsv1alpha1.NexusStatusFailure
+	} else {
+		nexus.Status.Reason = ""
+		if nexus.Status.DeploymentStatus.AvailableReplicas == nexus.Spec.Replicas {
+			nexus.Status.NexusStatus = appsv1alpha1.NexusStatusOK
+		} else {
+			nexus.Status.NexusStatus = appsv1alpha1.NexusStatusPending
+		}
 	}
 
 	if urlErr := r.getNexusURL(nexus); urlErr != nil {
@@ -222,6 +242,7 @@ func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *a
 
 	if !reflect.DeepEqual(originalNexus, nexus) {
 		log.Info("Updating nexus status")
+		// TODO: update just the "status" part, not the whole instance to not retrigger a new reconciliation
 		if updateErr := r.client.Update(context.TODO(), nexus); updateErr != nil {
 			log.Error(updateErr, "Error while updating Nexus status")
 		}

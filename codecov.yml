@@ -2,14 +2,19 @@ flags:
   operator:
     paths:
       - pkg/
+  operator-e2e:
+    paths:
+      - pkg/
 coverage:
   status:
     project:
       operator:
-        target: auto
-        threshold: 5%
-        base: auto
+        target: 75%
         flags:
           - operator
 comment:
   require_changes: true
+ignore:
+  - "test/e2e"
+  - "pkg/test"
+  - "pkg/apis"

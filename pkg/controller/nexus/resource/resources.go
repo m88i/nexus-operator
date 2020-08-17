@@ -19,12 +19,13 @@ package resource
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/networking"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/persistence"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/security"
-	"reflect"
 
 	"k8s.io/client-go/discovery"
 
@@ -53,15 +54,15 @@ func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInte
 
 // InitManagers initializes the managers responsible for the resources life cycle
 func (r *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
-	networkManager, err := networking.NewManager(*nexus, r.client, r.discoveryClient)
+	networkManager, err := networking.NewManager(nexus, r.client, r.discoveryClient)
 	if err != nil {
 		return fmt.Errorf("unable to create networking manager: %v", err)
 	}
 
 	r.managers = []Manager{
-		deployment.NewManager(*nexus, r.client),
-		persistence.NewManager(*nexus, r.client),
-		security.NewManager(*nexus, r.client),
+		deployment.NewManager(nexus, r.client),
+		persistence.NewManager(nexus, r.client),
+		security.NewManager(nexus, r.client),
 		networkManager,
 	}
 	return nil

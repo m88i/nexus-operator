@@ -19,6 +19,8 @@ package nexus
 
 import (
 	"context"
+	"testing"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
 	"github.com/m88i/nexus-operator/pkg/test"
@@ -33,8 +35,23 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"testing"
 )
+
+func TestReconcileNexus_Reconcile_NoInstance(t *testing.T) {
+
+	// create objects to run reconcile
+	cl := test.NewFakeClientBuilder().OnOpenshift().Build()
+	r := newFakeReconcileNexus(cl)
+	req := reconcile.Request{NamespacedName: types.NamespacedName{
+		Namespace: t.Name(),
+		Name:      "nexus3",
+	}}
+
+	// reconcile phase
+	res, err := r.Reconcile(req)
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue)
+}
 
 func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 	ns := t.Name()
@@ -49,6 +66,7 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 			Networking: v1alpha1.NexusNetworking{
 				Expose: true,
 			},
+			ServerOperations: v1alpha1.ServerOperationsOpts{DisableOperatorUserCreation: true, DisableRepositoryCreation: true},
 		},
 	}
 
@@ -80,6 +98,17 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, route.Spec.TLS)
 	assert.Equal(t, route.Spec.Port.TargetPort.IntVal, dep.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort)
+
+	err = r.client.Get(context.TODO(), req.NamespacedName, nexus)
+	assert.NoError(t, err)
+	assert.NotNil(t, nexus)
+	assert.False(t, nexus.Status.ServerOperationsStatus.ServerReady)
+	assert.NotEmpty(t, nexus.Status.ServerOperationsStatus.Reason)
+
+	// a second attempt must not requeue and not fail
+	res, err = r.Reconcile(req)
+	assert.NoError(t, err)
+	assert.False(t, res.Requeue)
 }
 
 func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
@@ -92,11 +121,13 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
+			ServerOperations: v1alpha1.ServerOperationsOpts{DisableOperatorUserCreation: true, DisableRepositoryCreation: true},
+			Networking:       v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, Host: "http://example.com"},
 		},
 	}
 
 	// create objects to run reconcile
-	cl := test.NewFakeClientBuilder(nexus).Build()
+	cl := test.NewFakeClientBuilder(nexus).WithIngress().Build()
 	r := newFakeReconcileNexus(cl)
 
 	req := reconcile.Request{NamespacedName: types.NamespacedName{
@@ -113,11 +144,18 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 	err = r.client.Get(context.TODO(), req.NamespacedName, pvc)
 	assert.NoError(t, err)
 	assert.Equal(t, resource.MustParse("10Gi"), pvc.Spec.Resources.Requests[corev1.ResourceStorage])
-	// networking is disabled
 	ingress := &v1beta1.Ingress{}
 	err = r.client.Get(context.TODO(), req.NamespacedName, ingress)
-	assert.Error(t, err)
-	assert.True(t, errors.IsNotFound(err))
+	assert.NoError(t, err)
+	assert.False(t, errors.IsNotFound(err))
+}
+
+func Test_add(t *testing.T) {
+	cli := test.NewFakeClientBuilder().Build()
+	mgr := test.NewManager(cli)
+	r := newFakeReconcileNexus(cli)
+	err := add(mgr, &r)
+	assert.NoError(t, err)
 }
 
 func newFakeReconcileNexus(cl *test.FakeClient) ReconcileNexus {

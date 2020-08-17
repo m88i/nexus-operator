@@ -66,7 +66,10 @@ spec:
           Defaults to `false`: the default password for a newly created instance is
           ''admin123'', which should be changed in the first login. If set to `true`,
           you must use the automatically generated ''admin'' password, stored in the
-          container''s file system at `/nexus-data/admin.password`.'
+          container''s file system at `/nexus-data/admin.password`. The operator uses
+          the default credentials to create a user for itself to create default repositories.
+          If set to `true`, the repositories won''t be created since the operator
+          won''t fetch for the random password.'
         displayName: Generate Random Admin Password
         path: generateRandomAdminPassword
       - description: 'Full image tag name for this specific deployment. Will be ignored

@@ -18,10 +18,11 @@
 package framework
 
 import (
+	"testing"
+
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
-	"testing"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/test"
@@ -48,7 +49,7 @@ var requiredObjects = []WatchedObjects{
 func Test_controllerWatcher_WatchWithoutIngressOnKubernetes(t *testing.T) {
 	cli := test.NewFakeClientBuilder().Build()
 	controller := test.NewController()
-	manager := test.NewManager()
+	manager := test.NewManager(cli)
 
 	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
 	assert.NotNil(t, watcher)
@@ -65,7 +66,7 @@ func Test_controllerWatcher_WatchWithoutIngressOnKubernetes(t *testing.T) {
 func Test_controllerWatcher_WatchWithIngressOnKubernetes(t *testing.T) {
 	cli := test.NewFakeClientBuilder().WithIngress().Build()
 	controller := test.NewController()
-	manager := test.NewManager()
+	manager := test.NewManager(cli)
 
 	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
 	assert.NotNil(t, watcher)
@@ -82,7 +83,7 @@ func Test_controllerWatcher_WatchWithIngressOnKubernetes(t *testing.T) {
 func Test_controllerWatcher_WatchWithRouteOnOpenShift(t *testing.T) {
 	cli := test.NewFakeClientBuilder().OnOpenshift().Build()
 	controller := test.NewController()
-	manager := test.NewManager()
+	manager := test.NewManager(cli)
 
 	watcher := NewControllerWatcher(cli, manager, controller, &v1alpha1.Nexus{})
 	assert.NotNil(t, watcher)

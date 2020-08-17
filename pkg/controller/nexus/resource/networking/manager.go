@@ -20,6 +20,8 @@ package networking
 import (
 	ctx "context"
 	"fmt"
+	"reflect"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -31,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,7 +55,7 @@ type Manager struct {
 
 // NewManager creates a networking resources manager
 // It is expected that the Nexus has been previously validated.
-func NewManager(nexus v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*Manager, error) {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*Manager, error) {
 	routeAvailable, err := openshift.IsRouteAvailable(disc)
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
@@ -71,7 +72,7 @@ func NewManager(nexus v1alpha1.Nexus, client client.Client, disc discovery.Disco
 	}
 
 	return &Manager{
-		nexus:            &nexus,
+		nexus:            nexus,
 		client:           client,
 		routeAvailable:   routeAvailable,
 		ingressAvailable: ingressAvailable,

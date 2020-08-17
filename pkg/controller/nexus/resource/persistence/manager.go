@@ -20,13 +20,14 @@ package persistence
 import (
 	ctx "context"
 	"fmt"
+	"reflect"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -39,11 +40,11 @@ type Manager struct {
 	client client.Client
 }
 
-// NewManager creates a persistence resources manager.
+// NewManager creates a persistence resources manager
 // It is expected that the Nexus has been previously validated.
-func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 	return &Manager{
-		nexus:  &nexus,
+		nexus:  nexus,
 		client: client,
 	}
 }

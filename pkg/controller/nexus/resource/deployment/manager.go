@@ -18,22 +18,25 @@
 package deployment
 
 import (
-	ctx "context"
 	"fmt"
+	"reflect"
+
+	"strings"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/logger"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
-var log = logger.GetLogger("deployment_manager")
+var managedObjectsRef = map[string]resource.KubernetesResource{
+	"Service":    &corev1.Service{},
+	"Deployment": &appsv1.Deployment{},
+}
 
 // Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
@@ -42,68 +45,31 @@ type Manager struct {
 	client client.Client
 }
 
-// NewManager creates a deployment resources manager.
+// NewManager creates a deployment resources manager
 // It is expected that the Nexus has been previously validated.
-func NewManager(nexus v1alpha1.Nexus, client client.Client) *Manager {
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 	return &Manager{
-		nexus:  &nexus,
+		nexus:  nexus,
 		client: client,
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	log.Debugf("Creating Deployment (%s)", m.nexus.Name)
-	deployment := newDeployment(m.nexus)
-	log.Debugf("Creating Service (%s)", m.nexus.Name)
-	svc := newService(m.nexus)
-	return []resource.KubernetesResource{deployment, svc}, nil
+	return []resource.KubernetesResource{newDeployment(m.nexus), newService(m.nexus)}, nil
 }
 
 // GetDeployedResources returns the deployment-related resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
-	if deployment, err := m.getDeployedDeployment(); err == nil {
-		resources = append(resources, deployment)
-	} else if !errors.IsNotFound(err) {
-		log.Errorf("Could not fetch Deployment (%s): %v", m.nexus.Name, err)
-		return nil, fmt.Errorf("could not fetch service (%s): %v", m.nexus.Name, err)
-	}
-	if service, err := m.getDeployedService(); err == nil {
-		resources = append(resources, service)
-	} else if !errors.IsNotFound(err) {
-		log.Errorf("Could not fetch Service (%s): %v", m.nexus.Name, err)
-		return nil, fmt.Errorf("could not fetch service (%s): %v", m.nexus.Name, err)
+	for resType, resRef := range managedObjectsRef {
+		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef); err == nil {
+			resources = append(resources, resRef)
+		} else if !errors.IsNotFound(err) {
+			return nil, fmt.Errorf("could not fetch Resource %s (%s): %v", resType, m.nexus.Name, err)
+		}
 	}
 	return resources, nil
-}
-
-func (m *Manager) getDeployedDeployment() (resource.KubernetesResource, error) {
-	dep := &appsv1.Deployment{}
-	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
-	log.Debugf("Attempting to fetch deployed Deployment (%s)", m.nexus.Name)
-	err := m.client.Get(ctx.TODO(), key, dep)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed Service (%s)", m.nexus.Name)
-		}
-		return nil, err
-	}
-	return dep, nil
-}
-
-func (m *Manager) getDeployedService() (resource.KubernetesResource, error) {
-	svc := &corev1.Service{}
-	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
-	log.Debugf("Attempting to fetch deployed Service (%s)", m.nexus.Name)
-	err := m.client.Get(ctx.TODO(), key, svc)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed Service (%s)", m.nexus.Name)
-		}
-		return nil, err
-	}
-	return svc, nil
 }
 
 // GetCustomComparator returns the custom comp function used to compare a deployment-related resource

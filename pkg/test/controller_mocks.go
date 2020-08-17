@@ -15,11 +15,12 @@
 package test
 
 import (
+	"net/http"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -67,11 +68,12 @@ func (c *controllerMock) GetWatchedSources() []source.Source {
 }
 
 // NewManager ...
-func NewManager() manager.Manager {
-	return &managerMock{scheme: runtime.NewScheme()}
+func NewManager(cli client.Client) manager.Manager {
+	return &managerMock{scheme: runtime.NewScheme(), client: cli}
 }
 
 type managerMock struct {
+	client client.Client
 	scheme *runtime.Scheme
 }
 
@@ -84,11 +86,11 @@ func (m managerMock) Elected() <-chan struct{} {
 }
 
 func (m managerMock) Add(manager.Runnable) error {
-	panic("implement me")
+	return nil
 }
 
 func (m managerMock) SetFields(interface{}) error {
-	panic("implement me")
+	return nil
 }
 
 func (m managerMock) AddHealthzCheck(name string, check healthz.Checker) error {
@@ -104,7 +106,7 @@ func (m managerMock) Start(<-chan struct{}) error {
 }
 
 func (m managerMock) GetConfig() *rest.Config {
-	panic("implement me")
+	return nil
 }
 
 func (m managerMock) GetScheme() *runtime.Scheme {
@@ -112,7 +114,7 @@ func (m managerMock) GetScheme() *runtime.Scheme {
 }
 
 func (m managerMock) GetClient() client.Client {
-	panic("implement me")
+	return m.client
 }
 
 func (m managerMock) GetFieldIndexer() client.FieldIndexer {
@@ -120,11 +122,11 @@ func (m managerMock) GetFieldIndexer() client.FieldIndexer {
 }
 
 func (m managerMock) GetCache() cache.Cache {
-	panic("implement me")
+	return nil
 }
 
 func (m managerMock) GetEventRecorderFor(name string) record.EventRecorder {
-	panic("implement me")
+	return nil
 }
 
 func (m managerMock) GetRESTMapper() meta.RESTMapper {

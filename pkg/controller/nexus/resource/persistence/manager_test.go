@@ -20,14 +20,15 @@ package persistence
 import (
 	ctx "context"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"testing"
 )
 
 var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}}
@@ -41,7 +42,7 @@ func TestNewManager(t *testing.T) {
 		nexus:  nexus,
 		client: client,
 	}
-	got := NewManager(*nexus, client)
+	got := NewManager(nexus, client)
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
 	}
