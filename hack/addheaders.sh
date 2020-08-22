@@ -16,10 +16,9 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
 
-
-which ./bin/addlicense > /dev/null || go build -o ./bin/addlicense github.com/google/addlicense
+which ./bin/addlicense >/dev/null || go build -o ./bin/addlicense github.com/google/addlicense
 
 # https://github.com/google/addlicense
 # https://www.gnu.org/licenses/gpl-howto.en.html
 
-./bin/addlicense -c "Nexus Operator and/or its authors" -f LICENSE_NOTICE cmd hack pkg version
+./bin/addlicense -c "Nexus Operator and/or its authors" -l apache cmd hack pkg version
