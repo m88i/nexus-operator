@@ -7,13 +7,19 @@ flags:
       - pkg/
 coverage:
   status:
+    patch:
+      default:
+        informational: true
+      operator:
+        informational: true
     project:
       operator:
         target: 75%
+        informational: true
         flags:
           - operator
 comment:
-  require_changes: false
+  require_changes: true
 ignore:
   - "test/e2e"
   - "pkg/test"
