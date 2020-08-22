@@ -10,6 +10,8 @@ spec:
     plural: nexus
     singular: nexus
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Nexus custom resource to deploy the Nexus Server
@@ -29,13 +31,6 @@ spec:
         spec:
           description: NexusSpec defines the desired state of Nexus
           properties:
-            disableDefaultRepos:
-              description: DisableDefaultRepos disables the auto-creation of Apache,
-                JBoss and Red Hat and to add them to the Maven Public group in this
-                Nexus instance. Default to false (always try to create the repos).
-                Set this to true to not create them. Only works if 'GenerateRandomAdminPassword'
-                is false.
-              type: boolean
             generateRandomAdminPassword:
               description: 'GenerateRandomAdminPassword enables the random password
                 generation. Defaults to `false`: the default password for a newly
@@ -226,6 +221,28 @@ spec:
                     value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                   type: object
               type: object
+            serverOperations:
+              description: ServerOperations describes the options for the operations
+                performed on the deployed server instance
+              properties:
+                disableOperatorUserCreation:
+                  description: DisableOperatorUserCreation disables the auto-creation
+                    of the `nexus-operator` user on the deployed server. This user
+                    performs all the operations on the server (such as creating the
+                    community repos). If disabled, the Operator will use the default
+                    `admin` user. Defaults to `false` (always create the user). Setting
+                    this to `true` is not recommended as it grants the Operator more
+                    privileges than it needs and it would not be possible to tell
+                    apart operations performed by the `admin` and the Operator.
+                  type: boolean
+                disableRepositoryCreation:
+                  description: DisableRepositoryCreation disables the auto-creation
+                    of Apache, JBoss and Red Hat repositories and their addition to
+                    the Maven Public group in this Nexus instance. Defaults to `false`
+                    (always try to create the repos). Set this to `true` to not create
+                    them. Only works if `spec.generateRandomAdminPassword` is `false`.
+                  type: boolean
+              type: object
             serviceAccountName:
               description: ServiceAccountName is the name of the ServiceAccount used
                 to run the Pods. If left blank, a default ServiceAccount is created
@@ -329,6 +346,21 @@ spec:
             reason:
               description: Gives more information about a failure status
               type: string
+            serverOperationsStatus:
+              description: ServerOperationsStatus describes the general status for
+                the operations performed in the Nexus server instance
+              properties:
+                communityRepositoriesCreated:
+                  type: boolean
+                mavenCentralUpdated:
+                  type: boolean
+                operatorUserCreated:
+                  type: boolean
+                reason:
+                  type: string
+                serverReady:
+                  type: boolean
+              type: object
           type: object
       type: object
   version: v1alpha1

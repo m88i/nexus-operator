@@ -93,6 +93,10 @@ spec:
         path: resources
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - description: ServerOperations describes the options for the operations performed
+          on the deployed server instance
+        displayName: Server Operations
+        path: serverOperations
       - description: ServiceAccountName is the name of the ServiceAccount used to
           run the Pods. If left blank, a default ServiceAccount is created with the
           same name as the Nexus CR (`metadata.name`).
@@ -108,6 +112,17 @@ spec:
       - description: Condition status for the Nexus deployment
         displayName: appsv1.DeploymentStatus
         path: deploymentStatus
+      - description: Route for external service access
+        displayName: Nexus Route
+        path: nexusRoute
+      - description: Will be "OK" when this Nexus instance is up
+        displayName: Nexus Status
+        path: nexusStatus
+      - description: Gives more information about a failure status
+        displayName: Reason
+        path: reason
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes.phase:reason
       version: v1alpha1
   description: |-
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:

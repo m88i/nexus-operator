@@ -242,6 +242,7 @@ const (
 // Nexus custom resource to deploy the Nexus Server
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path=nexus,scope=Namespaced
+// +kubebuilder:subresource:status
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Nexus"
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"A Kubernetes Deployment\""
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Service,v1,\"A Kubernetes Service\""
