@@ -13,7 +13,7 @@ coverage:
         flags:
           - operator
 comment:
-  require_changes: true
+  require_changes: false
 ignore:
   - "test/e2e"
   - "pkg/test"
