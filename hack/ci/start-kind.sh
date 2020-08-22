@@ -1,42 +1,40 @@
 #!/bin/bash
-#     Copyright 2020 Nexus Operator and/or its authors
+# Copyright 2020 Nexus Operator and/or its authors
 #
-#     This file is part of Nexus Operator.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#     Nexus Operator is free software: you can redistribute it and/or modify
-#     it under the terms of the GNU General Public License as published by
-#     the Free Software Foundation, either version 3 of the License, or
-#     (at your option) any later version.
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
-#     Nexus Operator is distributed in the hope that it will be useful,
-#     but WITHOUT ANY WARRANTY; without even the implied warranty of
-#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#     GNU General Public License for more details.
-#
-#     You should have received a copy of the GNU General Public License
-#     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 set -e
 
 #Make sure docker is installed before proceeding
-command -v docker > /dev/null || (echo "docker is not installed. Please install it before proceeding exiting...." && exit 1)
+command -v docker >/dev/null || (echo "docker is not installed. Please install it before proceeding exiting...." && exit 1)
 
 #Make sure kubectl is installed before proceeding
-command -v kubectl > /dev/null || (echo "kubectl is not installed. Please install it before proceeding exiting...." && exit 1)
+command -v kubectl >/dev/null || (echo "kubectl is not installed. Please install it before proceeding exiting...." && exit 1)
 
 #make sure kind is installed before proceeding
-command -v kind > /dev/null || (echo "kind is not installed. Please install it before proceeding exiting...." && exit 1)
+command -v kind >/dev/null || (echo "kind is not installed. Please install it before proceeding exiting...." && exit 1)
 
 default_cluster_name="operator-test"
 
 if [[ -z ${CLUSTER_NAME} ]]; then
-    CLUSTER_NAME=$default_cluster_name
+  CLUSTER_NAME=$default_cluster_name
 fi
 if [[ $(kind get clusters | grep ${CLUSTER_NAME}) ]]; then
   echo "---> Cluster ${CLUSTER_NAME} already present"
 else
   echo "---> Provisioning new cluster"
-  kind create cluster  --name ${CLUSTER_NAME} --wait 1m
+  kind create cluster --name ${CLUSTER_NAME} --wait 1m
 fi
 
 echo "---> Checking KIND cluster conditions"

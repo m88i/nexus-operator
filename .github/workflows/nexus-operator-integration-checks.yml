@@ -7,7 +7,6 @@ on:
       - "CONTRIBUTING.md"
       - "examples/**"
       - "LICENSE"
-      - "LICENSE_NOTICE"
       - "Makefile"
       - ".github/ISSUE_TEMPLATE/**"
     branches:

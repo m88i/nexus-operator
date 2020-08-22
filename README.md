@@ -1,7 +1,7 @@
 ![Nexus Operator Integration Checks](https://github.com/m88i/nexus-operator/workflows/Nexus%20Operator%20Integration%20Checks/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/m88i/nexus-operator)](https://goreportcard.com/report/github.com/m88i/nexus-operator)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/m88i/nexus-operator?label=latest)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m88i/nexus-operator)
 
 Table of Contents
