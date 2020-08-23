@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 
@@ -28,7 +29,9 @@ import (
 	"github.com/m88i/nexus-operator/pkg/logger"
 	routev1 "github.com/openshift/api/route/v1"
 	networking "k8s.io/api/networking/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource/write"
@@ -49,6 +52,11 @@ import (
 )
 
 var log = logger.GetLogger("controller_nexus")
+
+const (
+	updatePollWaitTimeout = 500 * time.Millisecond
+	updateCancelTimeout   = 30 * time.Second
+)
 
 // Add creates a new Nexus Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -237,11 +245,53 @@ func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *a
 		log.Error(urlErr, "Error while fetching Nexus URL status")
 	}
 
-	if !reflect.DeepEqual(originalNexus, nexus) {
-		log.Info("Updating nexus status")
-		// TODO: update just the "status" part, not the whole instance to not retrigger a new reconciliation
-		if updateErr := r.client.Update(context.TODO(), nexus); updateErr != nil {
-			log.Error(updateErr, "Error while updating Nexus status")
+	if !reflect.DeepEqual(originalNexus.Spec, nexus.Spec) {
+		log.Infof("Updating Nexus instance '%s'", nexus.Name)
+		waitErr := wait.Poll(updatePollWaitTimeout, updateCancelTimeout, func() (bool, error) {
+			if updateErr := r.client.Update(context.TODO(), nexus); errors.IsConflict(updateErr) {
+				newNexus := &appsv1alpha1.Nexus{ObjectMeta: v1.ObjectMeta{
+					Name:      nexus.Name,
+					Namespace: nexus.Namespace,
+				}}
+				if err := r.client.Get(context.TODO(), framework.Key(newNexus), newNexus); err != nil {
+					return false, err
+				}
+				// we override only the spec, which we are interested into
+				newNexus.Spec = nexus.Spec
+				nexus = newNexus
+				return false, nil
+			} else if updateErr != nil {
+				return false, updateErr
+			}
+			return true, nil
+		})
+		if waitErr != nil {
+			log.Error(waitErr, "Error while updating Nexus status")
+		}
+	}
+
+	if !reflect.DeepEqual(originalNexus.Status, nexus.Status) {
+		log.Infof("Updating status for Nexus instance '%s'", nexus.Name)
+		waitErr := wait.Poll(updatePollWaitTimeout, updateCancelTimeout, func() (bool, error) {
+			if updateErr := r.client.Status().Update(context.TODO(), nexus); errors.IsConflict(updateErr) {
+				newNexus := &appsv1alpha1.Nexus{ObjectMeta: v1.ObjectMeta{
+					Name:      nexus.Name,
+					Namespace: nexus.Namespace,
+				}}
+				if err := r.client.Get(context.TODO(), framework.Key(newNexus), newNexus); err != nil {
+					return false, err
+				}
+				// we override only the spec, which we are interested into
+				newNexus.Status = nexus.Status
+				nexus = newNexus
+				return false, nil
+			} else if updateErr != nil {
+				return false, updateErr
+			}
+			return true, nil
+		})
+		if waitErr != nil {
+			log.Error(waitErr, "Error while updating Nexus status")
 		}
 	}
 

@@ -10,6 +10,8 @@ spec:
     plural: nexus
     singular: nexus
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Nexus custom resource to deploy the Nexus Server

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 source ./hack/export-version.sh
 
 rm ./deploy/olm-catalog/nexus-operator/manifests -rf
