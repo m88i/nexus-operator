@@ -34,9 +34,10 @@ var (
 	allDefaultsCommunityNexus = &v1alpha1.Nexus{
 		ObjectMeta: metav1.ObjectMeta{Name: "nexus-test"},
 		Spec: v1alpha1.NexusSpec{
+			AutomaticUpdate:    v1alpha1.NexusAutomaticUpdate{Disabled: true},
 			ServiceAccountName: "nexus-test",
 			Resources:          validation.DefaultResources,
-			Image:              validation.NexusCommunityLatestImage,
+			Image:              validation.NexusCommunityImage,
 			LivenessProbe:      validation.DefaultProbe.DeepCopy(),
 			ReadinessProbe:     validation.DefaultProbe.DeepCopy(),
 		},
@@ -336,14 +337,14 @@ func Test_equalPullPolicies(t *testing.T) {
 	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 	assert.False(t, equalPullPolicies(depDeployment, reqDeployment))
 
-	// now let's set the latest tag on the images so we can test for the PullAways pull policy in that scenario as well
+	// now let's set the latest tag on the images so we can test for the PullAlways pull policy in that scenario as well
 	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
-	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityLatestImage, "latest")
+	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityImage, "latest")
 	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
 
 	// now with an actual tag and empty pullPolicy on the required deployment
-	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityLatestImage, "3.25.0")
-	depDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityLatestImage, "3.25.0")
+	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityImage, "3.25.0")
+	depDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityImage, "3.25.0")
 	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
 

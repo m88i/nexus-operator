@@ -23,8 +23,9 @@ var (
 
 	defaultNexusSpec = func() v1alpha1.NexusSpec {
 		spec := v1alpha1.NexusSpec{
+			AutomaticUpdate:             v1alpha1.NexusAutomaticUpdate{Disabled: true},
 			Replicas:                    1,
-			Image:                       validation.NexusCommunityLatestImage,
+			Image:                       validation.NexusCommunityImage,
 			ImagePullPolicy:             corev1.PullIfNotPresent,
 			Resources:                   validation.DefaultResources,
 			Persistence:                 v1alpha1.NexusPersistence{Persistent: false},

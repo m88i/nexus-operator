@@ -20,9 +20,11 @@ import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/discovery"
+	"strings"
 )
 
 const (
@@ -113,6 +115,7 @@ func (v *Validator) validateNetworking(nexus *v1alpha1.Nexus) error {
 func (v *Validator) setDefaults(nexus *v1alpha1.Nexus) *v1alpha1.Nexus {
 	n := nexus.DeepCopy()
 	v.setDeploymentDefaults(n)
+	v.setUpdateDefaults(n)
 	v.setNetworkingDefaults(n)
 	v.setPersistenceDefaults(n)
 	v.setSecurityDefaults(n)
@@ -136,9 +139,9 @@ func (v *Validator) setImageDefaults(nexus *v1alpha1.Nexus) {
 		if len(nexus.Spec.Image) > 0 {
 			log.Warnf("Nexus CR configured to the use Red Hat Certified Image, ignoring 'spec.image' field.")
 		}
-		nexus.Spec.Image = NexusCertifiedLatestImage
+		nexus.Spec.Image = NexusCertifiedImage
 	} else if len(nexus.Spec.Image) == 0 {
-		nexus.Spec.Image = NexusCommunityLatestImage
+		nexus.Spec.Image = NexusCommunityImage
 	}
 
 	if len(nexus.Spec.ImagePullPolicy) > 0 &&
@@ -182,6 +185,43 @@ func (v *Validator) setProbeDefaults(nexus *v1alpha1.Nexus) {
 	} else {
 		nexus.Spec.ReadinessProbe = DefaultProbe.DeepCopy()
 	}
+}
+
+// must be called only after image defaults have been set
+func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
+	if nexus.Spec.AutomaticUpdate.Disabled {
+		return
+	}
+
+	image := strings.Split(nexus.Spec.Image, ":")[0]
+	if image != NexusCommunityImage {
+		log.Warnf("Automatic Updates are enabled, but 'spec.image' is not using the community image (%s). Disabling automatic updates", NexusCommunityImage)
+		nexus.Spec.AutomaticUpdate.Disabled = true
+		return
+	}
+
+	if nexus.Spec.AutomaticUpdate.MinorVersion == nil {
+		log.Debugf("Automatic Updates are enabled, but no minor was informed. Fetching the most recent...")
+		minor, err := update.GetLatestMinor()
+		if err != nil {
+			log.Errorf("Unable to fetch the most recent minor. Disabling automatic updates.")
+			nexus.Spec.AutomaticUpdate.Disabled = true
+			return
+		}
+		nexus.Spec.AutomaticUpdate.MinorVersion = &minor
+	}
+
+	log.Debugf("Fetching the latest micro from minor %d", *nexus.Spec.AutomaticUpdate.MinorVersion)
+	tag, ok := update.GetLatestMicro(*nexus.Spec.AutomaticUpdate.MinorVersion)
+	if !ok {
+		// the informed minor doesn't exist, let's just use 'latest'
+		log.Warnf("Latest tag for minor version (%d) not found. Using 'latest' instead and disabling Automatic", *nexus.Spec.AutomaticUpdate.MinorVersion)
+		nexus.Spec.AutomaticUpdate.Disabled = true
+		return
+	}
+	newImage := fmt.Sprintf("%s:%s", image, tag)
+	log.Debugf("Replacing 'spec.image' (%s) with '%s'", nexus.Spec.Image, newImage)
+	nexus.Spec.Image = newImage
 }
 
 func (v *Validator) setNetworkingDefaults(nexus *v1alpha1.Nexus) {

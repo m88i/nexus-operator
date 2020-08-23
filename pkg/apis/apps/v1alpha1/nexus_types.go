@@ -42,6 +42,11 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes:image"
 	Image string `json:"image,omitempty"`
 
+	// Automatic updates configuration
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Automatic Update"
+	AutomaticUpdate NexusAutomaticUpdate `json:"automaticUpdate,omitempty"`
+
 	// The image pull policy for the Nexus image. If left blank behavior will be determined by the image tag (`Always` if "latest" and `IfNotPresent` otherwise).
 	// Possible values: `Always`, `IfNotPresent` or `Never`.
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
@@ -200,6 +205,18 @@ type ServerOperationsOpts struct {
 	DisableOperatorUserCreation bool `json:"disableOperatorUserCreation,omitempty"`
 }
 
+// NexusAutomaticUpdate defines configuration for automatic updates
+type NexusAutomaticUpdate struct {
+	// Whether or not the Operator should perform automatic updates. Defaults to `false` (auto updates are enabled).
+	// Is set to `false` if `spec.image` is not empty and is different from the default community image.
+	// +optional
+	Disabled bool `json:"disabled,omitempty"`
+	// The Nexus image minor version the deployment should stay in. If left blank and automatic updates are enabled the latest minor is set.
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	MinorVersion *int `json:"minorVersion,omitempty"` // must keep a pointer to tell apart uninformed from 0
+}
+
 // NexusStatus defines the observed state of Nexus
 // +k8s:openapi-gen=true
 type NexusStatus struct {
@@ -216,6 +233,10 @@ type NexusStatus struct {
 	// Route for external service access
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	NexusRoute string `json:"nexusRoute,omitempty"`
+	// Conditions reached during an update
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="Update Conditions"
+	UpdateConditions []string `json:"updateConditions,omitempty"`
 	// ServerOperationsStatus describes the general status for the operations performed in the Nexus server instance
 	ServerOperationsStatus OperationsStatus `json:"serverOperationsStatus,omitempty"`
 }

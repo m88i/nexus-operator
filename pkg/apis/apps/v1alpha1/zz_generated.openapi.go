@@ -182,6 +182,12 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 							Format:      "",
 						},
 					},
+					"automaticUpdate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Automatic updates configuration",
+							Ref:         ref("./pkg/apis/apps/v1alpha1.NexusAutomaticUpdate"),
+						},
+					},
 					"imagePullPolicy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The image pull policy for the Nexus image. If left blank behavior will be determined by the image tag (`Always` if \"latest\" and `IfNotPresent` otherwise). Possible values: `Always`, `IfNotPresent` or `Never`.",
@@ -251,7 +257,7 @@ func schema_pkg_apis_apps_v1alpha1_NexusSpec(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/apps/v1alpha1.NexusNetworking", "./pkg/apis/apps/v1alpha1.NexusPersistence", "./pkg/apis/apps/v1alpha1.NexusProbe", "./pkg/apis/apps/v1alpha1.ServerOperationsOpts", "k8s.io/api/core/v1.ResourceRequirements"},
+			"./pkg/apis/apps/v1alpha1.NexusAutomaticUpdate", "./pkg/apis/apps/v1alpha1.NexusNetworking", "./pkg/apis/apps/v1alpha1.NexusPersistence", "./pkg/apis/apps/v1alpha1.NexusProbe", "./pkg/apis/apps/v1alpha1.ServerOperationsOpts", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -287,6 +293,20 @@ func schema_pkg_apis_apps_v1alpha1_NexusStatus(ref common.ReferenceCallback) com
 							Description: "Route for external service access",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"updateConditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions reached during an update",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 					"serverOperationsStatus": {

@@ -31,6 +31,22 @@ spec:
         spec:
           description: NexusSpec defines the desired state of Nexus
           properties:
+            automaticUpdate:
+              description: Automatic updates configuration
+              properties:
+                disabled:
+                  description: Whether or not the Operator should perform automatic
+                    updates. Defaults to `false` (auto updates are enabled). Is set
+                    to `false` if `spec.image` is not empty and is different from
+                    the default community image.
+                  type: boolean
+                minorVersion:
+                  description: The Nexus image minor version the deployment should
+                    stay in. If left blank and automatic updates are enabled the latest
+                    minor is set.
+                  minimum: 0
+                  type: integer
+              type: object
             generateRandomAdminPassword:
               description: 'GenerateRandomAdminPassword enables the random password
                 generation. Defaults to `false`: the default password for a newly
@@ -361,6 +377,11 @@ spec:
                 serverReady:
                   type: boolean
               type: object
+            updateConditions:
+              description: Conditions reached during an update
+              items:
+                type: string
+              type: array
           type: object
       type: object
   version: v1alpha1

@@ -18,11 +18,12 @@ import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	k8sres "k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	NexusCommunityLatestImage = "docker.io/sonatype/nexus3"
-	NexusCertifiedLatestImage = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
+	NexusCommunityImage = "docker.io/sonatype/nexus3"
+	NexusCertifiedImage = "registry.connect.redhat.com/sonatype/nexus-repository-manager"
 
 	DefaultVolumeSize = "10Gi"
 
@@ -51,5 +52,44 @@ var (
 		PeriodSeconds:       probeDefaultPeriodSeconds,
 		SuccessThreshold:    probeDefaultSuccessThreshold,
 		FailureThreshold:    probeDefaultFailureThreshold,
+	}
+
+	DefaultPersistence = v1alpha1.NexusPersistence{
+		Persistent:   false,
+		VolumeSize:   DefaultVolumeSize,
+		StorageClass: "",
+	}
+
+	DefaultNetworking = v1alpha1.NexusNetworking{
+		Expose: false,
+		TLS:    DefaultTLS,
+	}
+
+	DefaultTLS = v1alpha1.NexusNetworkingTLS{
+		Mandatory:  false,
+		SecretName: "",
+	}
+
+	DefaultUpdate = v1alpha1.NexusAutomaticUpdate{
+		// this isn't really the default, but we need this off for most tests anyway
+		Disabled: true,
+	}
+
+	AllDefaultsCommunityNexus = v1alpha1.Nexus{
+		ObjectMeta: metav1.ObjectMeta{Name: "default-community-nexus", Namespace: "default"},
+		Spec: v1alpha1.NexusSpec{
+			Replicas:                    0,
+			Image:                       NexusCommunityImage,
+			ImagePullPolicy:             "",
+			AutomaticUpdate:             DefaultUpdate,
+			Resources:                   DefaultResources,
+			Persistence:                 DefaultPersistence,
+			UseRedHatImage:              false,
+			GenerateRandomAdminPassword: false,
+			Networking:                  DefaultNetworking,
+			ServiceAccountName:          "default-community-nexus",
+			LivenessProbe:               DefaultProbe.DeepCopy(),
+			ReadinessProbe:              DefaultProbe.DeepCopy(),
+		},
 	}
 )
