@@ -248,9 +248,7 @@ func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *a
 	if !reflect.DeepEqual(originalNexus.Spec, nexus.Spec) {
 		log.Infof("Updating Nexus instance '%s'", nexus.Name)
 		waitErr := wait.Poll(updatePollWaitTimeout, updateCancelTimeout, func() (bool, error) {
-			if updateErr := r.client.Update(context.TODO(), nexus); updateErr == nil {
-				return true, nil
-			} else if errors.IsConflict(updateErr) {
+			if updateErr := r.client.Update(context.TODO(), nexus); errors.IsConflict(updateErr) {
 				newNexus := &appsv1alpha1.Nexus{ObjectMeta: v1.ObjectMeta{
 					Name:      nexus.Name,
 					Namespace: nexus.Namespace,
@@ -275,9 +273,7 @@ func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *a
 	if !reflect.DeepEqual(originalNexus.Status, nexus.Status) {
 		log.Infof("Updating status for Nexus instance '%s'", nexus.Name)
 		waitErr := wait.Poll(updatePollWaitTimeout, updateCancelTimeout, func() (bool, error) {
-			if updateErr := r.client.Status().Update(context.TODO(), nexus); updateErr == nil {
-				return true, nil
-			} else if errors.IsConflict(updateErr) {
+			if updateErr := r.client.Status().Update(context.TODO(), nexus); errors.IsConflict(updateErr) {
 				newNexus := &appsv1alpha1.Nexus{ObjectMeta: v1.ObjectMeta{
 					Name:      nexus.Name,
 					Namespace: nexus.Namespace,
