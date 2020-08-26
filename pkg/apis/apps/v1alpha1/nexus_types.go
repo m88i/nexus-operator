@@ -234,6 +234,7 @@ type NexusStatus struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	NexusRoute string `json:"nexusRoute,omitempty"`
 	// Conditions reached during an update
+	// +listType=atomic
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="Update Conditions"
 	UpdateConditions []string `json:"updateConditions,omitempty"`

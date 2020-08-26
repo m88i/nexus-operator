@@ -26,8 +26,8 @@ require (
 )
 
 replace (
-	github.com/openshift/api => github.com/openshift/api v3.9.1-0.20190814194116-a94e914914f4+incompatible
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
+	github.com/openshift/api => github.com/openshift/api v3.9.1-0.20190814194116-a94e914914f4+incompatible
 	k8s.io/client-go => k8s.io/client-go v0.18.3 // Required by prometheus-operator
 )
 

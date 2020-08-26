@@ -296,6 +296,11 @@ func schema_pkg_apis_apps_v1alpha1_NexusStatus(ref common.ReferenceCallback) com
 						},
 					},
 					"updateConditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Conditions reached during an update",
 							Type:        []string{"array"},

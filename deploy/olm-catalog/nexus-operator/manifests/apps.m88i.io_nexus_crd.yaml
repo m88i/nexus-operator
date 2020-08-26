@@ -382,6 +382,7 @@ spec:
               items:
                 type: string
               type: array
+              x-kubernetes-list-type: atomic
           type: object
       type: object
   version: v1alpha1
