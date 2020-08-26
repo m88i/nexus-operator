@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package update
+package validation
 
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -21,21 +21,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	successfulUpdateReason = "UpdateSuccess"
-	failedUpdateReason     = "UpdateFailed"
-)
+const changedNexusReason = "NexusSpecChanged"
 
-func createUpdateSuccessEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, tag string) {
-	err := kubernetes.RaiseInfoEventf(nexus, scheme, c, successfulUpdateReason, "Successfully updated to %s", tag)
+func createChangedNexusEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, field string) {
+	err := kubernetes.RaiseWarnEventf(nexus, scheme, c, changedNexusReason, "'%s' has been changed in %s. Check the logs for more information", field, nexus.Name)
 	if err != nil {
-		log.Warnf("Unable to raise event for successful update of %s to %s: %v", nexus.Name, tag, err)
-	}
-}
-
-func createUpdateFailureEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, tag string) {
-	err := kubernetes.RaiseWarnEventf(nexus, scheme, c, failedUpdateReason, "Failed to update to %s. Human intervention may be required", tag)
-	if err != nil {
-		log.Warnf("Unable to raise event for failed update of %s to %s: %v", nexus.Name, tag, err)
+		log.Warnf("Unable to raise event for changing '%s' in Nexus (%s): %v", field, nexus.Name, err)
 	}
 }

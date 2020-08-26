@@ -24,14 +24,13 @@ import (
 	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/discovery"
 )
 
 func TestNewValidator(t *testing.T) {
 	tests := []struct {
-		name string
-		disc discovery.DiscoveryInterface
-		want *Validator
+		name   string
+		client *test.FakeClient
+		want   *Validator
 	}{
 		{
 			"On OCP",
@@ -63,18 +62,20 @@ func TestNewValidator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := NewValidator(tt.disc)
+		got, err := NewValidator(tt.client, tt.client.Scheme(), tt.client)
 		assert.Nil(t, err)
+		tt.want.client = tt.client
+		tt.want.scheme = tt.client.Scheme()
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%s\nWant: %+v\nGot: %+v", tt.name, tt.want, got)
 		}
 	}
 
 	// now let's test out error
-	disc := test.NewFakeClientBuilder().Build()
+	client := test.NewFakeClientBuilder().Build()
 	errString := "test error"
-	disc.SetMockErrorForOneRequest(fmt.Errorf(errString))
-	_, err := NewValidator(disc)
+	client.SetMockErrorForOneRequest(fmt.Errorf(errString))
+	_, err := NewValidator(client, client.Scheme(), client)
 	assert.Contains(t, err.Error(), errString)
 }
 
@@ -187,7 +188,8 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 }
 
 func TestValidator_setUpdateDefaults(t *testing.T) {
-	v := &Validator{}
+	client := test.NewFakeClientBuilder().Build()
+	v, _ := NewValidator(client, client.Scheme(), client)
 	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
 	nexus.Spec.Image = NexusCommunityImage
 
@@ -205,6 +207,21 @@ func TestValidator_setUpdateDefaults(t *testing.T) {
 	nexus.Spec.Image = "some-image"
 	v.setUpdateDefaults(nexus)
 	assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
+
+	// Informed a minor which does not exist
+	nexus = &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus.Spec.Image = NexusCommunityImage
+	bogusMinor := -1
+	nexus.Spec.AutomaticUpdate.MinorVersion = &bogusMinor
+	v.setUpdateDefaults(nexus)
+	latestMinor, err = update.GetLatestMinor()
+	if err != nil {
+		// If we couldn't fetch the tags updates should be disabled
+		assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
+		assert.True(t, test.EventExists(client, changedNexusReason))
+	} else {
+		assert.Equal(t, latestMinor, *nexus.Spec.AutomaticUpdate.MinorVersion)
+	}
 }
 
 func TestValidator_setNetworkingDefaults(t *testing.T) {

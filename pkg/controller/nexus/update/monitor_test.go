@@ -1,24 +1,20 @@
-//     Copyright 2020 Nexus Operator and/or its authors
+// Copyright 2020 Nexus Operator and/or its authors
 //
-//     This file is part of Nexus Operator.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-//     Nexus Operator is free software: you can redistribute it and/or modify
-//     it under the terms of the GNU General Public License as published by
-//     the Free Software Foundation, either version 3 of the License, or
-//     (at your option) any later version.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-//     Nexus Operator is distributed in the hope that it will be useful,
-//     but WITHOUT ANY WARRANTY; without even the implied warranty of
-//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//     GNU General Public License for more details.
-//
-//     You should have received a copy of the GNU General Public License
-//     along with Nexus Operator.  If not, see <https://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package update
 
 import (
-	ctx "context"
 	"fmt"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/test"
@@ -26,7 +22,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
 
@@ -93,7 +88,7 @@ func TestMonitorUpdate(t *testing.T) {
 	assert.Len(t, nexus.Status.UpdateConditions, 2)
 	assert.Equal(t, fmt.Sprintf(updateStartFormat, "3.25.0", "3.25.2"), nexus.Status.UpdateConditions[0])
 	assert.Equal(t, fmt.Sprintf(updateOKFormat, "3.25.0", "3.25.2"), nexus.Status.UpdateConditions[1])
-	assert.True(t, eventExists(c, successfulUpdateReason))
+	assert.True(t, test.EventExists(c, successfulUpdateReason))
 
 	// In an update and it fails
 	nexus.Status.UpdateConditions = []string{fmt.Sprintf(updateStartFormat, "3.25.0", "3.25.2")}
@@ -109,7 +104,7 @@ func TestMonitorUpdate(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf(updateFailedFormat, "3.25.0", "3.25.2"), nexus.Status.UpdateConditions[1])
 	assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
 	assert.Equal(t, fmt.Sprintf("%s:%s", image, "3.25.0"), nexus.Spec.Image)
-	assert.True(t, eventExists(c, failedUpdateReason))
+	assert.True(t, test.EventExists(c, failedUpdateReason))
 
 	// In an update, it fails and rolling back fails
 	nexus.Status.UpdateConditions = []string{fmt.Sprintf(updateStartFormat, "3.25.0", "3.25.2")}
@@ -122,7 +117,7 @@ func TestMonitorUpdate(t *testing.T) {
 
 	err = HandleUpdate(nexus, deployedDep, requiredDep, c.Scheme(), c)
 	assert.NotNil(t, err)
-	assert.False(t, eventExists(c, failedUpdateReason))
+	assert.False(t, test.EventExists(c, failedUpdateReason))
 
 	// In an update, but the conditions have been tempered with and it can't be parsed
 	nexus.Status.UpdateConditions = []string{fmt.Sprintf(updateStartPrefix+"wrong format %s %s", "3.25.0", "3.25.2")}
@@ -132,23 +127,13 @@ func TestMonitorUpdate(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, nexus.Status.UpdateConditions)
 
-	// automatic updates are disabled
+	// automatic updates are disabled and was in an update
+	nexus.Status.UpdateConditions = []string{fmt.Sprintf(updateStartFormat, "3.25.0", "3.25.1")}
 	nexus.Spec.AutomaticUpdate.Disabled = true
 
 	err = HandleUpdate(nexus, deployedDep, requiredDep, c.Scheme(), c)
 	assert.Nil(t, err)
 	assert.Nil(t, nexus.Status.UpdateConditions)
-}
-
-func eventExists(c client.Client, reason string) bool {
-	eventList := &corev1.EventList{}
-	_ = c.List(ctx.Background(), eventList)
-	for _, event := range eventList.Items {
-		if event.Reason == reason {
-			return true
-		}
-	}
-	return false
 }
 
 func Test_alreadyUpdating(t *testing.T) {

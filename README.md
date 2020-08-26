@@ -147,7 +147,34 @@ $ kubectl get events
 A successful update event looks like:
 
 ```yaml
+apiVersion: v1
+count: 1
+eventTime: null
+firstTimestamp: "2020-08-26T13:56:16Z"
+involvedObject:
+  apiVersion: apps.m88i.io/v1alpha1
+  kind: Nexus
+  name: nexus3
+  namespace: update
+  resourceVersion: "66087"
+  uid: f017e60f-21b5-4b14-b67c-341e029afae3
+kind: Event
+lastTimestamp: "2020-08-26T13:56:16Z"
+message: Successfully updated to 3.26.1
+# (output omitted)
+reason: UpdateSuccess
+reportingComponent: ""
+reportingInstance: ""
+source:
+  component: nexus3
+type: Normal
+```
 
+```
+$ kubectl get events         
+LAST SEEN   TYPE      REASON              OBJECT                         MESSAGE
+12m         Normal    UpdateSuccess       nexus/nexus3                   Successfully updated to 3.26.1
+# (output omitted)
 ```
 
 ### Failed Updates

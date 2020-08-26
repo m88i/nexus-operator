@@ -16,6 +16,8 @@ package validation
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
@@ -36,11 +38,14 @@ const (
 var log = logger.GetLogger("Nexus_validation")
 
 type Validator struct {
+	client client.Client
+	scheme *runtime.Scheme
+
 	routeAvailable, ingressAvailable, ocp bool
 }
 
 // NewValidator creates a new validator to set defaults, validate and update the Nexus CR
-func NewValidator(disc discovery.DiscoveryInterface) (*Validator, error) {
+func NewValidator(client client.Client, scheme *runtime.Scheme, disc discovery.DiscoveryInterface) (*Validator, error) {
 	routeAvailable, err := openshift.IsRouteAvailable(disc)
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
@@ -57,6 +62,8 @@ func NewValidator(disc discovery.DiscoveryInterface) (*Validator, error) {
 	}
 
 	return &Validator{
+		client:           client,
+		scheme:           scheme,
 		routeAvailable:   routeAvailable,
 		ingressAvailable: ingressAvailable,
 		ocp:              ocp,
@@ -204,7 +211,7 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 		log.Debugf("Automatic Updates are enabled, but no minor was informed. Fetching the most recent...")
 		minor, err := update.GetLatestMinor()
 		if err != nil {
-			log.Errorf("Unable to fetch the most recent minor. Disabling automatic updates.")
+			log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
 			nexus.Spec.AutomaticUpdate.Disabled = true
 			return
 		}
@@ -214,10 +221,20 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 	log.Debugf("Fetching the latest micro from minor %d", *nexus.Spec.AutomaticUpdate.MinorVersion)
 	tag, ok := update.GetLatestMicro(*nexus.Spec.AutomaticUpdate.MinorVersion)
 	if !ok {
-		// the informed minor doesn't exist, let's just use 'latest'
-		log.Warnf("Latest tag for minor version (%d) not found. Using 'latest' instead and disabling Automatic", *nexus.Spec.AutomaticUpdate.MinorVersion)
-		nexus.Spec.AutomaticUpdate.Disabled = true
-		return
+		// the informed minor doesn't exist, let's try the latest minor
+		log.Warnf("Latest tag for minor version (%d) not found. Trying the latest minor instead", *nexus.Spec.AutomaticUpdate.MinorVersion)
+		minor, err := update.GetLatestMinor()
+		if err != nil {
+			log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
+			nexus.Spec.AutomaticUpdate.Disabled = true
+			createChangedNexusEvent(nexus, v.scheme, v.client, "spec.automaticUpdate.disabled")
+			return
+		}
+		log.Infof("Setting 'spec.automaticUpdate.minorVersion to %d", minor)
+		nexus.Spec.AutomaticUpdate.MinorVersion = &minor
+		// no need to check for the tag existence here,
+		// we would have gotten an error from GetLatestMinor() if it didn't
+		tag, _ = update.GetLatestMicro(minor)
 	}
 	newImage := fmt.Sprintf("%s:%s", image, tag)
 	log.Debugf("Replacing 'spec.image' (%s) with '%s'", nexus.Spec.Image, newImage)

@@ -146,7 +146,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return result, err
 	}
 
-	v, err := validation.NewValidator(r.discoveryClient)
+	v, err := validation.NewValidator(r.client, r.scheme, r.discoveryClient)
 	if err != nil {
 		// Error using the discovery API - requeue the request.
 		return
