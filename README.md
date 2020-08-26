@@ -317,7 +317,7 @@ data:
 
 ### TLS/SSL
 
-For details about TLS configuration check out our [TLS guide](https://github.com/m88i/nexus-operator/tree/master/docs/TLS.md).
+For details about TLS configuration check out our [TLS guide](https://github.com/m88i/nexus-operator/tree/main/docs/TLS.md).
 
 ## Persistence
 

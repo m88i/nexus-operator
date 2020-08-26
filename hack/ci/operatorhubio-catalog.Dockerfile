@@ -29,7 +29,7 @@
 
 
 
-# this Dockerfile is based on https://github.com/operator-framework/community-operators/blob/master/upstream.Dockerfile
+# this Dockerfile is based on https://github.com/operator-framework/community-operators/blob/main/upstream.Dockerfile
 # we just changed the third line to include only our manifest in this registry. 
 # since we don't have dependencies from others operators, we're good to go
 FROM quay.io/operator-framework/upstream-registry-builder:v1.5.6 as builder
