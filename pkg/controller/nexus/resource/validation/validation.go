@@ -213,6 +213,7 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 		if err != nil {
 			log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
 			nexus.Spec.AutomaticUpdate.Disabled = true
+			createChangedNexusEvent(nexus, v.scheme, v.client, "spec.automaticUpdate.disabled")
 			return
 		}
 		nexus.Spec.AutomaticUpdate.MinorVersion = &minor
