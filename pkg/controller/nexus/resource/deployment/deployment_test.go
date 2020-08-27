@@ -36,7 +36,8 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 			Namespace: t.Name(),
 		},
 		Spec: v1alpha1.NexusSpec{
-			Replicas: 1,
+			AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{Disabled: true},
+			Replicas:        1,
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: false,
 			},
@@ -44,13 +45,13 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 			// but we don't care about that here (this is tested on the manager's tests)
 			LivenessProbe:  validation.DefaultProbe,
 			ReadinessProbe: validation.DefaultProbe,
-			Image:          validation.NexusCommunityLatestImage,
+			Image:          validation.NexusCommunityImage,
 		},
 	}
 	deployment := newDeployment(nexus)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
-	assert.Equal(t, validation.NexusCommunityLatestImage, deployment.Spec.Template.Spec.Containers[0].Image)
+	assert.Equal(t, validation.NexusCommunityImage, deployment.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, int32(1), *deployment.Spec.Replicas)
 
 	assert.Equal(t, int32(NexusServicePort), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.HTTPGet.Port.IntVal)
@@ -72,7 +73,8 @@ func Test_newDeployment_WithPersistence(t *testing.T) {
 			Namespace: t.Name(),
 		},
 		Spec: v1alpha1.NexusSpec{
-			Replicas: 1,
+			AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{Disabled: true},
+			Replicas:        1,
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
@@ -151,6 +153,7 @@ func Test_customProbes(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
+			AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{Disabled: true},
 			LivenessProbe: &v1alpha1.NexusProbe{
 				FailureThreshold:    1,
 				PeriodSeconds:       10,
@@ -181,6 +184,7 @@ func Test_applyJVMArgs_withRandomPassword(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
+			AutomaticUpdate:             v1alpha1.NexusAutomaticUpdate{Disabled: true},
 			GenerateRandomAdminPassword: true,
 			// a valid Liveness Probe should have successThreshold == 1
 			// but we don't care about that here (this is tested on the manager's tests)
@@ -207,6 +211,7 @@ func Test_applyJVMArgs_withDefaultValues(t *testing.T) {
 			Persistence: v1alpha1.NexusPersistence{
 				Persistent: true,
 			},
+			AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{Disabled: true},
 			// a valid Liveness Probe should have successThreshold == 1
 			// but we don't care about that here (this is tested on the manager's tests)
 			LivenessProbe:  validation.DefaultProbe,

@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package framework
+package validation
 
 import (
-	ctx "context"
-
-	"github.com/RHsyseng/operator-utils/pkg/resource"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource) error {
-	log.Debugf("Attempting to fetch deployed %s (%s)", instance.GetObjectKind(), key.Name)
-	if err := client.Get(ctx.TODO(), key, instance); err != nil {
-		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed %s (%s)", instance.GetObjectKind(), key.Name)
-		}
-		return err
+const changedNexusReason = "NexusSpecChanged"
+
+func createChangedNexusEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, field string) {
+	err := kubernetes.RaiseWarnEventf(nexus, scheme, c, changedNexusReason, "'%s' has been changed in %s. Check the logs for more information", field, nexus.Name)
+	if err != nil {
+		log.Warnf("Unable to raise event for changing '%s' in Nexus (%s): %v", field, nexus.Name, err)
 	}
-	return nil
 }

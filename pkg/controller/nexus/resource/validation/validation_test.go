@@ -20,38 +20,17 @@ import (
 	"testing"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/discovery"
-)
-
-var (
-	allDefaultsCommunityNexus = &v1alpha1.Nexus{
-		ObjectMeta: metav1.ObjectMeta{Name: "nexus-test"},
-		Spec: v1alpha1.NexusSpec{
-			ServiceAccountName: "nexus-test",
-			Resources:          DefaultResources,
-			Image:              NexusCommunityLatestImage,
-			LivenessProbe:      DefaultProbe.DeepCopy(),
-			ReadinessProbe:     DefaultProbe.DeepCopy(),
-		},
-	}
-
-	allDefaultsRedHatNexus = func() *v1alpha1.Nexus {
-		nexus := allDefaultsCommunityNexus.DeepCopy()
-		nexus.Spec.UseRedHatImage = true
-		nexus.Spec.Image = NexusCertifiedLatestImage
-		return nexus
-	}()
 )
 
 func TestNewValidator(t *testing.T) {
 	tests := []struct {
-		name string
-		disc discovery.DiscoveryInterface
-		want *Validator
+		name   string
+		client *test.FakeClient
+		want   *Validator
 	}{
 		{
 			"On OCP",
@@ -83,18 +62,20 @@ func TestNewValidator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := NewValidator(tt.disc)
+		got, err := NewValidator(tt.client, tt.client.Scheme(), tt.client)
 		assert.Nil(t, err)
+		tt.want.client = tt.client
+		tt.want.scheme = tt.client.Scheme()
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%s\nWant: %+v\nGot: %+v", tt.name, tt.want, got)
 		}
 	}
 
 	// now let's test out error
-	disc := test.NewFakeClientBuilder().Build()
+	client := test.NewFakeClientBuilder().Build()
 	errString := "test error"
-	disc.SetMockErrorForOneRequest(fmt.Errorf(errString))
-	_, err := NewValidator(disc)
+	client.SetMockErrorForOneRequest(fmt.Errorf(errString))
+	_, err := NewValidator(client, client.Scheme(), client)
 	assert.Contains(t, err.Error(), errString)
 }
 
@@ -115,42 +96,49 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		{
 			"'spec.resources' left blank",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.Resources = corev1.ResourceRequirements{}
 				return nexus
 			}(),
-			allDefaultsCommunityNexus,
+			&AllDefaultsCommunityNexus,
 		},
 		{
 			"'spec.useRedHatImage' set to true and 'spec.image' not left blank",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.UseRedHatImage = true
+				nexus.Spec.Image = "some-image"
 				return nexus
 			}(),
-			allDefaultsRedHatNexus,
-		}, {
+			func() *v1alpha1.Nexus {
+				n := AllDefaultsCommunityNexus.DeepCopy()
+				n.Spec.UseRedHatImage = true
+				n.Spec.Image = NexusCertifiedImage
+				return n
+			}(),
+		},
+		{
 			"'spec.useRedHatImage' set to false and 'spec.image' left blank",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.Image = ""
 				return nexus
 			}(),
-			allDefaultsCommunityNexus,
+			&AllDefaultsCommunityNexus,
 		},
 		{
 			"'spec.livenessProbe.successThreshold' not equal to 1",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe.SuccessThreshold = 2
 				return nexus
 			}(),
-			allDefaultsCommunityNexus,
+			&AllDefaultsCommunityNexus,
 		},
 		{
 			"'spec.livenessProbe.*' and 'spec.readinessProbe.*' don't meet minimum values",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe = &v1alpha1.NexusProbe{
 					InitialDelaySeconds: -1,
 					TimeoutSeconds:      -1,
@@ -162,7 +150,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 				return nexus
 			}(),
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe = minimumDefaultProbe.DeepCopy()
 				nexus.Spec.ReadinessProbe = minimumDefaultProbe.DeepCopy()
 				return nexus
@@ -171,21 +159,21 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		{
 			"Unset 'spec.livenessProbe' and 'spec.readinessProbe'",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe = nil
 				nexus.Spec.ReadinessProbe = nil
 				return nexus
 			}(),
-			allDefaultsCommunityNexus.DeepCopy(),
+			AllDefaultsCommunityNexus.DeepCopy(),
 		},
 		{
 			"Invalid 'spec.imagePullPolicy'",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.ImagePullPolicy = "invalid"
 				return nexus
 			}(),
-			allDefaultsCommunityNexus.DeepCopy(),
+			AllDefaultsCommunityNexus.DeepCopy(),
 		},
 	}
 
@@ -196,6 +184,43 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%s\nWant: %+v\nGot: %+v", tt.name, tt.want, got)
 		}
+	}
+}
+
+func TestValidator_setUpdateDefaults(t *testing.T) {
+	client := test.NewFakeClientBuilder().Build()
+	v, _ := NewValidator(client, client.Scheme(), client)
+	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus.Spec.Image = NexusCommunityImage
+
+	v.setUpdateDefaults(nexus)
+	latestMinor, err := update.GetLatestMinor()
+	if err != nil {
+		// If we couldn't fetch the tags updates should be disabled
+		assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
+	} else {
+		assert.Equal(t, latestMinor, *nexus.Spec.AutomaticUpdate.MinorVersion)
+	}
+
+	// Now an invalid image
+	nexus = &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus.Spec.Image = "some-image"
+	v.setUpdateDefaults(nexus)
+	assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
+
+	// Informed a minor which does not exist
+	nexus = &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus.Spec.Image = NexusCommunityImage
+	bogusMinor := -1
+	nexus.Spec.AutomaticUpdate.MinorVersion = &bogusMinor
+	v.setUpdateDefaults(nexus)
+	latestMinor, err = update.GetLatestMinor()
+	if err != nil {
+		// If we couldn't fetch the tags updates should be disabled
+		assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
+		assert.True(t, test.EventExists(client, changedNexusReason))
+	} else {
+		assert.Equal(t, latestMinor, *nexus.Spec.AutomaticUpdate.MinorVersion)
 	}
 }
 
@@ -214,12 +239,12 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 			true,
 			false, // unimportant
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				return n
 			}(),
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				n.Spec.Networking.ExposeAs = v1alpha1.RouteExposeType
 				return n
@@ -231,12 +256,12 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 			false,
 			true,
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				return n
 			}(),
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				n.Spec.Networking.ExposeAs = v1alpha1.IngressExposeType
 				return n
@@ -248,12 +273,12 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 			false,
 			false,
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				return n
 			}(),
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				n.Spec.Networking.ExposeAs = v1alpha1.NodePortExposeType
 				return n
@@ -411,12 +436,12 @@ func TestValidator_SetDefaultsAndValidate_Persistence(t *testing.T) {
 		{
 			"'spec.persistence.volumeSize' left blank",
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Persistence.Persistent = true
 				return n
 			}(),
 			func() *v1alpha1.Nexus {
-				n := allDefaultsCommunityNexus.DeepCopy()
+				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Persistence.Persistent = true
 				n.Spec.Persistence.VolumeSize = DefaultVolumeSize
 				return n
@@ -434,6 +459,7 @@ func TestValidator_SetDefaultsAndValidate_Persistence(t *testing.T) {
 }
 
 func TestValidator_SetDefaultsAndValidate_Security(t *testing.T) {
+
 	tests := []struct {
 		name  string
 		input *v1alpha1.Nexus
@@ -442,11 +468,11 @@ func TestValidator_SetDefaultsAndValidate_Security(t *testing.T) {
 		{
 			"'spec.serviceAccountName' left blank",
 			func() *v1alpha1.Nexus {
-				nexus := allDefaultsCommunityNexus.DeepCopy()
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.ServiceAccountName = ""
 				return nexus
 			}(),
-			allDefaultsCommunityNexus,
+			&AllDefaultsCommunityNexus,
 		},
 	}
 	for _, tt := range tests {

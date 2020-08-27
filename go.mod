@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.3.1
+	github.com/heroku/docker-registry-client v0.0.0-20190909225348-afc9e1acc3d5
 	github.com/m88i/aicura v0.2.0
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/operator-sdk v0.18.1
@@ -25,12 +26,9 @@ require (
 )
 
 replace (
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	github.com/openshift/api => github.com/openshift/api v3.9.1-0.20190814194116-a94e914914f4+incompatible
-	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20190813201236-5a5508328169
+	k8s.io/client-go => k8s.io/client-go v0.18.3 // Required by prometheus-operator
 )
-
-replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
-
-replace k8s.io/client-go => k8s.io/client-go v0.18.3 // Required by prometheus-operator
 
 go 1.14

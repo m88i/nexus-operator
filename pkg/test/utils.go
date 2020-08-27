@@ -15,7 +15,10 @@
 package test
 
 import (
+	"context"
+	"k8s.io/api/core/v1"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 )
@@ -23,6 +26,17 @@ import (
 func ContainsType(resources []resource.KubernetesResource, t reflect.Type) bool {
 	for _, res := range resources {
 		if reflect.TypeOf(res) == t {
+			return true
+		}
+	}
+	return false
+}
+
+func EventExists(c client.Client, reason string) bool {
+	eventList := &v1.EventList{}
+	_ = c.List(context.Background(), eventList)
+	for _, event := range eventList.Items {
+		if event.Reason == reason {
 			return true
 		}
 	}

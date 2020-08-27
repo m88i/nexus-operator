@@ -32,7 +32,7 @@ metadata:
           }
         }
       ]
-    capabilities: Basic Install
+    capabilities: Seamless Upgrades
     categories: Developer Tools
     certified: "false"
     containerImage: quay.io/m88i/nexus-operator:0.3.0
@@ -62,6 +62,9 @@ spec:
         name: A Kubernetes Service
         version: v1
       specDescriptors:
+      - description: Automatic updates configuration
+        displayName: Automatic Update
+        path: automaticUpdate
       - description: 'GenerateRandomAdminPassword enables the random password generation.
           Defaults to `false`: the default password for a newly created instance is
           ''admin123'', which should be changed in the first login. If set to `true`,
@@ -123,6 +126,9 @@ spec:
         path: reason
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.phase:reason
+      - description: Conditions reached during an update
+        displayName: Update Conditions
+        path: updateConditions
       version: v1alpha1
   description: |-
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:

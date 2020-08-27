@@ -79,6 +79,7 @@ func (b *FakeClientBuilder) WithIngress() *FakeClientBuilder {
 // Build returns the fake discovery client
 func (b *FakeClientBuilder) Build() *FakeClient {
 	return &FakeClient{
+		scheme: b.scheme,
 		client: fake.NewFakeClientWithScheme(b.scheme, b.initObjs...),
 		disc: &discfake.FakeDiscovery{
 			Fake: &clienttesting.Fake{
@@ -105,10 +106,16 @@ func schemeBuilderWithIngress() *runtime.SchemeBuilder {
 // It also wraps a fake discovery client
 // FakeClient implements both client.Client and discovery.DiscoveryInterface
 type FakeClient struct {
+	scheme           *runtime.Scheme
 	client           client.Client
 	disc             discovery.DiscoveryInterface
 	mockErr          error
 	shouldClearError bool
+}
+
+// Scheme returns the fake client's scheme
+func (c *FakeClient) Scheme() *runtime.Scheme {
+	return c.scheme
 }
 
 // SetMockError sets the error which should be returned for the following requests

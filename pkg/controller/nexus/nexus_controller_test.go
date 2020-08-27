@@ -16,10 +16,13 @@ package nexus
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	resUtils "github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	"github.com/m88i/nexus-operator/pkg/test"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
@@ -28,9 +31,10 @@ import (
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -54,7 +58,7 @@ func TestReconcileNexus_Reconcile_NotPersistent(t *testing.T) {
 	ns := t.Name()
 	appName := "nexus3"
 	nexus := &v1alpha1.Nexus{
-		ObjectMeta: v1.ObjectMeta{Namespace: ns, Name: appName},
+		ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: appName},
 		Spec: v1alpha1.NexusSpec{
 			Replicas: 1,
 			Persistence: v1alpha1.NexusPersistence{
@@ -112,7 +116,7 @@ func TestReconcileNexus_Reconcile_Persistent(t *testing.T) {
 	ns := t.Name()
 	appName := "nexus3"
 	nexus := &v1alpha1.Nexus{
-		ObjectMeta: v1.ObjectMeta{Namespace: ns, Name: appName},
+		ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: appName},
 		Spec: v1alpha1.NexusSpec{
 			Replicas: 1,
 			Persistence: v1alpha1.NexusPersistence{
@@ -153,6 +157,38 @@ func Test_add(t *testing.T) {
 	r := newFakeReconcileNexus(cli)
 	err := add(mgr, &r)
 	assert.NoError(t, err)
+}
+
+func TestReconcileNexus_handleUpdate(t *testing.T) {
+	r := newFakeReconcileNexus(test.NewFakeClientBuilder().Build())
+	baseNexus := validation.AllDefaultsCommunityNexus.DeepCopy()
+	baseNexus.Spec.AutomaticUpdate.Disabled = true
+	deploymentType := reflect.TypeOf(appsv1.Deployment{})
+
+	// First, let's test the first deployment scenario, which isn't an update
+	requiredRes := make(map[reflect.Type][]resUtils.KubernetesResource)
+	deployedRes := make(map[reflect.Type][]resUtils.KubernetesResource)
+
+	requiredDep := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Image: fmt.Sprintf("%s:%s", baseNexus.Spec.Image, "3.25.1"),
+						},
+					},
+				},
+			},
+		},
+	}
+	requiredRes[deploymentType] = []resUtils.KubernetesResource{requiredDep}
+	assert.NoError(t, r.handleUpdate(baseNexus, requiredRes, deployedRes))
+
+	// Now let's test with an existing deployment
+	deployedDep := requiredDep.DeepCopy()
+	deployedRes[deploymentType] = []resUtils.KubernetesResource{deployedDep}
+	assert.NoError(t, r.handleUpdate(baseNexus, requiredRes, deployedRes))
 }
 
 func newFakeReconcileNexus(cl *test.FakeClient) ReconcileNexus {

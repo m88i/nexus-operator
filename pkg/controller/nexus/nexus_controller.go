@@ -20,20 +20,16 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
-
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/server"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	routev1 "github.com/openshift/api/route/v1"
-	networking "k8s.io/api/networking/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/discovery"
 
+	resUtils "github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/write"
 
 	appsv1alpha1 "github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -41,8 +37,13 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -145,7 +146,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return result, err
 	}
 
-	v, err := validation.NewValidator(r.discoveryClient)
+	v, err := validation.NewValidator(r.client, r.scheme, r.discoveryClient)
 	if err != nil {
 		// Error using the discovery API - requeue the request.
 		return
@@ -164,7 +165,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return
 	}
 	// Create the objects as desired by the Nexus instance
-	requestedRes, err := r.resourceSupervisor.GetRequiredResources()
+	requiredRes, err := r.resourceSupervisor.GetRequiredResources()
 	if err != nil {
 		return
 	}
@@ -178,7 +179,7 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 	if err != nil {
 		return
 	}
-	deltas := comparator.Compare(deployedRes, requestedRes)
+	deltas := comparator.Compare(deployedRes, requiredRes)
 
 	writer := write.New(r.client).WithOwnerController(validatedNexus, r.scheme)
 	for resourceType, delta := range deltas {
@@ -208,7 +209,20 @@ func (r *ReconcileNexus) Reconcile(request reconcile.Request) (result reconcile.
 		return
 	}
 
+	// Check if we are performing an update and act upon it if needed
+	err = r.handleUpdate(validatedNexus, requiredRes, deployedRes)
 	return
+}
+
+func (r *ReconcileNexus) handleUpdate(nexus *appsv1alpha1.Nexus, required, deployed map[reflect.Type][]resUtils.KubernetesResource) error {
+	requiredDeployment := required[reflect.TypeOf(appsv1.Deployment{})][0].(*appsv1.Deployment)
+	deployedDeployments := deployed[reflect.TypeOf(appsv1.Deployment{})]
+	if len(deployedDeployments) == 0 {
+		// nothing previously deployed, not an update
+		return nil
+	}
+	deployedDeployment := deployedDeployments[0].(*appsv1.Deployment)
+	return update.HandleUpdate(nexus, deployedDeployment, requiredDeployment, r.scheme, r.client)
 }
 
 func (r *ReconcileNexus) ensureServerUpdates(instance *appsv1alpha1.Nexus) error {
@@ -226,7 +240,7 @@ func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *a
 	log.Info("Updating application status before leaving")
 
 	if statusErr := r.getNexusDeploymentStatus(nexus); statusErr != nil {
-		log.Error(statusErr, "Error while fetching Nexus Deployment status")
+		log.Errorf("Error while fetching Nexus Deployment status: %v", err)
 	}
 
 	if *err != nil {
@@ -242,7 +256,7 @@ func (r *ReconcileNexus) updateNexus(nexus *appsv1alpha1.Nexus, originalNexus *a
 	}
 
 	if urlErr := r.getNexusURL(nexus); urlErr != nil {
-		log.Error(urlErr, "Error while fetching Nexus URL status")
+		log.Errorf("Error while fetching Nexus URL status: %v", urlErr)
 	}
 
 	if !reflect.DeepEqual(originalNexus.Spec, nexus.Spec) {

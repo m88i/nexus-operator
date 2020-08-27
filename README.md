@@ -12,6 +12,9 @@ Table of Contents
       * [Quick Install](#quick-install)
          * [Openshift](#openshift)
          * [Clean up](#clean-up)
+      * [Automatic Updates](#automatic-updates)
+         * [Successful Updates](#successful-updates)
+         * [Failed Updates](#failed-updates)
       * [Networking](#networking)
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
@@ -96,6 +99,126 @@ Considering that you ran the install command above, to remove the operator compl
 ```bash
 make uninstall
 ```
+
+## Automatic Updates
+
+The Nexus Operator is capable of conducting automatic updates within a minor (the `y` in `x.y.z`) when using the community default image (`docker.io/sonatype/nexus3`). In the future Red Hat images will also be supported by this feature.
+> **Note**: custom images will not be supported as there is no guarantee that they follow [semantic versioning](https://semver.org/) and as such, updates within the same minor may be disruptive.
+
+Two fields within the Nexus CR control this behavior:
+
+  - `spec.automaticUpdate.disabled` (*boolean*): Whether the Operator should perform automatic updates. Defaults to `false` (auto updates are enabled). Is set to `false` if `spec.image` is not empty and is different from the default community image.
+  - `spec.automaticUpdate.minorVersion` (*integer*): The Nexus image minor version the deployment should stay in. If left blank and automatic updates are enabled the latest minor is set.
+
+> **Note**: if you wish to set a specific tag when using the default community image you must first disable automatic updates.
+
+> **Important**: a change of minors will *not* be monitored or acted upon as an automatic update. Changing the minor is a manual process initiated by the human operator and as such must be monitored by the human operator.
+ 
+The state of ongoing updates is written to `status.updateConditions`, which can be easily accessed with `kubectl`:
+
+```
+$ kubectl describe nexus
+# (output omitted)
+  Update Conditions:
+    Starting automatic update from 3.26.0 to 3.26.1
+    Successfully updated from 3.26.0 to 3.26.1
+Events:
+  Type    Reason         Age   From    Message
+  ----    ------         ----  ----    -------
+  Normal  UpdateSuccess  59s   nexus3  Successfully updated to 3.26.1
+```
+
+> **Note**: do *not* modify these conditions manually, the Operator reconstructs the update state from these.
+
+### Successful Updates
+
+Once an update finishes successfully, an [Event](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#event-v1-core) is raised. You may view the events from a particular Nexus CR by describing it:
+
+```
+$ kubectl describe <Nexus CR>
+```
+
+Or you may query all events:
+
+```
+$ kubectl get events
+```
+
+A successful update event looks like:
+
+```yaml
+apiVersion: v1
+count: 1
+eventTime: null
+firstTimestamp: "2020-08-26T13:56:16Z"
+involvedObject:
+  apiVersion: apps.m88i.io/v1alpha1
+  kind: Nexus
+  name: nexus3
+  namespace: update
+  resourceVersion: "66087"
+  uid: f017e60f-21b5-4b14-b67c-341e029afae3
+kind: Event
+lastTimestamp: "2020-08-26T13:56:16Z"
+message: Successfully updated to 3.26.1
+# (output omitted)
+reason: UpdateSuccess
+reportingComponent: ""
+reportingInstance: ""
+source:
+  component: nexus3
+type: Normal
+```
+
+```
+$ kubectl get events         
+LAST SEEN   TYPE      REASON              OBJECT                         MESSAGE
+12m         Normal    UpdateSuccess       nexus/nexus3                   Successfully updated to 3.26.1
+# (output omitted)
+```
+
+### Failed Updates
+
+When an update fails, since the Deployments produced by the Operator use a [Rolling Deployment Strategy](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment) there is no disruption and the previous version is still available. 
+The Operator will then:
+ 
+   1. disable automatic updates
+   2. set `spec.image` to the version that was set before the update began
+   3. raise a failure event
+
+A failed update event looks like:
+
+```yaml
+apiVersion: v1
+count: 1
+eventTime: null
+firstTimestamp: "2020-08-21T18:29:11Z"
+involvedObject:
+  apiVersion: apps.m88i.io/v1alpha1
+  kind: Nexus
+  name: nexus3
+  namespace: update
+  resourceVersion: "51602"
+  uid: 2e9ef49a-7d37-4c96-bfae-0642a9487c95
+kind: Event
+lastTimestamp: "2020-08-21T18:29:11Z"
+message: Failed to update to 3.26.1. Human intervention may be required
+# (output omitted)
+reason: UpdateFailed
+reportingComponent: ""
+reportingInstance: ""
+source:
+  component: nexus3
+type: Warning
+```
+
+```
+$ kubectl get events         
+  LAST SEEN   TYPE      REASON              OBJECT                         MESSAGE
+  9m45s       Warning   UpdateFailed        nexus/nexus3                   Failed to update to 3.26.1. Human intervention may be required
+# (output omitted)
+```
+
 ## Networking
 
 There are three flavours for exposing the Nexus server deployed with the Nexus Operator: `NodePort`, `Route` (for OpenShift) and `Ingress` (for Kubernetes).
