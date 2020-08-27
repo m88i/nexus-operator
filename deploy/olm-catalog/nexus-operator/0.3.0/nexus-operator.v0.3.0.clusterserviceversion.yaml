@@ -32,7 +32,7 @@ metadata:
           }
         }
       ]
-    capabilities: Basic Install
+    capabilities: Seamless Upgrades
     categories: Developer Tools
     certified: "false"
     containerImage: quay.io/m88i/nexus-operator:0.3.0
