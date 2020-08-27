@@ -137,7 +137,7 @@ spec:
     * Creates an [Ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes (1.14+) environments to expose the application to the world
     * On OpenShift, creates a Route to expose the service outside the cluster
 
-    [See our documentation](https://github.com/m88i/nexus-operator/blob/master/README.md) for more installation and usage scenarios.
+    [See our documentation](https://github.com/m88i/nexus-operator/blob/main/README.md) for more installation and usage scenarios.
 
     If you experience any issues or have any ideas for new features, please [file an issue in our Github repository](https://github.com/m88i/nexus-operator/issues) or send an email to our maillist: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com)
 
@@ -309,7 +309,7 @@ spec:
     name: nexus-operator
   links:
   - name: Documentation
-    url: https://github.com/m88i/nexus-operator/blob/master/README.md
+    url: https://github.com/m88i/nexus-operator/blob/main/README.md
   - name: Nexus Operator source code repository
     url: https://github.com/m88i/nexus-operator
   maintainers:
