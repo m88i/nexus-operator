@@ -19,7 +19,7 @@ import (
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/apis/apps/v1alpha1"
 )
 
 // Supervisor is the resources manager for the nexus CR.

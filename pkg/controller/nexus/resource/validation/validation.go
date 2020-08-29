@@ -16,17 +16,19 @@ package validation
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"strings"
+
+	"github.com/m88i/nexus-operator/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/discovery"
-	"strings"
 )
 
 const (

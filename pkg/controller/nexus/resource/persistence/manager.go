@@ -20,7 +20,7 @@ import (
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

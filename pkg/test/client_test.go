@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
@@ -38,12 +38,12 @@ func TestNewFakeClientBuilder(t *testing.T) {
 	b := NewFakeClientBuilder(nexus)
 
 	// client.Client
-	assert.Len(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), 10)
-	assert.Contains(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), strings.Split(reflect.TypeOf(&v1alpha1.Nexus{}).String(), ".")[1])
-	assert.Contains(t, b.scheme.KnownTypes(v1alpha1.SchemeGroupVersion), strings.Split(reflect.TypeOf(&v1alpha1.NexusList{}).String(), ".")[1])
+	assert.Len(t, b.scheme.KnownTypes(v1alpha1.GroupVersion), 10)
+	assert.Contains(t, b.scheme.KnownTypes(v1alpha1.GroupVersion), strings.Split(reflect.TypeOf(&v1alpha1.Nexus{}).String(), ".")[1])
+	assert.Contains(t, b.scheme.KnownTypes(v1alpha1.GroupVersion), strings.Split(reflect.TypeOf(&v1alpha1.NexusList{}).String(), ".")[1])
 
 	// discovery.DiscoveryInterface
-	assert.True(t, resourceListsContainsGroupVersion(b.resources, v1alpha1.SchemeGroupVersion.String()))
+	assert.True(t, resourceListsContainsGroupVersion(b.resources, v1alpha1.GroupVersion.String()))
 
 	// initObjs
 	assert.Len(t, b.initObjs, 1)
