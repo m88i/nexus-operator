@@ -53,7 +53,7 @@ jobs:
           go mod tidy
 
       - name: FMT
-        run: gofmt -s -l -w cmd/ pkg/ version/
+        run: gofmt -s -l -w pkg/ version/ controllers/ apis/
 
       - name: Vet
         run: go vet ./...
