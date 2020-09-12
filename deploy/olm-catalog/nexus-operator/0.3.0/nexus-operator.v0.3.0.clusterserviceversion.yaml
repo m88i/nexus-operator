@@ -286,13 +286,13 @@ spec:
         serviceAccountName: nexus-operator
     strategy: deployment
   installModes:
-  - supported: true
+  - supported: false
     type: OwnNamespace
   - supported: true
     type: SingleNamespace
   - supported: false
     type: MultiNamespace
-  - supported: true
+  - supported: false
     type: AllNamespaces
   keywords:
   - nexus
