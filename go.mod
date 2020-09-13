@@ -10,7 +10,7 @@ require (
 	github.com/googleapis/gnostic v0.3.1
 	github.com/heroku/docker-registry-client v0.0.0-20190909225348-afc9e1acc3d5
 	github.com/m88i/aicura v0.2.0
-	github.com/openshift/api v3.9.0+incompatible
+	github.com/openshift/api v0.0.0-20200312145924-779a333deb13 // branch release-3.11
 	github.com/operator-framework/operator-sdk v0.18.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
@@ -27,7 +27,6 @@ require (
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
-	github.com/openshift/api => github.com/openshift/api v3.9.1-0.20190814194116-a94e914914f4+incompatible
 	k8s.io/client-go => k8s.io/client-go v0.18.3 // Required by prometheus-operator
 )
 
