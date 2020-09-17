@@ -22,7 +22,7 @@ UNABLE_TO_PUSH_ERR="Unable to push. You'll need to push manually."
 confirm_git_or_die() {
     if ! command -v git >/dev/null 2>&1; then
         echo "Could not find git. You'll need to push manually." >&2
-        exit
+        exit 1
     fi
 }
 
@@ -62,14 +62,30 @@ prompt_and_push_or_die() {
 
 echo "All tests were successful!"
 
+# check if there are uncommitted changes
+if [[ $(git status -s | wc -l) -ne 0 ]]; then
+    echo -e "There are uncommitted changes:\n\n$(git status -s)\n"
+    while true; do
+        read -rp "Would you like to create a new commit? This will run \"git commit -a -s\"; for more complex use cases, stop and proceed manually (y/n) " response
+        case $response in
+        [Yy]*)
+            git commit -a -s
+            break
+            ;;
+        [Nn]*) break ;;
+        *) echo "Please answer y or n." ;;
+        esac
+    done
+fi
+
 if [[ ${PUSH_WITH_DEFAULTS^^} == "TRUE" ]]; then
     push_with_defaults_or_die
     exit 0
 fi
 
 while true; do
-    read -rp "Do you wish to push? (y/n) " yn
-    case $yn in
+    read -rp "Do you wish to push? (y/n) " response
+    case $response in
     [Yy]*)
         prompt_and_push_or_die
         exit 0
