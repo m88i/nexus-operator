@@ -134,8 +134,10 @@ spec:
     Creates a new Nexus 3.x deployment in a Kubernetes cluster. Will help DevOps to have a quick Nexus application exposed to the world that can be used in a CI/CD process:
 
     * Deploys a new Nexus 3.x server based on either Community or Red Hat images
-    * Creates an [Ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes (1.14+) environments to expose the application to the world
+    * Creates an [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) in Kubernetes (1.14+) environments to expose the application to the world
     * On OpenShift, creates a Route to expose the service outside the cluster
+    * Automatically creates Apache, Red Hat and JBoss Maven repositories
+    * Automatically updates Nexus within the same minor version
 
     [See our documentation](https://github.com/m88i/nexus-operator/blob/main/README.md) for more installation and usage scenarios.
 
