@@ -228,7 +228,7 @@ func (tester *tester) checkServerInteraction(nexus *v1alpha1.Nexus) {
 			tester.t.Log("Nexus Operator credentials found! Test OK.")
 			return true, nil
 		}
-		tester.t.Log("Waiting for Nexus Operator to be created in the server")
+		tester.t.Log("Waiting for Nexus secret to have credentials")
 		return false, nil
 	})
 	assert.NoError(tester.t, err)
