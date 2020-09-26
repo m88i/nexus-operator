@@ -62,11 +62,13 @@ If you're running on Kubernetes, edit the Nexus resource to add a [valid host fo
 
 ### Openshift
 
-If you're running the Operator on Openshift (3.11 or 4.x+) and you're not using [Red Hat certified images](#red-hat-certified-images) it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
+If you're running the Operator on Openshift (3.11 or 4.x+) and **you're not using Red Hat image with persistence enabled**, that's anything other than `spec.useRedHatImage: true` and `spec.persistence.persistent: true`,
+it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
 
-This is necessary because the Nexus image requires its container to be ran as UID 200. The use of the `restricted` default SCC in Openshift results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41) and [Issue #51](https://github.com/m88i/nexus-operator/issues/51) (see this issue for more details on why can't the Operator handle this for you as things are now).
+This is necessary because the Nexus image requires its container to be ran as UID 200. 
+The use of the `restricted` default SCC in Openshift results in a failure when starting the pods, as seen in [Issue #41](https://github.com/m88i/nexus-operator/issues/41) and [Issue #51](https://github.com/m88i/nexus-operator/issues/51) (see this issue for more details on why can't the Operator handle this for you as things are now).
 
-Valid SCC resources can be found at the `examples/` directory. You must associate the SCC with the `ServiceAccount` in use and change the SCC's `metadata.name` field (search for "<Change Me!>" in the file).
+Valid SCC resources can be found at the `examples/` directory. You must associate the SCC with the `ServiceAccount` in use.
 
 For persistent configurations:
 
@@ -85,12 +87,13 @@ $ oc apply -f examples/scc-volatile.yaml
 Once the SCC has been created, run:
 
 ```
-$ oc adm policy add-scc-to-user <SCCName> -z <ServiceAccountName>
+$ oc adm policy add-scc-to-user allow-nexus-userid-200 -z <ServiceAccountName>
 ```
 
 This command will bind the SCC we just created with the `ServiceAccount` being used to create the Pods.
 
-If you're [using a custom ServiceAccount](#service-account), replace "`<ServiceAccountName>`" with the name of that account. If you're not using a custom `ServiceAccount`, the operator has created a default one which has the same name as your Nexus CR, replace "`<ServiceAccountName>`" with that.
+If you're [using a custom ServiceAccount](#service-account), replace "`<ServiceAccountName>`" with the name of that account. 
+If you're not using a custom `ServiceAccount`, the operator has created a default one which has the same name as your Nexus CR, replace "`<ServiceAccountName>`" with that.
 
 ### Clean up
 

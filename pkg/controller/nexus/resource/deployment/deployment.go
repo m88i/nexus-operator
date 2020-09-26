@@ -215,10 +215,13 @@ func calculateJVMMemory(limits corev1.ResourceList) (jvmMemory, directMemSize st
 	return
 }
 
+// see: https://catalog.redhat.com/software/containers/sonatype/nexus-repository-manager/594c281c1fbe9847af657690?container-tabs=overview
+// Even RH image requires user 200 in the security context if no PV is set to be able to write to the ephemeral pod directory, quoting the link above:
+// "A persistent directory, /nexus-data, is used for configuration,  logs, and storage. This directory needs to be writable by the Nexus process, which runs as UID 200."
 func applySecurityContext(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
-	var podSecContext *corev1.PodSecurityContext
-	if !nexus.Spec.UseRedHatImage {
-		podSecContext = &corev1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}}
+	if nexus.Spec.UseRedHatImage && nexus.Spec.Persistence.Persistent {
+		deployment.Spec.Template.Spec.SecurityContext = nil
+		return
 	}
-	deployment.Spec.Template.Spec.SecurityContext = podSecContext
+	deployment.Spec.Template.Spec.SecurityContext = &corev1.PodSecurityContext{FSGroup: &nexusUID, RunAsUser: &nexusUID, SupplementalGroups: []int64{nexusUID}}
 }

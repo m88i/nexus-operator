@@ -90,6 +90,9 @@ func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource
 func deploymentEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	depDeployment := deployed.(*appsv1.Deployment)
 	reqDeployment := requested.(*appsv1.Deployment)
+
+	equalizeSecurityContext(depDeployment, reqDeployment)
+
 	var pairs [][2]interface{}
 	pairs = append(pairs, [2]interface{}{depDeployment.Name, reqDeployment.Name})
 	pairs = append(pairs, [2]interface{}{depDeployment.Namespace, reqDeployment.Namespace})
@@ -124,4 +127,13 @@ func equalPullPolicies(depDeployment, reqDeployment *appsv1.Deployment) bool {
 	}
 
 	return depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy == corev1.PullIfNotPresent
+}
+
+// see: https://github.com/m88i/nexus-operator/issues/156
+// On OpenShift 4.5+ `SecurityContext` is not nil, but a "blank" object.
+// Since we are requesting a nil object in this context, we consider the deployed object to be nil as well.
+func equalizeSecurityContext(depDeployment, reqDeployment *appsv1.Deployment) {
+	if reqDeployment.Spec.Template.Spec.SecurityContext == nil {
+		depDeployment.Spec.Template.Spec.SecurityContext = nil
+	}
 }
