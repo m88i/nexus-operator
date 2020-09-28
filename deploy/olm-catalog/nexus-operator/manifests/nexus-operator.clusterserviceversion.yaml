@@ -187,16 +187,10 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - pods
-          - services
-          - services/finalizers
-          - endpoints
-          - persistentvolumeclaims
           - events
-          - configmaps
+          - persistentvolumeclaims
           - secrets
-          - replicationcontrollers
-          - podtemplates
+          - services
           - serviceaccounts
           verbs:
           - create
@@ -210,9 +204,6 @@ spec:
           - apps
           resources:
           - deployments
-          - daemonsets
-          - replicasets
-          - statefulsets
           verbs:
           - create
           - delete
@@ -240,13 +231,6 @@ spec:
           - ""
           resources:
           - pods
-          verbs:
-          - get
-        - apiGroups:
-          - apps
-          resources:
-          - replicasets
-          - deployments
           verbs:
           - get
         - apiGroups:
@@ -285,6 +269,19 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - apps
+          resources:
+          - replicasets
+          verbs:
+          - get
         serviceAccountName: nexus-operator
     strategy: deployment
   installModes:
