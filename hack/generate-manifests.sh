@@ -15,7 +15,6 @@
 
 source ./hack/export-version.sh
 
-rm ./deploy/olm-catalog/nexus-operator/manifests -rf
 
 # generate manifests for package format
 # use --from-version to upgrade: https://operator-sdk.netlify.app/docs/olm-integration/generating-a-csv/#upgrading-your-csv
