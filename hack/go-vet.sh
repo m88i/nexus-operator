@@ -19,10 +19,10 @@ GOPATH=$(go env GOPATH)
 ./hack/addheaders.sh
 
 operator-sdk generate k8s
-operator-sdk generate crds
+operator-sdk generate crds --crd-version=v1beta1
 
 # get the openapi binary
-command -v openapi-gen >/dev/null || go build -o $GOPATH/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+command -v openapi-gen >/dev/null || go build -o $GOPATH/bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
 echo "Generating openapi files"
 openapi-gen --logtostderr=true -o "" -i ./pkg/apis/apps/v1alpha1 -O zz_generated.openapi -p ./pkg/apis/apps/v1alpha1 -h ./hack/boilerplate.go.txt -r "-"
 
