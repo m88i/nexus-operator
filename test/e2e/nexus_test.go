@@ -37,7 +37,7 @@ var (
 			LivenessProbe:               validation.DefaultProbe.DeepCopy(),
 			ReadinessProbe:              validation.DefaultProbe.DeepCopy(),
 		}
-		spec.LivenessProbe.InitialDelaySeconds = 240
+		spec.LivenessProbe.InitialDelaySeconds = 480
 		return spec
 	}()
 )
