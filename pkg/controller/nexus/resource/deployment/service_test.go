@@ -41,7 +41,7 @@ func Test_newService(t *testing.T) {
 	svc := newService(nexus)
 
 	assert.Len(t, svc.Spec.Ports, 1)
-	assert.Equal(t, int32(defaultHTTPPort), svc.Spec.Ports[0].Port)
+	assert.Equal(t, int32(DefaultHTTPPort), svc.Spec.Ports[0].Port)
 	assert.Equal(t, appName, svc.Labels[meta.AppLabel])
 	assert.Equal(t, appName, svc.Spec.Selector[meta.AppLabel])
 }

@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: nexus-operator
-  namespace: ${NAMESPACE}
+  namespace: nexus-e2e
 roleRef:
   kind: ClusterRole
   name: nexus-operator
