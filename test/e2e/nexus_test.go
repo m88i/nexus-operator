@@ -18,7 +18,7 @@ const nexusName = "nexus3"
 
 var (
 	retryInterval        = time.Second * 30
-	timeout              = time.Second * 360
+	timeout              = time.Second * 720
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 5
 
