@@ -67,6 +67,7 @@ func NexusCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Operator namespace: %s", namespace)
 	// get global framework variables
 	f := framework.Global
 	// wait for nexus-operator to be ready
