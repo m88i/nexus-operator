@@ -15,10 +15,10 @@ spec:
       serviceAccountName: nexus-operator
       containers:
         - name: nexus-operator
-          image: quay.io/m88i/nexus-operator:0.4.0-cr1
+          image: quay.io/m88i/nexus-operator:0.4.0
           command:
             - nexus-operator
-          imagePullPolicy: Never
+          imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
               value: ""
