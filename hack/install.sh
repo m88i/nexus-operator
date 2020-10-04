@@ -14,27 +14,16 @@
 # limitations under the License.
 
 
-# The git command will fetch the most recent tag across all branches
-LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-NAMESPACE=nexus
+VERSION=$1
 
-echo "[INFO]  The repository will be checked out at the latest release"
-echo "....... Checkout code at ${LATEST_TAG} ......"
-git checkout tags/${LATEST_TAG}
+if [ -z ${VERSION} ]; then
+    echo "Please inform the desired version"
+    exit(1)
+fi
 
-echo "....... Creating namespace ......."
-kubectl create namespace ${NAMESPACE}
+echo "Downloading latest version"
+curl -LO https://github.com/m88i/nexus-operator/releases/download/${VERSION}/nexus-operator.yaml
 
-echo "....... Applying CRDS ......."
-kubectl apply -f deploy/crds/apps.m88i.io_nexus_crd.yaml
+echo "....... Installing Nexus Operator ......."
 
-echo "....... Applying Rules and Service Account ......."
-kubectl apply -f deploy/role.yaml -n ${NAMESPACE}
-kubectl apply -f deploy/role_binding.yaml -n ${NAMESPACE}
-kubectl apply -f deploy/service_account.yaml -n ${NAMESPACE}
-
-echo "....... Applying Nexus Operator ......."
-kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
-
-echo "....... Creating the Nexus 3.x Server ......."
-kubectl apply -f examples/nexus3-centos-no-volume.yaml -n ${NAMESPACE}
+kubectl apply -f nexus-operator.yaml

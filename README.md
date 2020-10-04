@@ -46,19 +46,14 @@ If you have any questions please either [open an issue](https://github.com/m88i/
 
 ## Quick Install
 
-The installation procedure will create a Namespace named `nexus` and a Nexus 3.x server for you:
+The installation procedure will create a Namespace named `operators` and will install every resources needed for the operator to run:
 
 ```bash
 make install
 ```
 
-You can then edit or customize the installation as you pleased, just run:
-
-```bash
-kubectl edit nexus
-```
-
-If you're running on Kubernetes, edit the Nexus resource to add a [valid host for the Ingress](#network-on-kubernetes-114) to work.
+You can choose any flavors of Nexus 3.x server from our [`examples`](examples) directory and apply the YAML in any namespace in your cluster.
+Use this examples as a starting point to customize the server to meet your requirements.
 
 ### Openshift
 

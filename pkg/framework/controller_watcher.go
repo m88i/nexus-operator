@@ -99,7 +99,7 @@ func (c *controllerWatcher) Watch(watchedObjects ...WatchedObjects) (err error) 
 				delete(c.groupsNotWatched, object.GroupVersion.Group)
 			} else {
 				c.groupsNotWatched[object.GroupVersion.Group] = true
-				log.Warnf("Impossible to register GroupVersion %s. CRD not installed in the cluster, controller might not behave as expected", object.GroupVersion)
+				log.Infof("Skipping registration of GroupVersion %s. CRD not installed in the cluster", object.GroupVersion)
 			}
 		}
 	}

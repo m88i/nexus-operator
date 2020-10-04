@@ -25,3 +25,5 @@ operator-sdk generate csv --apis-dir ./pkg/apis/apps/v1alpha1 --verbose --operat
 
 # our package doesn't have the same name as the operator
 rm ./deploy/olm-catalog/nexus-operator/nexus-operator.package.yaml -rf
+
+source ./hack/generate-yaml-installer.sh

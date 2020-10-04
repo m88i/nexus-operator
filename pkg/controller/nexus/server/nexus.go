@@ -89,7 +89,7 @@ func (s *server) getNexusEndpoint() (string, error) {
 	if err := s.k8sclient.Get(context.TODO(), types.NamespacedName{Name: s.nexus.Name, Namespace: s.nexus.Namespace}, svc); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("http://%s:%s", svc.Name, svc.Spec.Ports[0].TargetPort.String()), nil
+	return fmt.Sprintf("http://%s.%s", svc.Name, svc.Namespace), nil
 }
 
 // isServerReady checks if the given Nexus instance is ready to receive requests

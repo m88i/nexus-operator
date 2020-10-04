@@ -68,7 +68,7 @@ func Test_server_getNexusEndpoint(t *testing.T) {
 				{
 					Name:     "http",
 					Protocol: corev1.ProtocolTCP,
-					Port:     8081,
+					Port:     80,
 					TargetPort: intstr.IntOrString{
 						IntVal: 8081,
 					},
@@ -87,7 +87,6 @@ func Test_server_getNexusEndpoint(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, URL)
 	assert.Contains(t, URL, nexus.Name)
-	assert.Contains(t, URL, "8081")
 	_, err = url.Parse(URL)
 	assert.NoError(t, err)
 }

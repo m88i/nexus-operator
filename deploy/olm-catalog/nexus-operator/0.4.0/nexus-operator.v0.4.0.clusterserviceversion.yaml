@@ -150,39 +150,7 @@ spec:
     mediatype: image/svg+xml
   install:
     spec:
-      deployments:
-      - name: nexus-operator
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              name: nexus-operator
-          strategy: {}
-          template:
-            metadata:
-              labels:
-                name: nexus-operator
-            spec:
-              containers:
-              - command:
-                - nexus-operator
-                env:
-                - name: WATCH_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
-                - name: POD_NAME
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.name
-                - name: OPERATOR_NAME
-                  value: nexus-operator
-                image: quay.io/m88i/nexus-operator:0.4.0
-                imagePullPolicy: Always
-                name: nexus-operator
-                resources: {}
-              serviceAccountName: nexus-operator
-      permissions:
+      clusterPermissions:
       - rules:
         - apiGroups:
           - ""
@@ -283,6 +251,38 @@ spec:
           verbs:
           - get
         serviceAccountName: nexus-operator
+      deployments:
+      - name: nexus-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: nexus-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: nexus-operator
+            spec:
+              containers:
+              - command:
+                - nexus-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: nexus-operator
+                image: quay.io/m88i/nexus-operator:0.4.0
+                imagePullPolicy: Always
+                name: nexus-operator
+                resources: {}
+              serviceAccountName: nexus-operator
     strategy: deployment
   installModes:
   - supported: true
