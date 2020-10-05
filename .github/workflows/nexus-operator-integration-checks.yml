@@ -130,7 +130,7 @@ jobs:
       - name: Install KIND
         run: |
           ./hack/ci/install-kind.sh
-          echo "::add-path::$GITHUB_WORKSPACE/bin"
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
 
       - name: Start KIND
         run: ./hack/ci/start-kind.sh
