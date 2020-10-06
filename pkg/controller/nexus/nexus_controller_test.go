@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"testing"
 
+	"reflect"
+
 	resUtils "github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
@@ -34,7 +36,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 

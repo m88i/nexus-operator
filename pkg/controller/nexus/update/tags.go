@@ -16,11 +16,12 @@ package update
 
 import (
 	"fmt"
-	"github.com/heroku/docker-registry-client/registry"
-	"github.com/m88i/nexus-operator/pkg/logger"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/heroku/docker-registry-client/registry"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 const (
