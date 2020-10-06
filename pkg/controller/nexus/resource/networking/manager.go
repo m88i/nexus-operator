@@ -15,8 +15,9 @@
 package networking
 
 import (
-	ctx "context"
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"go.uber.org/zap"
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
@@ -28,7 +29,6 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,13 +39,12 @@ const (
 	resUnavailableFormat = "%s are not available in this cluster"        // resource type
 )
 
-var log = logger.GetLogger("networking_manager")
-
 // Manager is responsible for creating networking resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
+	log    *zap.SugaredLogger
 
 	routeAvailable, ingressAvailable, ocp bool
 }
@@ -74,6 +73,7 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.Disc
 		routeAvailable:   routeAvailable,
 		ingressAvailable: ingressAvailable,
 		ocp:              ocp,
+		log:              logger.GetLoggerWithResource("networking_manager", nexus),
 	}, nil
 }
 
@@ -98,7 +98,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 			return nil, fmt.Errorf(resUnavailableFormat, "routes")
 		}
 
-		log.Debugf("Creating Route (%s)", m.nexus.Name)
+		m.log.Debugf("Generating required %s", framework.RouteKind)
 		route := m.createRoute()
 		resources = append(resources, route)
 
@@ -107,7 +107,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 			return nil, fmt.Errorf(resUnavailableFormat, "ingresses")
 		}
 
-		log.Debugf("Creating Ingress (%s)", m.nexus.Name)
+		m.log.Debugf("Generating required %s", framework.IngressKind)
 		ingress := m.createIngress()
 		resources = append(resources, ingress)
 	}
@@ -134,48 +134,22 @@ func (m *Manager) createIngress() *networkingv1beta1.Ingress {
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	if m.routeAvailable {
-		if route, err := m.getDeployedRoute(); err == nil {
+		route := &routev1.Route{}
+		if err := framework.Fetch(m.client, framework.Key(m.nexus), route, framework.RouteKind); err == nil {
 			resources = append(resources, route)
 		} else if !errors.IsNotFound(err) {
-			log.Errorf("Could not fetch Route (%s): %v", m.nexus.Name, err)
-			return nil, fmt.Errorf("could not fetch route (%s): %v", m.nexus.Name, err)
+			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", framework.RouteKind, m.nexus.Namespace, m.nexus.Name, err)
 		}
 	}
 	if m.ingressAvailable {
-		if ingress, err := m.getDeployedIngress(); err == nil {
+		ingress := &networkingv1beta1.Ingress{}
+		if err := framework.Fetch(m.client, framework.Key(m.nexus), ingress, framework.IngressKind); err == nil {
 			resources = append(resources, ingress)
 		} else if !errors.IsNotFound(err) {
-			log.Errorf("Could not fetch Ingress (%s): %v", m.nexus.Name, err)
-			return nil, fmt.Errorf("could not fetch ingress (%s): %v", m.nexus.Name, err)
+			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", framework.IngressKind, m.nexus.Namespace, m.nexus.Name, err)
 		}
 	}
 	return resources, nil
-}
-
-func (m *Manager) getDeployedRoute() (*routev1.Route, error) {
-	route := &routev1.Route{}
-	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
-	err := m.client.Get(ctx.TODO(), key, route)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed Route (%s)", m.nexus.Name)
-		}
-		return nil, err
-	}
-	return route, nil
-}
-
-func (m *Manager) getDeployedIngress() (*networkingv1beta1.Ingress, error) {
-	ingress := &networkingv1beta1.Ingress{}
-	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
-	err := m.client.Get(ctx.TODO(), key, ingress)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed Ingress (%s)", m.nexus.Name)
-		}
-		return nil, err
-	}
-	return ingress, nil
 }
 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.
@@ -204,9 +178,5 @@ func ingressEqual(deployed resource.KubernetesResource, requested resource.Kuber
 	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
 	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
 
-	equal := compare.EqualPairs(pairs)
-	if !equal {
-		log.Info("Resources are not equal", "deployed", deployed, "requested", requested)
-	}
-	return equal
+	return compare.EqualPairs(pairs)
 }

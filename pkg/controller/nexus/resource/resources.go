@@ -16,6 +16,8 @@ package resource
 
 import (
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"go.uber.org/zap"
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
@@ -39,6 +41,7 @@ type supervisor struct {
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
 	managers        []Manager
+	log             *zap.SugaredLogger
 }
 
 // NewSupervisor creates a new resource manager for nexus CR
@@ -50,29 +53,30 @@ func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInte
 }
 
 // InitManagers initializes the managers responsible for the resources life cycle
-func (r *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
-	networkManager, err := networking.NewManager(nexus, r.client, r.discoveryClient)
+func (s *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
+	s.log = logger.GetLoggerWithResource("resource_supervisor", nexus)
+	networkManager, err := networking.NewManager(nexus, s.client, s.discoveryClient)
 	if err != nil {
 		return fmt.Errorf("unable to create networking manager: %v", err)
 	}
 
-	r.managers = []Manager{
-		deployment.NewManager(nexus, r.client),
-		persistence.NewManager(nexus, r.client),
-		security.NewManager(nexus, r.client),
+	s.managers = []Manager{
+		deployment.NewManager(nexus, s.client),
+		persistence.NewManager(nexus, s.client),
+		security.NewManager(nexus, s.client),
 		networkManager,
 	}
 	return nil
 }
 
-func (r *supervisor) GetDeployedResources() (map[reflect.Type][]resource.KubernetesResource, error) {
-	if len(r.managers) == 0 {
+func (s *supervisor) GetDeployedResources() (map[reflect.Type][]resource.KubernetesResource, error) {
+	if len(s.managers) == 0 {
 		return nil, fmt.Errorf(mgrsNotInit)
 	}
 
-	log.Info("Fetching deployed resources")
+	s.log.Info("Fetching deployed resources")
 	builder := compare.NewMapBuilder()
-	for _, manager := range r.managers {
+	for _, manager := range s.managers {
 		deployedResources, err := manager.GetDeployedResources()
 		if err != nil {
 			return nil, err
@@ -82,14 +86,14 @@ func (r *supervisor) GetDeployedResources() (map[reflect.Type][]resource.Kuberne
 	return builder.ResourceMap(), nil
 }
 
-func (r *supervisor) GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error) {
-	if len(r.managers) == 0 {
+func (s *supervisor) GetRequiredResources() (resources map[reflect.Type][]resource.KubernetesResource, err error) {
+	if len(s.managers) == 0 {
 		return nil, fmt.Errorf(mgrsNotInit)
 	}
 
-	log.Info("Fetching required resources")
+	s.log.Info("Generating required resources")
 	builder := compare.NewMapBuilder()
-	for _, manager := range r.managers {
+	for _, manager := range s.managers {
 		requiredResources, err := manager.GetRequiredResources()
 		if err != nil {
 			return nil, err
@@ -101,13 +105,13 @@ func (r *supervisor) GetRequiredResources() (resources map[reflect.Type][]resour
 
 // GetComparator will create the comparator for the Nexus instance
 // The comparator can be used to compare two different sets of resources and update them accordingly
-func (r *supervisor) GetComparator() (compare.MapComparator, error) {
-	if len(r.managers) == 0 {
+func (s *supervisor) GetComparator() (compare.MapComparator, error) {
+	if len(s.managers) == 0 {
 		return compare.MapComparator{}, fmt.Errorf(mgrsNotInit)
 	}
 
 	resourceComparator := compare.DefaultComparator()
-	for _, manager := range r.managers {
+	for _, manager := range s.managers {
 		for resType, compFunc := range manager.GetCustomComparators() {
 			resourceComparator.SetComparator(resType, compFunc)
 		}

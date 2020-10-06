@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package resource
+package update
 
 import "github.com/m88i/nexus-operator/pkg/logger"
 
-var log = logger.GetLogger("resources_management")
+const (
+	defaultLogName = "update"
+	monitorLogName = "update_monitor"
+)
+
+var log = logger.GetLogger(defaultLogName)

@@ -16,18 +16,19 @@ package framework
 
 import (
 	ctx "context"
-
 	"github.com/RHsyseng/operator-utils/pkg/resource"
+	"github.com/m88i/nexus-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource) error {
-	log.Debugf("Attempting to fetch deployed %s (%s)", instance.GetObjectKind(), key.Name)
+func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource, kind string) error {
+	log := logger.GetLoggerWithNamespacedName("resource_fetcher", key)
+	log.Debugf("Attempting to fetch deployed %s", kind)
 	if err := client.Get(ctx.TODO(), key, instance); err != nil {
 		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed %s (%s)", instance.GetObjectKind(), key.Name)
+			log.Debugf("There is no deployed %s", kind)
 		}
 		return err
 	}

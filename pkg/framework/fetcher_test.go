@@ -28,14 +28,14 @@ import (
 func TestFetch(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: v1.ObjectMeta{Name: "deployment", Namespace: t.Name()}}
 	cli := test.NewFakeClientBuilder(deployment).Build()
-	err := Fetch(cli, Key(deployment), deployment)
+	err := Fetch(cli, Key(deployment), deployment, DeploymentKind)
 	assert.NoError(t, err)
 }
 
 func TestNotFoundFetch(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: v1.ObjectMeta{Name: "deployment", Namespace: t.Name()}}
 	cli := test.NewFakeClientBuilder().Build()
-	err := Fetch(cli, Key(deployment), deployment)
+	err := Fetch(cli, Key(deployment), deployment, DeploymentKind)
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 }

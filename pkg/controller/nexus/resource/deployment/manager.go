@@ -16,6 +16,8 @@ package deployment
 
 import (
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"go.uber.org/zap"
 	"reflect"
 
 	"strings"
@@ -31,8 +33,8 @@ import (
 )
 
 var managedObjectsRef = map[string]resource.KubernetesResource{
-	"Service":    &corev1.Service{},
-	"Deployment": &appsv1.Deployment{},
+	framework.DeploymentKind: &appsv1.Deployment{},
+	framework.ServiceKind:    &corev1.Service{},
 }
 
 // Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
@@ -40,6 +42,7 @@ var managedObjectsRef = map[string]resource.KubernetesResource{
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
+	log    *zap.SugaredLogger
 }
 
 // NewManager creates a deployment resources manager
@@ -48,11 +51,14 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 	return &Manager{
 		nexus:  nexus,
 		client: client,
+		log:    logger.GetLoggerWithResource("deployment_manager", nexus),
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+	m.log.Debugf("Generating required %s", framework.DeploymentKind)
+	m.log.Debugf("Generating required %s", framework.ServiceKind)
 	return []resource.KubernetesResource{newDeployment(m.nexus), newService(m.nexus)}, nil
 }
 
@@ -60,10 +66,10 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	for resType, resRef := range managedObjectsRef {
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef); err == nil {
+		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
 			resources = append(resources, resRef)
 		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch Resource %s (%s): %v", resType, m.nexus.Name, err)
+			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, m.nexus.Namespace, m.nexus.Name, err)
 		}
 	}
 	return resources, nil

@@ -17,6 +17,7 @@ package validation
 import (
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
+	"github.com/m88i/nexus-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,8 +25,9 @@ import (
 const changedNexusReason = "NexusSpecChanged"
 
 func createChangedNexusEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, field string) {
-	err := kubernetes.RaiseWarnEventf(nexus, scheme, c, changedNexusReason, "'%s' has been changed in %s. Check the logs for more information", field, nexus.Name)
+	log := logger.GetLoggerWithResource("validation_event", nexus)
+	err := kubernetes.RaiseWarnEventf(nexus, scheme, c, changedNexusReason, "'%s' has been changed in %s/%s. Check the logs for more information", field, nexus.Namespace, nexus.Name)
 	if err != nil {
-		log.Warnf("Unable to raise event for changing '%s' in Nexus (%s): %v", field, nexus.Name, err)
+		log.Warnf("Unable to raise event for changing '%s' in Nexus CR: %v", field, err)
 	}
 }

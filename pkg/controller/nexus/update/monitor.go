@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,6 +54,9 @@ func HandleUpdate(nexus *v1alpha1.Nexus, deployed, required *appsv1.Deployment, 
 		}
 		return nil
 	}
+
+	log = logger.GetLoggerWithResource(monitorLogName, nexus)
+	defer func() { log = logger.GetLogger(defaultLogName) }()
 
 	// it's important to check if this is a new update before checking ongoing updates because
 	// if this is a new update, the one that was happening before no longer matters
@@ -124,7 +128,7 @@ func isNewUpdate(deployed, required *appsv1.Deployment) (updating bool, previous
 
 	updating, err := HigherVersion(requiredImageParts[1], deployedImageParts[1])
 	if err != nil {
-		log.Warnf("Unable to check if the required deployment (%s) is an update when comparing to the deployed one: %v", required.Name, err)
+		log.Warnf("Unable to check if the required Deployment (%s) is an update when comparing to the deployed one: %v", required.Name, err)
 		return
 	}
 	previousTag = deployedImageParts[1]

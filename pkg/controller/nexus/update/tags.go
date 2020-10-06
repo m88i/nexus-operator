@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/heroku/docker-registry-client/registry"
-	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 const (
@@ -40,7 +39,6 @@ var (
 	lastQuery    time.Time
 	lastErr      time.Time
 	latestMicros = make(map[int]string)
-	log          = logger.GetLogger("update")
 )
 
 // HigherVersion checks if thisTag is of a higher version than otherTag

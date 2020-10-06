@@ -17,6 +17,7 @@ package deployment
 import (
 	ctx "context"
 	"fmt"
+	"github.com/m88i/nexus-operator/pkg/logger"
 	"reflect"
 	"testing"
 
@@ -54,9 +55,8 @@ func TestNewManager(t *testing.T) {
 		client: client,
 	}
 	got := NewManager(nexus, client)
-	if !reflect.DeepEqual(want, got) {
-		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
-	}
+	assert.Equal(t, want.nexus, got.nexus)
+	assert.Equal(t, want.client, got.client)
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
@@ -65,6 +65,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
 		client: test.NewFakeClientBuilder().Build(),
+		log:    logger.GetLoggerWithResource("test", allDefaultsCommunityNexus),
 	}
 	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)

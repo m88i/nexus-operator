@@ -15,7 +15,9 @@
 package logger
 
 import (
+	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"io"
+	"k8s.io/apimachinery/pkg/types"
 	"os"
 	"time"
 
@@ -28,7 +30,7 @@ import (
 )
 
 var (
-	defaultOutput = os.Stderr
+	defaultOutput = os.Stdout
 )
 
 // Logger shared logger struct
@@ -57,6 +59,18 @@ func GetLoggerWithOptions(name string, options *Opts) *zap.SugaredLogger {
 		options.Output = defaultOutput
 	}
 	return getLogger(name, options)
+}
+
+// GetLoggerWithResource returns a custom named logger with a resource's namespace and name as fields
+func GetLoggerWithResource(name string, res resource.KubernetesResource) *zap.SugaredLogger {
+	// we can't use framework.Key() here as it generates an import cycle (framework needs logging)
+	key := types.NamespacedName{Name: res.GetName(), Namespace: res.GetNamespace()}
+	return GetLoggerWithNamespacedName(name, key)
+}
+
+func GetLoggerWithNamespacedName(name string, key types.NamespacedName) *zap.SugaredLogger {
+	options := getDefaultOpts()
+	return getLogger(name, options).With("namespace", key.Namespace, "resource name", key.Name)
 }
 
 // GetLogger returns a custom named logger
@@ -91,19 +105,9 @@ func createLogger(options *Opts) (logger Logger) {
 		}),
 		SugaredLogger: zapSugaredLogger(options),
 	}
-	defer syncLogger(log)
 
 	logf.SetLogger(log.Logger)
 	return log
-}
-
-func syncLogger(logger Logger) {
-	if err := logger.SugaredLogger.Sync(); err != nil {
-		// Let the messages in DEBUG mode only
-		// see: https://github.com/uber-go/zap/issues/772
-		// see: https://github.com/uber-go/zap/issues/370
-		logger.SugaredLogger.Debug("Failed to sync Sugered log: ", err)
-	}
 }
 
 // zapSugaredLogger is a Logger implementation.
