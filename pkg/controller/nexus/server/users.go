@@ -106,7 +106,7 @@ func (u *userOperation) createOperatorUserIfNotExists() (*nexus.User, error) {
 func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 	secret := &corev1.Secret{}
 	log.Debug("Attempt to store operator user credentials into Secret")
-	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, "Secret"); err != nil {
+	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, framework.SecretKind); err != nil {
 		return err
 	}
 	if secret.StringData == nil {

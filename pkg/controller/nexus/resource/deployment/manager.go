@@ -119,6 +119,11 @@ func deploymentEqual(deployed resource.KubernetesResource, requested resource.Ku
 
 	equal := compare.EqualPairs(pairs)
 	equal = equal && equalPullPolicies(depDeployment, reqDeployment)
+
+	if !equal {
+		logger.GetLogger("deployment_manager").Info("Resources are not equal", "deployed", deployed, "requested", requested)
+	}
+
 	return equal
 }
 

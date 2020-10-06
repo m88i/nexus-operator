@@ -178,5 +178,9 @@ func ingressEqual(deployed resource.KubernetesResource, requested resource.Kuber
 	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
 	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
 
-	return compare.EqualPairs(pairs)
+	equal := compare.EqualPairs(pairs)
+	if !equal {
+		logger.GetLogger("networking_manager").Info("Resources are not equal", "deployed", deployed, "requested", requested)
+	}
+	return equal
 }
