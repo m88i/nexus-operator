@@ -15,6 +15,9 @@
 
 
 gofmt -s -l -w cmd/ pkg/ version/
+# get the goimports binary
+command -v goimports >/dev/null || go build -o $GOPATH/bin/goimports golang.org/x/tools/cmd/goimports
+goimports -l -w cmd/ pkg/ version/
 
 if [[ -n ${CI} ]]; then
     git diff --exit-code
