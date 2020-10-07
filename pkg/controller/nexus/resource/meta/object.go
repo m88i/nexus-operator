@@ -15,8 +15,9 @@
 package meta
 
 import (
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 )
 
 const AppLabel = "app"

@@ -15,10 +15,10 @@
 package security
 
 import (
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
-
-	corev1 "k8s.io/api/core/v1"
 )
 
 // defaultSecret all purposes secret used by this instance

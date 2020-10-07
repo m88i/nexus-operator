@@ -18,10 +18,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/m88i/aicura/nexus"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
-	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -30,6 +26,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/aicura/nexus"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 // createNewServerAndKubeCli creates a new fake server and kubernetes fake client to be used in tests for this package;

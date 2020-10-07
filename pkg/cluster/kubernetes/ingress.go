@@ -18,12 +18,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/m88i/nexus-operator/pkg/util"
 	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/util"
 )
 
 const ingressGroup = networking.GroupName

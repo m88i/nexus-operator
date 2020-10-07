@@ -21,14 +21,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
-	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
+	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 )
 
 const testErrorMsg = "test"

@@ -20,21 +20,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
-	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/server"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
-	"github.com/m88i/nexus-operator/pkg/framework"
-	"github.com/m88i/nexus-operator/pkg/logger"
-	routev1 "github.com/openshift/api/route/v1"
-
 	resUtils "github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/write"
-
-	appsv1alpha1 "github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
-
+	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
@@ -50,6 +38,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	appsv1alpha1 "github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
+	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/server"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 var log = logger.GetLogger("controller_nexus")

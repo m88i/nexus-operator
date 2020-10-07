@@ -17,17 +17,19 @@ package security
 import (
 	ctx "context"
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/logger"
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
-	"github.com/m88i/nexus-operator/pkg/test"
+	"github.com/m88i/nexus-operator/pkg/logger"
+
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}, Spec: v1alpha1.NexusSpec{ServiceAccountName: "nexus"}}

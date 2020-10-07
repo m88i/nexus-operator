@@ -15,12 +15,13 @@
 package networking
 
 import (
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 	v1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
 )
 
 var serviceKind = (&corev1.Service{}).GroupVersionKind().Kind

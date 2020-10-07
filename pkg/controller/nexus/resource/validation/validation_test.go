@@ -16,15 +16,16 @@ package validation
 
 import (
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/logger"
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
-	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 func TestNewValidator(t *testing.T) {

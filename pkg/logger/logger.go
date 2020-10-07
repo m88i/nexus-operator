@@ -15,18 +15,19 @@
 package logger
 
 import (
-	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"io"
-	"k8s.io/apimachinery/pkg/types"
 	"os"
 	"time"
 
+	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/go-logr/logr"
-	"github.com/m88i/nexus-operator/pkg/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/m88i/nexus-operator/pkg/util"
 )
 
 var (

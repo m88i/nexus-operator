@@ -19,8 +19,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/m88i/aicura/nexus"
-	"github.com/m88i/nexus-operator/pkg/framework"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/m88i/nexus-operator/pkg/framework"
 )
 
 const (

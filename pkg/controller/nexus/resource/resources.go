@@ -16,23 +16,20 @@ package resource
 
 import (
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/logger"
-	"go.uber.org/zap"
 	"reflect"
 
+	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
+	"go.uber.org/zap"
+	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/networking"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/persistence"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/security"
-
-	"k8s.io/client-go/discovery"
-
-	"github.com/RHsyseng/operator-utils/pkg/resource"
-
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 const mgrsNotInit = "resource managers have not been initialized"

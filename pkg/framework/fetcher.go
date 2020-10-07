@@ -16,11 +16,13 @@ package framework
 
 import (
 	ctx "context"
+
 	"github.com/RHsyseng/operator-utils/pkg/resource"
-	"github.com/m88i/nexus-operator/pkg/logger"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource, kind string) error {

@@ -16,16 +16,17 @@ package persistence
 
 import (
 	"fmt"
-	"github.com/m88i/nexus-operator/pkg/framework"
-	"go.uber.org/zap"
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/logger"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 var managedObjectsRef = map[string]resource.KubernetesResource{

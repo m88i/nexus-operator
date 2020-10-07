@@ -17,12 +17,12 @@ package framework
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/pkg/test"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestFetch(t *testing.T) {

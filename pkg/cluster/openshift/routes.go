@@ -18,12 +18,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/m88i/nexus-operator/pkg/util"
 	v1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/util"
 )
 
 const (

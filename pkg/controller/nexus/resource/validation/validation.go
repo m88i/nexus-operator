@@ -19,19 +19,16 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/logger"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/discovery"
 )
 
 const (
