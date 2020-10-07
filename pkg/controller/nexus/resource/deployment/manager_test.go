@@ -20,14 +20,16 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
-	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 var (
@@ -54,9 +56,8 @@ func TestNewManager(t *testing.T) {
 		client: client,
 	}
 	got := NewManager(nexus, client)
-	if !reflect.DeepEqual(want, got) {
-		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
-	}
+	assert.Equal(t, want.nexus, got.nexus)
+	assert.Equal(t, want.client, got.client)
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
@@ -65,6 +66,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
 		client: test.NewFakeClientBuilder().Build(),
+		log:    logger.GetLoggerWithResource("test", allDefaultsCommunityNexus),
 	}
 	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)

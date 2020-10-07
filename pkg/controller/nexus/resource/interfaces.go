@@ -19,6 +19,7 @@ import (
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 )
 

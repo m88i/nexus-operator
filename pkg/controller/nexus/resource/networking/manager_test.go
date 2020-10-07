@@ -20,15 +20,17 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
-	"github.com/m88i/nexus-operator/pkg/test"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 var nodePortNexus = &v1alpha1.Nexus{
@@ -124,9 +126,11 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned
 	// first, let's test a Nexus which does not expose
+	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: false}}}
 	mgr := &Manager{
-		nexus:  &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: false}}},
+		nexus:  nexus,
 		client: test.NewFakeClientBuilder().Build(),
+		log:    logger.GetLoggerWithResource("test", nexus),
 	}
 	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, resources)
@@ -136,6 +140,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	mgr = &Manager{
 		nexus:          routeNexus,
 		client:         test.NewFakeClientBuilder().OnOpenshift().Build(),
+		log:            logger.GetLoggerWithResource("test", routeNexus),
 		routeAvailable: true,
 		ocp:            true,
 	}
@@ -147,6 +152,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// still a route, but in a cluster without routes
 	mgr = &Manager{
 		nexus:  routeNexus,
+		log:    logger.GetLoggerWithResource("test", routeNexus),
 		client: test.NewFakeClientBuilder().Build(),
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -157,6 +163,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	mgr = &Manager{
 		nexus:            ingressNexus,
 		client:           test.NewFakeClientBuilder().WithIngress().Build(),
+		log:              logger.GetLoggerWithResource("test", ingressNexus),
 		ingressAvailable: true,
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -167,6 +174,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// still an ingress, but in a cluster without ingresses
 	mgr = &Manager{
 		nexus:  ingressNexus,
+		log:    logger.GetLoggerWithResource("test", ingressNexus),
 		client: test.NewFakeClientBuilder().Build(),
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -234,44 +242,6 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	resources, err = mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Contains(t, err.Error(), mockErrorMsg)
-}
-
-func TestManager_getDeployedRoute(t *testing.T) {
-	mgr := &Manager{
-		nexus:  routeNexus,
-		client: test.NewFakeClientBuilder().OnOpenshift().Build(),
-	}
-
-	// first, test without creating the route
-	route, err := mgr.getDeployedRoute()
-	assert.Nil(t, route)
-	assert.True(t, errors.IsNotFound(err))
-
-	// now test after creating the route
-	route = &routev1.Route{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), route))
-	route, err = mgr.getDeployedRoute()
-	assert.NotNil(t, route)
-	assert.NoError(t, err)
-}
-
-func TestManager_getDeployedIngress(t *testing.T) {
-	mgr := &Manager{
-		nexus:  ingressNexus,
-		client: test.NewFakeClientBuilder().WithIngress().Build(),
-	}
-
-	// first, test without creating the ingress
-	ingress, err := mgr.getDeployedIngress()
-	assert.Nil(t, ingress)
-	assert.True(t, errors.IsNotFound(err))
-
-	// now test after creating the ingress
-	ingress = &networkingv1beta1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), ingress))
-	ingress, err = mgr.getDeployedIngress()
-	assert.NotNil(t, ingress)
-	assert.NoError(t, err)
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {

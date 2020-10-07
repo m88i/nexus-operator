@@ -19,8 +19,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/m88i/aicura/nexus"
-	"github.com/m88i/nexus-operator/pkg/framework"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/m88i/nexus-operator/pkg/framework"
 )
 
 const (
@@ -70,9 +71,9 @@ func (u *userOperation) EnsureOperatorUser() error {
 }
 
 func (u *userOperation) createOperatorUserIfNotExists() (*nexus.User, error) {
-	// TODO: open an issue to handle access to a custom admin credentials to be used by the operator
+	// TODO: handle access to a custom admin credentials to be used by the operator
 	u.nexuscli.SetCredentials(defaultAdminUsername, defaultAdminPassword)
-	log.Debug("Attempt to create operator user. Cheking if it already exists.")
+	log.Debug("Attempt to create operator user. Checking if it already exists.")
 	user, err := u.nexuscli.UserService.GetUserByID(operatorUsername)
 	if err != nil {
 		if nexus.IsAuthenticationError(err) {
@@ -106,7 +107,7 @@ func (u *userOperation) createOperatorUserIfNotExists() (*nexus.User, error) {
 func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 	secret := &corev1.Secret{}
 	log.Debug("Attempt to store operator user credentials into Secret")
-	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret); err != nil {
+	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, framework.SecretKind); err != nil {
 		return err
 	}
 	if secret.StringData == nil {
@@ -114,7 +115,7 @@ func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 	}
 	secret.StringData[SecretKeyPassword] = user.Password
 	secret.StringData[SecretKeyUsername] = user.UserID
-	log.Debug("Updating secret with user credentials")
+	log.Debug("Updating Secret with user credentials")
 	if err := u.k8sclient.Update(context.TODO(), secret); err != nil {
 		return err
 	}
@@ -123,7 +124,7 @@ func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 
 func (u *userOperation) getOperatorUserCredentials() (user, password string, err error) {
 	secret := &corev1.Secret{}
-	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret); err != nil {
+	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, framework.SecretKind); err != nil {
 		return "", "", err
 	}
 	return string(secret.Data[SecretKeyUsername]), string(secret.Data[SecretKeyPassword]), nil

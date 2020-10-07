@@ -20,11 +20,12 @@ import (
 	"os"
 
 	nexusapi "github.com/m88i/aicura/nexus"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 type server struct {
@@ -40,8 +41,6 @@ const (
 	// used when running the operator instance locally
 	serverURLEnvKey = "NEXUS_SERVER_URL"
 )
-
-var log = logger.GetLogger("server_operations")
 
 func handleServerOperations(nexus *v1alpha1.Nexus, client client.Client, nexusAPIBuilder func(url, user, pass string) *nexusapi.Client) (v1alpha1.OperationsStatus, error) {
 	s := server{nexus: nexus, k8sclient: client, status: &v1alpha1.OperationsStatus{}}
@@ -73,6 +72,8 @@ func handleServerOperations(nexus *v1alpha1.Nexus, client client.Client, nexusAP
 
 // HandleServerOperations makes all required operations in the Nexus server side, such as creating the operator user
 func HandleServerOperations(nexus *v1alpha1.Nexus, client client.Client) (v1alpha1.OperationsStatus, error) {
+	log = logger.GetLoggerWithResource(defaultLogName, nexus)
+	defer func() { log = logger.GetLogger(defaultLogName) }()
 	return handleServerOperations(nexus, client, func(url, user, pass string) *nexusapi.Client {
 		return nexusapi.NewClient(url).WithCredentials(user, pass).Build()
 	})
@@ -99,6 +100,6 @@ func (s *server) isServerReady() bool {
 		return true
 	}
 	s.status.ServerReady = false
-	s.status.Reason = "Server does not have enough availble replicas"
+	s.status.Reason = "Server does not have enough available replicas"
 	return false
 }

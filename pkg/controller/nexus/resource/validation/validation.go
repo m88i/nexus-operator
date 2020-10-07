@@ -16,19 +16,19 @@ package validation
 
 import (
 	"fmt"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"strings"
+
+	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/logger"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/discovery"
 )
 
 const (
@@ -37,11 +37,10 @@ const (
 	unspecifiedExposeAsFormat = "'spec.exposeAs' left unspecified, setting it to %s"
 )
 
-var log = logger.GetLogger("Nexus_validation")
-
 type Validator struct {
 	client client.Client
 	scheme *runtime.Scheme
+	log    *zap.SugaredLogger
 
 	routeAvailable, ingressAvailable, ocp bool
 }
@@ -74,6 +73,7 @@ func NewValidator(client client.Client, scheme *runtime.Scheme, disc discovery.D
 
 // SetDefaultsAndValidate returns a copy of the parameter Nexus with defaults set and an error if validation fails.
 func (v *Validator) SetDefaultsAndValidate(nexus *v1alpha1.Nexus) (*v1alpha1.Nexus, error) {
+	v.log = logger.GetLoggerWithResource("nexus_validation", nexus)
 	n := v.setDefaults(nexus)
 	return n, v.validate(n)
 }
@@ -84,37 +84,37 @@ func (v *Validator) validate(nexus *v1alpha1.Nexus) error {
 
 func (v *Validator) validateNetworking(nexus *v1alpha1.Nexus) error {
 	if !nexus.Spec.Networking.Expose {
-		log.Debugf("'spec.networking.expose' set to 'false', ignoring networking configuration")
+		v.log.Debugf("'spec.networking.expose' set to 'false', ignoring networking configuration")
 		return nil
 	}
 
 	if !v.ingressAvailable && nexus.Spec.Networking.ExposeAs == v1alpha1.IngressExposeType {
-		log.Errorf("Ingresses are not available on your cluster. Make sure to be running Kubernetes > 1.14 or if you're running Openshift set 'spec.networking.exposeAs' to '%s'. Alternatively you may also try '%s'", v1alpha1.IngressExposeType, v1alpha1.NodePortExposeType)
+		v.log.Errorf("Ingresses are not available on your cluster. Make sure to be running Kubernetes > 1.14 or if you're running Openshift set 'spec.networking.exposeAs' to '%s'. Alternatively you may also try '%s'", v1alpha1.IngressExposeType, v1alpha1.NodePortExposeType)
 		return fmt.Errorf("ingress expose required, but unavailable")
 	}
 
 	if !v.routeAvailable && nexus.Spec.Networking.ExposeAs == v1alpha1.RouteExposeType {
-		log.Errorf("Routes are not available on your cluster. If you're running Kubernetes 1.14 or higher try setting 'spec.networking.exposeAs' to '%s'. Alternatively you may also try '%s'", v1alpha1.IngressExposeType, v1alpha1.NodePortExposeType)
+		v.log.Errorf("Routes are not available on your cluster. If you're running Kubernetes 1.14 or higher try setting 'spec.networking.exposeAs' to '%s'. Alternatively you may also try '%s'", v1alpha1.IngressExposeType, v1alpha1.NodePortExposeType)
 		return fmt.Errorf("route expose required, but unavailable")
 	}
 
 	if nexus.Spec.Networking.ExposeAs == v1alpha1.NodePortExposeType && nexus.Spec.Networking.NodePort == 0 {
-		log.Errorf("NodePort networking requires a port. Check the Nexus resource 'spec.networking.nodePort' parameter")
+		v.log.Errorf("NodePort networking requires a port. Check the Nexus resource 'spec.networking.nodePort' parameter")
 		return fmt.Errorf("nodeport expose required, but no port informed")
 	}
 
 	if nexus.Spec.Networking.ExposeAs == v1alpha1.IngressExposeType && len(nexus.Spec.Networking.Host) == 0 {
-		log.Errorf("Ingress networking requires a host. Check the Nexus resource 'spec.networking.host' parameter")
+		v.log.Errorf("Ingress networking requires a host. Check the Nexus resource 'spec.networking.host' parameter")
 		return fmt.Errorf("ingress expose required, but no host informed")
 	}
 
 	if len(nexus.Spec.Networking.TLS.SecretName) > 0 && nexus.Spec.Networking.ExposeAs != v1alpha1.IngressExposeType {
-		log.Errorf("'spec.networking.tls.secretName' is only available when using an Ingress. Try setting 'spec.networking.exposeAs' to '%s'", v1alpha1.IngressExposeType)
+		v.log.Errorf("'spec.networking.tls.secretName' is only available when using an Ingress. Try setting 'spec.networking.exposeAs' to '%s'", v1alpha1.IngressExposeType)
 		return fmt.Errorf("tls secret name informed, but using route")
 	}
 
 	if nexus.Spec.Networking.TLS.Mandatory && nexus.Spec.Networking.ExposeAs != v1alpha1.RouteExposeType {
-		log.Errorf("'spec.networking.tls.mandatory' is only available when using a Route. Try setting 'spec.networking.exposeAs' to '%s'", v1alpha1.RouteExposeType)
+		v.log.Errorf("'spec.networking.tls.mandatory' is only available when using a Route. Try setting 'spec.networking.exposeAs' to '%s'", v1alpha1.RouteExposeType)
 		return fmt.Errorf("tls set to mandatory, but using ingress")
 	}
 
@@ -146,7 +146,7 @@ func (v *Validator) setResourcesDefaults(nexus *v1alpha1.Nexus) {
 func (v *Validator) setImageDefaults(nexus *v1alpha1.Nexus) {
 	if nexus.Spec.UseRedHatImage {
 		if len(nexus.Spec.Image) > 0 {
-			log.Warnf("Nexus CR configured to the use Red Hat Certified Image, ignoring 'spec.image' field.")
+			v.log.Warnf("Nexus CR configured to the use Red Hat Certified Image, ignoring 'spec.image' field.")
 		}
 		nexus.Spec.Image = NexusCertifiedImage
 	} else if len(nexus.Spec.Image) == 0 {
@@ -158,7 +158,7 @@ func (v *Validator) setImageDefaults(nexus *v1alpha1.Nexus) {
 		nexus.Spec.ImagePullPolicy != corev1.PullIfNotPresent &&
 		nexus.Spec.ImagePullPolicy != corev1.PullNever {
 
-		log.Warnf("Invalid 'spec.imagePullPolicy', unsetting the value. The pull policy will be determined by the image tag. Consider setting this value to '%s', '%s' or '%s'", corev1.PullAlways, corev1.PullIfNotPresent, corev1.PullNever)
+		v.log.Warnf("Invalid 'spec.imagePullPolicy', unsetting the value. The pull policy will be determined by the image tag. Consider setting this value to '%s', '%s' or '%s'", corev1.PullAlways, corev1.PullIfNotPresent, corev1.PullNever)
 		nexus.Spec.ImagePullPolicy = ""
 	}
 }
@@ -204,16 +204,16 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 
 	image := strings.Split(nexus.Spec.Image, ":")[0]
 	if image != NexusCommunityImage {
-		log.Warnf("Automatic Updates are enabled, but 'spec.image' is not using the community image (%s). Disabling automatic updates", NexusCommunityImage)
+		v.log.Warnf("Automatic Updates are enabled, but 'spec.image' is not using the community image (%s). Disabling automatic updates", NexusCommunityImage)
 		nexus.Spec.AutomaticUpdate.Disabled = true
 		return
 	}
 
 	if nexus.Spec.AutomaticUpdate.MinorVersion == nil {
-		log.Debugf("Automatic Updates are enabled, but no minor was informed. Fetching the most recent...")
+		v.log.Debugf("Automatic Updates are enabled, but no minor was informed. Fetching the most recent...")
 		minor, err := update.GetLatestMinor()
 		if err != nil {
-			log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
+			v.log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
 			nexus.Spec.AutomaticUpdate.Disabled = true
 			createChangedNexusEvent(nexus, v.scheme, v.client, "spec.automaticUpdate.disabled")
 			return
@@ -221,26 +221,26 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 		nexus.Spec.AutomaticUpdate.MinorVersion = &minor
 	}
 
-	log.Debugf("Fetching the latest micro from minor %d", *nexus.Spec.AutomaticUpdate.MinorVersion)
+	v.log.Debugf("Fetching the latest micro from minor %d", *nexus.Spec.AutomaticUpdate.MinorVersion)
 	tag, ok := update.GetLatestMicro(*nexus.Spec.AutomaticUpdate.MinorVersion)
 	if !ok {
 		// the informed minor doesn't exist, let's try the latest minor
-		log.Warnf("Latest tag for minor version (%d) not found. Trying the latest minor instead", *nexus.Spec.AutomaticUpdate.MinorVersion)
+		v.log.Warnf("Latest tag for minor version (%d) not found. Trying the latest minor instead", *nexus.Spec.AutomaticUpdate.MinorVersion)
 		minor, err := update.GetLatestMinor()
 		if err != nil {
-			log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
+			v.log.Errorf("Unable to fetch the most recent minor: %v. Disabling automatic updates.", err)
 			nexus.Spec.AutomaticUpdate.Disabled = true
 			createChangedNexusEvent(nexus, v.scheme, v.client, "spec.automaticUpdate.disabled")
 			return
 		}
-		log.Infof("Setting 'spec.automaticUpdate.minorVersion to %d", minor)
+		v.log.Infof("Setting 'spec.automaticUpdate.minorVersion to %d", minor)
 		nexus.Spec.AutomaticUpdate.MinorVersion = &minor
 		// no need to check for the tag existence here,
 		// we would have gotten an error from GetLatestMinor() if it didn't
 		tag, _ = update.GetLatestMicro(minor)
 	}
 	newImage := fmt.Sprintf("%s:%s", image, tag)
-	log.Debugf("Replacing 'spec.image' (%s) with '%s'", nexus.Spec.Image, newImage)
+	v.log.Debugf("Replacing 'spec.image' (%s) with '%s'", nexus.Spec.Image, newImage)
 	nexus.Spec.Image = newImage
 }
 
@@ -251,16 +251,16 @@ func (v *Validator) setNetworkingDefaults(nexus *v1alpha1.Nexus) {
 
 	if len(nexus.Spec.Networking.ExposeAs) == 0 {
 		if v.ocp {
-			log.Infof(unspecifiedExposeAsFormat, v1alpha1.RouteExposeType)
+			v.log.Infof(unspecifiedExposeAsFormat, v1alpha1.RouteExposeType)
 			nexus.Spec.Networking.ExposeAs = v1alpha1.RouteExposeType
 		} else if v.ingressAvailable {
-			log.Infof(unspecifiedExposeAsFormat, v1alpha1.IngressExposeType)
+			v.log.Infof(unspecifiedExposeAsFormat, v1alpha1.IngressExposeType)
 			nexus.Spec.Networking.ExposeAs = v1alpha1.IngressExposeType
 		} else {
 			// we're on kubernetes < 1.14
 			// try setting nodePort, validation will catch it if impossible
-			log.Info("On Kubernetes, but Ingresses are not available")
-			log.Infof(unspecifiedExposeAsFormat, v1alpha1.NodePortExposeType)
+			v.log.Info("On Kubernetes, but Ingresses are not available")
+			v.log.Infof(unspecifiedExposeAsFormat, v1alpha1.NodePortExposeType)
 			nexus.Spec.Networking.ExposeAs = v1alpha1.NodePortExposeType
 		}
 	}

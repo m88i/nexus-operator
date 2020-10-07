@@ -12,18 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package security
+package server
 
-import (
-	corev1 "k8s.io/api/core/v1"
+import "github.com/m88i/nexus-operator/pkg/logger"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
-)
+const defaultLogName = "server_operations"
 
-func defaultServiceAccount(nexus *v1alpha1.Nexus) *corev1.ServiceAccount {
-	account := &corev1.ServiceAccount{
-		ObjectMeta: meta.DefaultObjectMeta(nexus),
-	}
-	return account
-}
+var log = logger.GetLogger(defaultLogName)

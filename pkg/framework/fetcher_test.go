@@ -17,25 +17,25 @@ package framework
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/pkg/test"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestFetch(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: v1.ObjectMeta{Name: "deployment", Namespace: t.Name()}}
 	cli := test.NewFakeClientBuilder(deployment).Build()
-	err := Fetch(cli, Key(deployment), deployment)
+	err := Fetch(cli, Key(deployment), deployment, DeploymentKind)
 	assert.NoError(t, err)
 }
 
 func TestNotFoundFetch(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: v1.ObjectMeta{Name: "deployment", Namespace: t.Name()}}
 	cli := test.NewFakeClientBuilder().Build()
-	err := Fetch(cli, Key(deployment), deployment)
+	err := Fetch(cli, Key(deployment), deployment, DeploymentKind)
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 }

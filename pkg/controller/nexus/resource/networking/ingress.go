@@ -15,11 +15,12 @@
 package networking
 
 import (
+	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/meta"
-	"k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (

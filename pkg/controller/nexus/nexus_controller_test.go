@@ -17,15 +17,10 @@ package nexus
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
-	"reflect"
-
 	resUtils "github.com/RHsyseng/operator-utils/pkg/resource"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
-	"github.com/m88i/nexus-operator/pkg/test"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,6 +32,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	nexusres "github.com/m88i/nexus-operator/pkg/controller/nexus/resource"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 func TestReconcileNexus_Reconcile_NoInstance(t *testing.T) {

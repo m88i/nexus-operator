@@ -15,26 +15,30 @@
 package persistence
 
 import (
-	ctx "context"
 	"fmt"
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/logger"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
-var log = logger.GetLogger("persistence_manager")
+var managedObjectsRef = map[string]resource.KubernetesResource{
+	framework.PVCKind: &corev1.PersistentVolumeClaim{},
+}
 
 // Manager is responsible for creating persistence resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
+	log    *zap.SugaredLogger
 }
 
 // NewManager creates a persistence resources manager
@@ -43,44 +47,35 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 	return &Manager{
 		nexus:  nexus,
 		client: client,
+		log:    logger.GetLoggerWithResource("persistence_manager", nexus),
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
-	if m.nexus.Spec.Persistence.Persistent {
-		log.Debugf("Creating Persistent Volume Claim (%s)", m.nexus.Name)
-		pvc := newPVC(m.nexus)
-		resources = append(resources, pvc)
+	if !m.nexus.Spec.Persistence.Persistent {
+		return resources, nil
 	}
+
+	m.log.Debugf("Generating required %s", framework.PVCKind)
+	pvc := newPVC(m.nexus)
+	resources = append(resources, pvc)
+
 	return resources, nil
 }
 
 // GetDeployedResources returns the persistence resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
-	if pvc, err := m.getDeployedPVC(); err == nil {
-		resources = append(resources, pvc)
-	} else if !errors.IsNotFound(err) {
-		log.Errorf("Could not fetch Persistent Volume Claim (%s): %v", m.nexus.Name, err)
-		return nil, fmt.Errorf("could not fetch pvc (%s): %v", m.nexus.Name, err)
+	for resType, resRef := range managedObjectsRef {
+		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
+			resources = append(resources, resRef)
+		} else if !errors.IsNotFound(err) {
+			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, m.nexus.Namespace, m.nexus.Name, err)
+		}
 	}
 	return resources, nil
-}
-
-func (m *Manager) getDeployedPVC() (resource.KubernetesResource, error) {
-	pvc := &corev1.PersistentVolumeClaim{}
-	key := types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}
-	log.Debugf("Attempting to fetch deployed Persistent Volume Claim (%s)", m.nexus.Name)
-	err := m.client.Get(ctx.TODO(), key, pvc)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed Persistent Volume Claim (%s)", m.nexus.Name)
-		}
-		return nil, err
-	}
-	return pvc, nil
 }
 
 // GetCustomComparator returns the custom comp function used to compare a persistence resource.

@@ -20,12 +20,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}}
@@ -40,9 +42,8 @@ func TestNewManager(t *testing.T) {
 		client: client,
 	}
 	got := NewManager(nexus, client)
-	if !reflect.DeepEqual(want, got) {
-		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
-	}
+	assert.Equal(t, want.nexus, got.nexus)
+	assert.Equal(t, want.client, got.client)
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
@@ -51,6 +52,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	mgr := &Manager{
 		nexus:  baseNexus.DeepCopy(),
 		client: test.NewFakeClientBuilder().Build(),
+		log:    logger.GetLoggerWithResource("test", baseNexus),
 	}
 
 	// first, let's test without persistence
@@ -97,25 +99,6 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	resources, err = mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Contains(t, err.Error(), mockErrorMsg)
-}
-
-func TestManager_getDeployedPVC(t *testing.T) {
-	mgr := &Manager{
-		nexus:  baseNexus,
-		client: test.NewFakeClientBuilder().Build(),
-	}
-
-	// first, test without creating the pvc
-	pvc, err := mgr.getDeployedPVC()
-	assert.Nil(t, pvc)
-	assert.True(t, errors.IsNotFound(err))
-
-	// now test after creating the pvc
-	pvc = &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), pvc))
-	pvc, err = mgr.getDeployedPVC()
-	assert.NotNil(t, pvc)
-	assert.NoError(t, err)
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {

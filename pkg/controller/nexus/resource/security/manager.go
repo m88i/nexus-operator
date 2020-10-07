@@ -19,16 +19,19 @@ import (
 	"reflect"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"go.uber.org/zap"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 var managedObjectsRef = map[string]resource.KubernetesResource{
-	"Secret":          &core.Secret{},
-	"Service Account": &core.ServiceAccount{},
+	framework.SecretKind:     &core.Secret{},
+	framework.SvcAccountKind: &core.ServiceAccount{},
 }
 
 // Manager is responsible for creating security resources, fetching deployed ones and comparing them
@@ -36,6 +39,7 @@ var managedObjectsRef = map[string]resource.KubernetesResource{
 type Manager struct {
 	nexus  *v1alpha1.Nexus
 	client client.Client
+	log    *zap.SugaredLogger
 }
 
 // NewManager creates a security resources Manager
@@ -43,11 +47,14 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 	return &Manager{
 		nexus:  nexus,
 		client: client,
+		log:    logger.GetLoggerWithResource("security_manager", nexus),
 	}
 }
 
 // GetRequiredResources returns the resources initialized by the Manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
+	m.log.Debugf("Generating required %s", framework.SvcAccountKind)
+	m.log.Debugf("Generating required %s", framework.SecretKind)
 	return []resource.KubernetesResource{defaultServiceAccount(m.nexus), defaultSecret(m.nexus)}, nil
 }
 
@@ -55,10 +62,10 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	for resType, resRef := range managedObjectsRef {
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef); err == nil {
+		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
 			resources = append(resources, resRef)
 		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch Resource %s (%s): %v", resType, m.nexus.Name, err)
+			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, m.nexus.Namespace, m.nexus.Name, err)
 		}
 	}
 	return resources, nil

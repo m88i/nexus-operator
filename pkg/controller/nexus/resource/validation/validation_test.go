@@ -19,11 +19,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
-	"github.com/m88i/nexus-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/update"
+	"github.com/m88i/nexus-operator/pkg/logger"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 func TestNewValidator(t *testing.T) {
@@ -189,9 +191,10 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 
 func TestValidator_setUpdateDefaults(t *testing.T) {
 	client := test.NewFakeClientBuilder().Build()
-	v, _ := NewValidator(client, client.Scheme(), client)
 	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
 	nexus.Spec.Image = NexusCommunityImage
+	v, _ := NewValidator(client, client.Scheme(), client)
+	v.log = logger.GetLoggerWithResource("test", nexus)
 
 	v.setUpdateDefaults(nexus)
 	latestMinor, err := update.GetLatestMinor()
@@ -291,6 +294,7 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
 			ocp:              tt.ocp,
+			log:              logger.GetLoggerWithResource("test", tt.input),
 		}
 		got := tt.input.DeepCopy()
 		v.setNetworkingDefaults(got)
@@ -420,6 +424,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
 			ocp:              tt.ocp,
+			log:              logger.GetLoggerWithResource("test", tt.input),
 		}
 		if err := v.validateNetworking(tt.input); (err != nil) != tt.wantError {
 			t.Errorf("%s\nWantError: %v\tError: %v", tt.name, tt.wantError, err)

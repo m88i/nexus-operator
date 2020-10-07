@@ -20,13 +20,16 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
-	"github.com/m88i/nexus-operator/pkg/test"
+	"github.com/m88i/nexus-operator/pkg/logger"
+
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 var baseNexus = &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}, Spec: v1alpha1.NexusSpec{ServiceAccountName: "nexus"}}
@@ -41,9 +44,8 @@ func TestNewManager(t *testing.T) {
 		client: client,
 	}
 	got := NewManager(nexus, client)
-	if !reflect.DeepEqual(want, got) {
-		t.Errorf("TestNewManager()\nWant: %+v\tGot: %+v", want, got)
-	}
+	assert.Equal(t, want.nexus, got.nexus)
+	assert.Equal(t, want.client, got.client)
 }
 
 func TestManager_GetRequiredResources(t *testing.T) {
@@ -52,6 +54,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	mgr := &Manager{
 		nexus:  baseNexus.DeepCopy(),
 		client: test.NewFakeClientBuilder().Build(),
+		log:    logger.GetLoggerWithResource("test", baseNexus),
 	}
 
 	// the default service accout is _always_ created
@@ -99,13 +102,13 @@ func TestManager_getDeployedSvcAccnt(t *testing.T) {
 	}
 
 	// first, test without creating the svcAccnt
-	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef["Service Account"])
+	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef[framework.SvcAccountKind], framework.SvcAccountKind)
 	assert.True(t, errors.IsNotFound(err))
 
 	// now test after creating the svcAccnt
 	svcAccnt := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), svcAccnt))
-	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt)
+	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt, framework.SvcAccountKind)
 	assert.NotNil(t, svcAccnt)
 	assert.NoError(t, err)
 }
