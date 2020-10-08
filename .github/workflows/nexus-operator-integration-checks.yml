@@ -151,7 +151,7 @@ jobs:
       - name: Run e2e test
         env:
           RUN_WITH_IMAGE: true
-          TIMEOUT_E2E: 20m
+          TIMEOUT_E2E: 30m
           ADDITIONAL_FLAGS: "-coverprofile=coverage_e2e.txt -covermode=atomic"
         run: ./hack/run-e2e-test.sh
 

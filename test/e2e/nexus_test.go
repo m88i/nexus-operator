@@ -1,10 +1,11 @@
 package e2e
 
 import (
-	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
-	corev1 "k8s.io/api/core/v1"
 	"testing"
 	"time"
+
+	"github.com/m88i/nexus-operator/pkg/controller/nexus/resource/validation"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/m88i/nexus-operator/pkg/apis"
 	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
@@ -16,8 +17,8 @@ import (
 const nexusName = "nexus3"
 
 var (
-	retryInterval        = time.Second * 10
-	timeout              = time.Second * 360
+	retryInterval        = time.Second * 30
+	timeout              = time.Second * 720
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 5
 
@@ -36,7 +37,7 @@ var (
 			LivenessProbe:               validation.DefaultProbe.DeepCopy(),
 			ReadinessProbe:              validation.DefaultProbe.DeepCopy(),
 		}
-		spec.LivenessProbe.InitialDelaySeconds = 240
+		spec.LivenessProbe.InitialDelaySeconds = 480
 		return spec
 	}()
 )
@@ -66,6 +67,7 @@ func NexusCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Operator namespace: %s", namespace)
 	// get global framework variables
 	f := framework.Global
 	// wait for nexus-operator to be ready

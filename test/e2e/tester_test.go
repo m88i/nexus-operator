@@ -76,7 +76,7 @@ func (tester *tester) checkService(nexus *v1alpha1.Nexus) {
 	assert.NoError(tester.t, err)
 	assert.NotNil(tester.t, svc)
 
-	assert.Equal(tester.t, deployment.NexusServicePort, int(svc.Spec.Ports[0].Port))
+	assert.Equal(tester.t, deployment.DefaultHTTPPort, int(svc.Spec.Ports[0].Port))
 	assert.Equal(tester.t, deployment.NexusServicePort, int(svc.Spec.Ports[0].TargetPort.IntVal))
 	assert.Equal(tester.t, deployment.NexusPortName, svc.Spec.Ports[0].Name)
 
