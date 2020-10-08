@@ -17,13 +17,9 @@
 VERSION=$1
 
 if [ -z ${VERSION} ]; then
-    echo "Please inform the desired version"
-    exit(1)
+    VERSION=$(curl https://api.github.com/repos/m88i/nexus-operator/releases/latest | python -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")
 fi
 
-echo "Downloading latest version"
-curl -LO https://github.com/m88i/nexus-operator/releases/download/${VERSION}/nexus-operator.yaml
+echo "....... Installing Nexus Operator ${VERSION} ......."
 
-echo "....... Installing Nexus Operator ......."
-
-kubectl apply -f nexus-operator.yaml
+kubectl apply -f https://github.com/m88i/nexus-operator/releases/download/${VERSION}/nexus-operator.yaml

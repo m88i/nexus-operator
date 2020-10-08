@@ -14,22 +14,16 @@
 # limitations under the License.
 
 # generating all in one yaml file
-sed -i '4 a \ \ namespace: operators' ./deploy/operator.yaml
-sed -i '4 a \ \ namespace: operators' ./deploy/service_account.yaml
-
 cat ./deploy/namespace.yaml > nexus-operator.yaml
 echo "---" >> nexus-operator.yaml
 cat ./deploy/crds/apps.m88i.io_nexus_crd.yaml >> nexus-operator.yaml
 echo "---" >> nexus-operator.yaml
-cat ./deploy/service_account.yaml >> nexus-operator.yaml
+sed '4 a \ \ namespace: operators' ./deploy/service_account.yaml >> nexus-operator.yaml
 echo "---" >> nexus-operator.yaml
 cat ./deploy/role.yaml >> nexus-operator.yaml
 echo "---" >> nexus-operator.yaml
 cat ./deploy/role_binding.yaml >> nexus-operator.yaml
 echo "---" >> nexus-operator.yaml
-cat ./deploy/operator.yaml >> nexus-operator.yaml
-
-sed -i '5d' ./deploy/operator.yaml
-sed -i '5d' ./deploy/service_account.yaml
+sed '4 a \ \ namespace: operators' ./deploy/operator.yaml >> nexus-operator.yaml
 
 sed -i "s/\${NAMESPACE}/operators/g" nexus-operator.yaml

@@ -49,11 +49,20 @@ If you have any questions please either [open an issue](https://github.com/m88i/
 The installation procedure will create a Namespace named `operators` and will install every resources needed for the operator to run:
 
 ```bash
-make install
+# requires python and kubectl
+bash <(curl -s https://github.com/m88i/nexus-operator/blob/main/hack/install.sh)
+```
+
+Alternatively, you can manually elect a [released version](https://github.com/m88i/nexus-operator/releases):
+
+```bash
+VERSION=<version from GitHub releases page>
+
+kubectl apply -f https://github.com/m88i/nexus-operator/releases/download/${VERSION}/nexus-operator.yaml
 ```
 
 You can choose any flavors of Nexus 3.x server from our [`examples`](examples) directory and apply the YAML in any namespace in your cluster.
-Use this examples as a starting point to customize the server to meet your requirements.
+Use these examples as a starting point to customize the server to meet your requirements.
 
 ### Openshift
 
