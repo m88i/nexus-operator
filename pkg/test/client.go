@@ -17,7 +17,7 @@ package test
 import (
 	"context"
 
-	openapi_v2 "github.com/googleapis/gnostic/OpenAPIv2"
+	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/m88i/nexus-operator/pkg/apis/apps/v1alpha1"
+	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/util"
 )
 
@@ -52,7 +52,7 @@ type FakeClientBuilder struct {
 func NewFakeClientBuilder(initObjs ...runtime.Object) *FakeClientBuilder {
 	s := scheme.Scheme
 	util.Must(minimumSchemeBuilder().AddToScheme(s))
-	res := []*metav1.APIResourceList{{GroupVersion: v1alpha1.SchemeGroupVersion.String()}}
+	res := []*metav1.APIResourceList{{GroupVersion: v1alpha1.GroupVersion.String()}}
 
 	return &FakeClientBuilder{
 		initObjs:  initObjs,

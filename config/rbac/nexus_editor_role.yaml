@@ -1,0 +1,24 @@
+# permissions for end users to edit nexus.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nexus-editor-role
+rules:
+- apiGroups:
+  - apps.m88i.io
+  resources:
+  - nexus
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps.m88i.io
+  resources:
+  - nexus/status
+  verbs:
+  - get

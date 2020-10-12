@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright 2020 Nexus Operator and/or its authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source ./hack/go-path.sh
 
-gofmt -s -l -w cmd/ pkg/ version/
+go mod tidy
+
+gofmt -s -l -w .
 # get the goimports binary
-command -v goimports >/dev/null || go build -o $GOPATH/bin/goimports golang.org/x/tools/cmd/goimports
-goimports -local github.com/m88i/nexus-operator -l -w cmd/ pkg/ version/
-
-if [[ -n ${CI} ]]; then
-    git diff --exit-code
-fi
+command -v goimports >/dev/null || go build -o "${GOPATH}"/bin/goimports golang.org/x/tools/cmd/goimports
+goimports -local github.com/m88i/nexus-operator -l -w .

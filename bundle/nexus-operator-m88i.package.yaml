@@ -1,0 +1,5 @@
+channels:
+  - currentCSV: nexus-operator.v{version}
+    name: alpha
+defaultChannel: alpha
+packageName: nexus-operator-m88i

@@ -1,0 +1,20 @@
+# permissions for end users to view nexus.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nexus-viewer-role
+rules:
+- apiGroups:
+  - apps.m88i.io
+  resources:
+  - nexus
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.m88i.io
+  resources:
+  - nexus/status
+  verbs:
+  - get

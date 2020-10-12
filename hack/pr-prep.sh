@@ -56,9 +56,7 @@ prompt_and_push_or_die() {
     )
 }
 
-./hack/go-test.sh
-./hack/go-build.sh
-./hack/run-e2e-test.sh
+make test
 
 echo "All tests were successful!"
 

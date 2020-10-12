@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright 2020 Nexus Operator and/or its authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source ./hack/go-path.sh
 
 # it's expected to have GOPATH in your PATH
 # The command in or will fetch the latest tag available for golangci-lint and install in $GOPATH/bin/
-which golangci-lint >/dev/null || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+command -v golangci-lint >/dev/null || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}"/bin
 
-golangci-lint run ./pkg/... ./test/...
+golangci-lint run --enable=golint

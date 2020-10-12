@@ -46,7 +46,7 @@ If you have any questions please either [open an issue](https://github.com/m88i/
 
 ## Quick Install
 
-The installation procedure will create a Namespace named `operators` and will install every resources needed for the operator to run:
+The installation procedure will create a Namespace named `nexus-operator-system` and will install every resources needed for the operator to run:
 
 ```bash
 # requires python and kubectl

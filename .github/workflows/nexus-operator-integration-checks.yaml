@@ -1,0 +1,151 @@
+name: Nexus Operator Integration Checks
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "examples/**"
+      - "LICENSE"
+      - "Makefile"
+      - ".github/ISSUE_TEMPLATE/**"
+    branches:
+      - main
+env:
+  OPERATOR_SDK_VERSION: v1.0.1
+  GO_VERSION: 1.14
+jobs:
+  golint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
+          version: v1.27
+          args: --enable=golint --timeout=2m
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+      - name: Check Vet
+        run: |
+          make generate
+          make manifests
+          changed_files=$(git status -s | grep -v 'go.mod\|go.sum' || :)
+          generated_changed_files=$(git status -s | grep zz_generated || :)
+          [[ -z "$generated_changed_files" ]] || (printf "There is change in auto-generated files" && exit 1)
+          [[ -z "$changed_files" ]] ||  (printf "Change is detected in some files: \n$changed_files\n" && exit 1)
+      - name: Check Headers
+        run: |
+          ./hack/addheaders.sh
+          changed_files=$(git status -s | grep -v 'go.mod\|go.sum' || :)
+          [[ -z "$changed_files" ]] ||  (printf "Some files are missing the headers: \n$changed_files\n Please add headers before sending the PR" && exit 1)
+
+  unit_test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod/cache
+          key: ${{ runner.os }}-go-cache-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-cache-
+
+      - name: Cache Operator SDK
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.GOPATH }}/bin/operator-sdk
+          key: ${{ runner.os }}-sdk-cache-${{ env.OPERATOR_SDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-sdk-cache
+      - name: Install Operator SDK
+        run: ./hack/ci/install-operator-sdk.sh
+
+      - name: Mod Tidy
+        run: |
+          go mod tidy
+
+      - name: Cache testenv
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.PATH }}/nexus-operator/testbin
+          key: ${{ runner.os }}-testbin-${{ env.OPERATOR_SDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-testbin-${{ env.OPERATOR_SDK_VERSION }}
+      - name: Test Packages
+        run: make test
+      - name: Validate codcov yaml file
+        run: curl -vvv --data-binary @codecov.yml https://codecov.io/validate
+      - name: Send Coverage Report
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./cover.out
+          flags: operator
+          name: operator-test
+          fail_ci_if_error: true
+
+  integration_tests:
+      name: Integration Tests
+      # we should wait for an ok from the other two
+      needs: [golint, unit_test]
+      runs-on: ubuntu-latest
+      env:
+        CLUSTER_NAME: operator-test
+        KIND_VERSION: v0.8.1
+        CREATE_NAMESPACE: false
+        NAMESPACE_E2E: default
+      steps:
+        - name: Check out code
+          uses: actions/checkout@v2
+        - name: Set up Go ${{ env.GO_VERSION }}
+          uses: actions/setup-go@v2
+          with:
+            go-version: ${{ env.GO_VERSION }}
+          id: go
+        - name: Cache dependencies
+          uses: actions/cache@v2
+          with:
+            path: ~/go/pkg/mod/cache
+            key: ${{ runner.os }}-go-cache-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-cache-
+        - name: Cache Binaries
+          uses: actions/cache@v2
+          with:
+            path: ~/go/bin/
+            key: ${{ runner.os }}-go-${{ env.GO_VERSION }}
+            restore-keys: |
+              ${{ runner.os }}-go-${{ env.GO_VERSION }}
+        - name: Install Operator SDK
+          run: |
+            ./hack/ci/install-operator-sdk.sh
+        - name: Install KIND
+          run: |
+            ./hack/ci/install-kind.sh
+            echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+        - name: Start KIND
+          run: ./hack/ci/start-kind.sh
+
+        - name: Generate Manifests
+          run: make bundle
+
+        - name: Build Operator Image
+          run: make operator-build BUILDER=docker
+
+        - name: Run Operator OLM Integration Test
+          run: make ci-olm-test

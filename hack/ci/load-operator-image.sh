@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-source ./hack/export-version.sh
+source ./hack/verify-version.sh
 
 echo "---> Loading Operator Image into Kind"
 kind load docker-image quay.io/m88i/nexus-operator:${OP_VERSION} --name ${CLUSTER_NAME}

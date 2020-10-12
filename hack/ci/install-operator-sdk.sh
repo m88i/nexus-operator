@@ -16,7 +16,7 @@
 
 set -e
 
-default_operator_sdk_version=v0.18.1
+default_operator_sdk_version=v1.0.1
 
 if [[ -z ${OPERATOR_SDK_VERSION} ]]; then
   OPERATOR_SDK_VERSION=$default_operator_sdk_version
