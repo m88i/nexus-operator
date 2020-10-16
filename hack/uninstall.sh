@@ -14,19 +14,12 @@
 # limitations under the License.
 
 
-NAMESPACE=nexus
+VERSION=$1
 
-echo "....... Uninstalling ......."
-echo "....... Deleting CRDs......."
-kubectl delete -f deploy/crds/apps.m88i.io_nexus_crd.yaml
+if [ -z ${VERSION} ]; then
+    VERSION=$(curl https://api.github.com/repos/m88i/nexus-operator/releases/latest | python -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")
+fi
 
-echo "....... Deleting Rules and Service Account ......."
-kubectl delete -f deploy/role.yaml -n ${NAMESPACE}
-kubectl delete -f deploy/role_binding.yaml -n ${NAMESPACE}
-kubectl delete -f deploy/service_account.yaml -n ${NAMESPACE}
+echo "....... Uninstall Nexus Operator ${VERSION} ......."
 
-echo "....... Deleting Operator ......."
-kubectl delete -f deploy/operator.yaml -n ${NAMESPACE}
-
-echo "....... Deleting namespace ${NAMESPACE}......."
-kubectl delete namespace ${NAMESPACE}
+kubectl delete -f https://github.com/m88i/nexus-operator/releases/download/${VERSION}/nexus-operator.yaml

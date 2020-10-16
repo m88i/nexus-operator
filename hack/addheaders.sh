@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-which ./bin/addlicense >/dev/null || go build -o ./bin/addlicense github.com/google/addlicense
+source ./hack/go-path.sh
+
+command -v addlicense >/dev/null || go build -o "${GOPATH}"/bin/addlicense github.com/google/addlicense
 
 # https://github.com/google/addlicense
 
-./bin/addlicense -c "Nexus Operator and/or its authors" -l apache cmd hack pkg version
+addlicense -c "Nexus Operator and/or its authors" -l apache controllers hack pkg

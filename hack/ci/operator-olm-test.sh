@@ -14,8 +14,8 @@
 # limitations under the License.
 
 
+source ./hack/verify-version.sh
 source ./hack/ci/operator-ensure-manifest.sh
-source ./hack/export-version.sh
 
 CATALOG_IMAGE="operatorhubio-catalog:temp"
 OP_PATH="community-operators/nexus-operator-m88i"

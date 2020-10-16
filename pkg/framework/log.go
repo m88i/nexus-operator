@@ -18,4 +18,4 @@ import (
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
-var log = logger.GetLogger("nexus_framework")
+var log = logger.GetLogger("framework")

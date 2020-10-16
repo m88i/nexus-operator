@@ -2,9 +2,8 @@ flags:
   operator:
     paths:
       - pkg/
-  operator-e2e:
-    paths:
-      - pkg/
+      - controllers/
+      - api
 coverage:
   status:
     patch:
@@ -15,12 +14,6 @@ coverage:
       operator-e2e:
         informational: true
     project:
-      operator-e2e:
-        target: auto
-        base: auto
-        threshold: 5%
-        flags:
-          - operator-e2e
       operator:
         target: auto
         base: auto
@@ -30,6 +23,4 @@ coverage:
 comment:
   require_changes: true
 ignore:
-  - "test/e2e"
   - "pkg/test"
-  - "pkg/apis"

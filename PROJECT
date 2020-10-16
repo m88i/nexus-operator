@@ -1,0 +1,11 @@
+domain: m88i.io
+layout: go.kubebuilder.io/v2
+projectName: nexus-operator
+repo: github.com/m88i/nexus-operator
+resources:
+- group: apps
+  kind: Nexus
+  version: v1alpha1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}

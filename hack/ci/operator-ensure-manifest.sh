@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-source ./hack/export-version.sh
+source ./hack/verify-version.sh
 
 OUTPUT="${PWD}/build/_output/operatorhub"
 
@@ -24,11 +24,19 @@ echo "---> Output dir is set to ${OUTPUT}"
 rm -rf "${OUTPUT}"
 
 mkdir -p "${OUTPUT}"
-cp -r "./deploy/olm-catalog/nexus-operator/" "${OUTPUT}/"
-mv "${OUTPUT}/nexus-operator" "${OUTPUT}/nexus-operator-m88i"
-rm "${OUTPUT}/nexus-operator-m88i/manifests" -rf
-rm "${OUTPUT}/nexus-operator-m88i/metadata" -rf
-rm "${OUTPUT}/nexus-operator-m88i/0.1.0" -rf
+
+rm -rf ~/operators/
+git clone --depth 1 --filter=blob:none https://github.com/operator-framework/community-operators.git ~/operators/
+
+cp -r ~/operators/community-operators/nexus-operator-m88i "${OUTPUT}"
+rm -rf ~/operators/
+
+mkdir -p "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}"
+cp -v "./bundle/manifests/apps.m88i.io_nexus.yaml" "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}/apps.m88i.io_nexus_crd.yaml"
+cp -v "./bundle/manifests/nexus-operator.clusterserviceversion.yaml" "${OUTPUT}/nexus-operator-m88i/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml"
+cp -v "./bundle/nexus-operator-m88i.package.yaml" "${OUTPUT}/nexus-operator-m88i/"
+
+sed -i "s/{version}/${OP_VERSION}/g" "${OUTPUT}/nexus-operator-m88i/nexus-operator-m88i.package.yaml"
 
 echo "---> Manifest files in the output directory for OLM verification"
 ls -la "${OUTPUT}/nexus-operator-m88i/"

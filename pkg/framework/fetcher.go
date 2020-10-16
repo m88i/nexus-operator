@@ -21,16 +21,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource, kind string) error {
-	log := logger.GetLoggerWithNamespacedName("resource_fetcher", key)
-	log.Debugf("Attempting to fetch deployed %s", kind)
+	log.Info("Attempting to fetch deployed resource", "kind", kind, "namespacedName", key)
 	if err := client.Get(ctx.TODO(), key, instance); err != nil {
 		if errors.IsNotFound(err) {
-			log.Debugf("There is no deployed %s", kind)
+			log.Debug("Unable to find resource", "kind", kind, "namespacedName", key)
 		}
 		return err
 	}
