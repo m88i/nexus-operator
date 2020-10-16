@@ -56,8 +56,8 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	m.log.Debug("Generating required", "resource", framework.DeploymentKind)
-	m.log.Debug("Generating required", "resource", framework.ServiceKind)
+	m.log.Debug("Generating required resource", "kind", framework.DeploymentKind)
+	m.log.Debug("Generating required resource", "kind", framework.ServiceKind)
 	return []resource.KubernetesResource{newDeployment(m.nexus), newService(m.nexus)}, nil
 }
 

@@ -87,32 +87,32 @@ func (v *Validator) validateNetworking(nexus *v1alpha1.Nexus) error {
 	}
 
 	if !v.ingressAvailable && nexus.Spec.Networking.ExposeAs == v1alpha1.IngressExposeType {
-		v.log.Info("Ingresses are not available on your cluster. Make sure to be running Kubernetes > 1.14 or if you're running Openshift set ", "spec.networking.exposeAs", v1alpha1.IngressExposeType, "Also try", v1alpha1.NodePortExposeType)
+		v.log.Warn("Ingresses are not available on your cluster. Make sure to be running Kubernetes > 1.14 or if you're running Openshift set ", "spec.networking.exposeAs", v1alpha1.IngressExposeType, "Also try", v1alpha1.NodePortExposeType)
 		return fmt.Errorf("ingress expose required, but unavailable")
 	}
 
 	if !v.routeAvailable && nexus.Spec.Networking.ExposeAs == v1alpha1.RouteExposeType {
-		v.log.Info("Routes are not available on your cluster. If you're running Kubernetes 1.14 or higher try setting ", "'spec.networking.exposeAs'", v1alpha1.IngressExposeType, "Also try", v1alpha1.NodePortExposeType)
+		v.log.Warn("Routes are not available on your cluster. If you're running Kubernetes 1.14 or higher try setting ", "'spec.networking.exposeAs'", v1alpha1.IngressExposeType, "Also try", v1alpha1.NodePortExposeType)
 		return fmt.Errorf("route expose required, but unavailable")
 	}
 
 	if nexus.Spec.Networking.ExposeAs == v1alpha1.NodePortExposeType && nexus.Spec.Networking.NodePort == 0 {
-		v.log.Info("NodePort networking requires a port. Check the Nexus resource 'spec.networking.nodePort' parameter")
+		v.log.Warn("NodePort networking requires a port. Check the Nexus resource 'spec.networking.nodePort' parameter")
 		return fmt.Errorf("nodeport expose required, but no port informed")
 	}
 
 	if nexus.Spec.Networking.ExposeAs == v1alpha1.IngressExposeType && len(nexus.Spec.Networking.Host) == 0 {
-		v.log.Info("Ingress networking requires a host. Check the Nexus resource 'spec.networking.host' parameter")
+		v.log.Warn("Ingress networking requires a host. Check the Nexus resource 'spec.networking.host' parameter")
 		return fmt.Errorf("ingress expose required, but no host informed")
 	}
 
 	if len(nexus.Spec.Networking.TLS.SecretName) > 0 && nexus.Spec.Networking.ExposeAs != v1alpha1.IngressExposeType {
-		v.log.Info("'spec.networking.tls.secretName' is only available when using an Ingress. Try setting ", "spec.networking.exposeAs'", v1alpha1.IngressExposeType)
+		v.log.Warn("'spec.networking.tls.secretName' is only available when using an Ingress. Try setting ", "spec.networking.exposeAs'", v1alpha1.IngressExposeType)
 		return fmt.Errorf("tls secret name informed, but using route")
 	}
 
 	if nexus.Spec.Networking.TLS.Mandatory && nexus.Spec.Networking.ExposeAs != v1alpha1.RouteExposeType {
-		v.log.Info("'spec.networking.tls.mandatory' is only available when using a Route. Try setting ", "spec.networking.exposeAs'", v1alpha1.RouteExposeType)
+		v.log.Warn("'spec.networking.tls.mandatory' is only available when using a Route. Try setting ", "spec.networking.exposeAs'", v1alpha1.RouteExposeType)
 		return fmt.Errorf("tls set to mandatory, but using ingress")
 	}
 
@@ -211,7 +211,7 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 		v.log.Debug("Automatic Updates are enabled, but no minor was informed. Fetching the most recent...")
 		minor, err := update.GetLatestMinor()
 		if err != nil {
-			v.log.Error(err, "Unable to fetch the most recent minor: %v. Disabling automatic updates.")
+			v.log.Error(err, "Unable to fetch the most recent minor. Disabling automatic updates.")
 			nexus.Spec.AutomaticUpdate.Disabled = true
 			createChangedNexusEvent(nexus, v.scheme, v.client, "spec.automaticUpdate.disabled")
 			return

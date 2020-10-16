@@ -97,7 +97,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 			return nil, fmt.Errorf(resUnavailableFormat, "routes")
 		}
 
-		m.log.Debug("Generating required", "resources", framework.RouteKind)
+		m.log.Debug("Generating required resource", "kind", framework.RouteKind)
 		route := m.createRoute()
 		resources = append(resources, route)
 
@@ -106,7 +106,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 			return nil, fmt.Errorf(resUnavailableFormat, "ingresses")
 		}
 
-		m.log.Debug("Generating required", "resources", framework.IngressKind)
+		m.log.Debug("Generating required resource", "kind", framework.IngressKind)
 		ingress := m.createIngress()
 		resources = append(resources, ingress)
 	}

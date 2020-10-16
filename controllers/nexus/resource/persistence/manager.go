@@ -57,7 +57,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 		return resources, nil
 	}
 
-	m.log.Debug("Generating required", "resource", framework.PVCKind)
+	m.log.Debug("Generating required resource", "kind", framework.PVCKind)
 	pvc := newPVC(m.nexus)
 	resources = append(resources, pvc)
 

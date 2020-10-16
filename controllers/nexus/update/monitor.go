@@ -100,7 +100,7 @@ func HandleUpdate(nexus *v1alpha1.Nexus, deployed, required *appsv1.Deployment, 
 		}
 
 		if condition.Type == appsv1.DeploymentProgressing && condition.Reason == "NewReplicaSetAvailable" {
-			log.Info("Successfully updated to", "tag", targetTag)
+			log.Info("Successfully updated", "tag", targetTag)
 			// the Nexus status update can be delayed, let's leave it to the reconciler
 			nexus.Status.UpdateConditions = append(nexus.Status.UpdateConditions, fmt.Sprintf(updateOKFormat, previousTag, targetTag))
 			createUpdateSuccessEvent(nexus, scheme, c, targetTag)

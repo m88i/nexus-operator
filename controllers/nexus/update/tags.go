@@ -27,7 +27,7 @@ const (
 	communityNexusRegistry     = "https://registry.hub.docker.com"
 	communityNexusRepo         = "sonatype/nexus3"
 	tagParseFailureFormat      = "unable to parse tag \"%s\": %v"
-	unableToCheckUpdatesFormat = "Unable to check for updates"
+	unableToCheckUpdatesMsg = "Unable to check for updates"
 )
 
 const (
@@ -104,13 +104,13 @@ func fetchUpdates() {
 	tags, err := getTags()
 	if err != nil {
 		lastErr = time.Now()
-		log.Error(err, unableToCheckUpdatesFormat)
+		log.Error(err, unableToCheckUpdatesMsg)
 		return
 	}
 	lastQuery = time.Now()
 
 	if err = parseTagsAndUpdate(tags); err != nil {
-		log.Error(err, unableToCheckUpdatesFormat)
+		log.Error(err, unableToCheckUpdatesMsg)
 		return
 	}
 }
@@ -122,8 +122,8 @@ func getTags() ([]string, error) {
 	}
 	// redirect the lib's logging to ours
 	reg.Logf = func(format string, args ...interface{}) {
-		format = fmt.Sprintf("Registry: %s", format)
-		log.Info(format, args...)
+		format = fmt.Sprintf(fmt.Sprintf("Registry: %s", format), args)
+		log.Info(format)
 	}
 
 	repo := communityNexusRepo

@@ -30,13 +30,13 @@ const (
 func createUpdateSuccessEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, tag string) {
 	err := kubernetes.RaiseInfoEventf(nexus, scheme, c, successfulUpdateReason, "Successfully updated to %s", tag)
 	if err != nil {
-		log.Error(err, "Unable to raise event for successful update", "instance", nexus.Name, "tag", tag)
+		log.Error(err, "Unable to raise event for successful update", "tag", tag)
 	}
 }
 
 func createUpdateFailureEvent(nexus *v1alpha1.Nexus, scheme *runtime.Scheme, c client.Client, tag string) {
 	err := kubernetes.RaiseWarnEventf(nexus, scheme, c, failedUpdateReason, "Failed to update to %s. Human intervention may be required", tag)
 	if err != nil {
-		log.Error(err, "Unable to raise event for failed update", "instance", nexus.Name, "tag", tag)
+		log.Error(err, "Unable to raise event for failed update", "tag", tag)
 	}
 }

@@ -41,11 +41,6 @@ test: generate-installer fmt vet bundle
 	sed -i "/pipefail/d" ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
-# Run the OLM test on CI
-ci-olm-test:
-	./hack/ci/load-operator-image.sh
-	./hack/ci/operator-olm-test.sh
-
 generate-installer: generate manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG)
 	$(KUSTOMIZE) build config/default > nexus-operator.yaml
@@ -146,3 +141,16 @@ bundle: manifests
 .PHONY: bundle-build
 bundle-build:
 	$(BUILDER) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+
+#################### CUSTOM NEXUS OPERATOR TASKS ######################
+# Run the OLM test on CI
+ci-olm-test:
+	./hack/ci/load-operator-image.sh
+	./hack/ci/operator-olm-test.sh
+
+.PHONY: pr-prep
+create_namespace=true
+run_with_image=true
+pr-prep:
+	CREATE_NAMESPACE=$(create_namespace) RUN_WITH_IMAGE=$(run_with_image) ./hack/pr-prep.sh

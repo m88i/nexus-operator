@@ -47,7 +47,7 @@ func handleServerOperations(nexus *v1alpha1.Nexus, client client.Client, nexusAP
 	if nexus.Spec.GenerateRandomAdminPassword {
 		return *s.status, nil
 	}
-	log.Debug("Initializing server operations", "instance", nexus.Name)
+	log.Debug("Initializing server operations")
 	if s.isServerReady() {
 		internalEndpoint, err := s.getNexusEndpoint()
 		if err != nil {
