@@ -24,10 +24,10 @@ import (
 )
 
 func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource, kind string) error {
-	log.Info("Attempting to fetch", "deployed", kind)
+	log.Info("Attempting to fetch deployed resource", "kind", kind, "namespacedName", key)
 	if err := client.Get(ctx.TODO(), key, instance); err != nil {
 		if errors.IsNotFound(err) {
-			log.Debug("There is no deployed", "kind", kind)
+			log.Debug("Unable to find resource", "kind", kind, "namespacedName", key)
 		}
 		return err
 	}
