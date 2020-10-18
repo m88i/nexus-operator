@@ -22,7 +22,6 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
@@ -32,7 +31,6 @@ import (
 )
 
 const (
-	discOCPFailureFormat = "unable to determine if cluster is Openshift: %v"
 	discFailureFormat    = "unable to determine if %s are available: %v" // resource type, error
 	resUnavailableFormat = "%s are not available in this cluster"        // resource type
 )
@@ -40,38 +38,43 @@ const (
 // Manager is responsible for creating networking resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
-	nexus                                 *v1alpha1.Nexus
-	client                                client.Client
-	log                                   logger.Logger
-	routeAvailable, ingressAvailable, ocp bool
+	nexus             *v1alpha1.Nexus
+	client            client.Client
+	log               logger.Logger
+	managedObjectsRef map[string]resource.KubernetesResource
+
+	routeAvailable, ingressAvailable bool
 }
 
 // NewManager creates a networking resources manager
 // It is expected that the Nexus has been previously validated.
 func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
+	mgr := &Manager{
+		nexus:             nexus,
+		client:            client,
+		log:               logger.GetLoggerWithResource("networking_manager", nexus),
+		managedObjectsRef: make(map[string]resource.KubernetesResource),
+	}
+
 	routeAvailable, err := discovery.IsRouteAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
+	}
+	if routeAvailable {
+		mgr.routeAvailable = true
+		mgr.managedObjectsRef[framework.RouteKind] = &routev1.Route{}
 	}
 
 	ingressAvailable, err := discovery.IsIngressAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
-
-	ocp, err := discovery.IsOpenShift()
-	if err != nil {
-		return nil, fmt.Errorf(discOCPFailureFormat, err)
+	if ingressAvailable {
+		mgr.ingressAvailable = true
+		mgr.managedObjectsRef[framework.IngressKind] = &networkingv1beta1.Ingress{}
 	}
 
-	return &Manager{
-		nexus:            nexus,
-		client:           client,
-		routeAvailable:   routeAvailable,
-		ingressAvailable: ingressAvailable,
-		ocp:              ocp,
-		log:              logger.GetLoggerWithResource("networking_manager", nexus),
-	}, nil
+	return mgr, nil
 }
 
 func (m *Manager) IngressAvailable() bool {
@@ -129,24 +132,7 @@ func (m *Manager) createIngress() *networkingv1beta1.Ingress {
 
 // GetDeployedResources returns the networking resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	var resources []resource.KubernetesResource
-	if m.routeAvailable {
-		route := &routev1.Route{}
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), route, framework.RouteKind); err == nil {
-			resources = append(resources, route)
-		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", framework.RouteKind, m.nexus.Namespace, m.nexus.Name, err)
-		}
-	}
-	if m.ingressAvailable {
-		ingress := &networkingv1beta1.Ingress{}
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), ingress, framework.IngressKind); err == nil {
-			resources = append(resources, ingress)
-		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", framework.IngressKind, m.nexus.Namespace, m.nexus.Name, err)
-		}
-	}
-	return resources, nil
+	return framework.FetchDeployedResources(m.managedObjectsRef, m.nexus, m.client)
 }
 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.

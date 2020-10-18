@@ -15,7 +15,6 @@
 package deployment
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -23,7 +22,6 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
@@ -31,17 +29,13 @@ import (
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
-var managedObjectsRef = map[string]resource.KubernetesResource{
-	framework.DeploymentKind: &appsv1.Deployment{},
-	framework.ServiceKind:    &corev1.Service{},
-}
-
 // Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
-	nexus  *v1alpha1.Nexus
-	client client.Client
-	log    logger.Logger
+	nexus             *v1alpha1.Nexus
+	client            client.Client
+	log               logger.Logger
+	managedObjectsRef map[string]resource.KubernetesResource
 }
 
 // NewManager creates a deployment resources manager
@@ -51,6 +45,11 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 		nexus:  nexus,
 		client: client,
 		log:    logger.GetLoggerWithResource("deployment_manager", nexus),
+
+		managedObjectsRef: map[string]resource.KubernetesResource{
+			framework.DeploymentKind: &appsv1.Deployment{},
+			framework.ServiceKind:    &corev1.Service{},
+		},
 	}
 }
 
@@ -63,15 +62,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 
 // GetDeployedResources returns the deployment-related resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	var resources []resource.KubernetesResource
-	for resType, resRef := range managedObjectsRef {
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
-			resources = append(resources, resRef)
-		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, m.nexus.Namespace, m.nexus.Name, err)
-		}
-	}
-	return resources, nil
+	return framework.FetchDeployedResources(m.managedObjectsRef, m.nexus, m.client)
 }
 
 // GetCustomComparator returns the custom comp function used to compare a deployment-related resource

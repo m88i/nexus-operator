@@ -49,6 +49,12 @@ func NewSupervisor(client client.Client) Supervisor {
 // InitManagers initializes the managers responsible for the resources life cycle
 func (s *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
 	s.log = logger.GetLoggerWithResource("resource_supervisor", nexus)
+
+	securityManager, err := security.NewManager(nexus, s.client)
+	if err != nil {
+		return fmt.Errorf("unable to create security manager: %v", err)
+	}
+
 	networkManager, err := networking.NewManager(nexus, s.client)
 	if err != nil {
 		return fmt.Errorf("unable to create networking manager: %v", err)
@@ -57,7 +63,7 @@ func (s *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
 	s.managers = []Manager{
 		deployment.NewManager(nexus, s.client),
 		persistence.NewManager(nexus, s.client),
-		security.NewManager(nexus, s.client),
+		securityManager,
 		networkManager,
 	}
 	return nil
