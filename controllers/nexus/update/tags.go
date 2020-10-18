@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	communityNexusRegistry     = "https://registry.hub.docker.com"
-	communityNexusRepo         = "sonatype/nexus3"
-	tagParseFailureFormat      = "unable to parse tag \"%s\": %v"
+	communityNexusRegistry  = "https://registry.hub.docker.com"
+	communityNexusRepo      = "sonatype/nexus3"
+	tagParseFailureFormat   = "unable to parse tag \"%s\": %v"
 	unableToCheckUpdatesMsg = "Unable to check for updates"
 )
 

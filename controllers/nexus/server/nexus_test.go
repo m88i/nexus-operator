@@ -39,17 +39,17 @@ import (
 func createNewServerAndKubeCli(t *testing.T, objects ...runtime.Object) (*server, client.Client) {
 	nexusInstance := &v1alpha1.Nexus{ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()}}
 	objects = append(objects, nexusInstance)
-	client := test.NewFakeClientBuilder(
+	cli := test.NewFakeClientBuilder(
 		objects...).
 		Build()
 	server := &server{
 		nexus:     nexusInstance,
-		k8sclient: client,
+		k8sclient: cli,
 		nexuscli:  nexus.NewFakeClient(),
 		status:    &v1alpha1.OperationsStatus{},
 	}
 
-	return server, client
+	return server, cli
 }
 
 func nexusAPIFakeBuilder(url, user, pass string) *nexus.Client {
@@ -57,12 +57,12 @@ func nexusAPIFakeBuilder(url, user, pass string) *nexus.Client {
 }
 
 func Test_server_getNexusEndpoint(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 	}
 	svc := &corev1.Service{
-		ObjectMeta: meta.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(instance),
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
@@ -74,31 +74,31 @@ func Test_server_getNexusEndpoint(t *testing.T) {
 					},
 				},
 			},
-			Selector:        meta.GenerateLabels(nexus),
+			Selector:        meta.GenerateLabels(instance),
 			SessionAffinity: corev1.ServiceAffinityNone,
 		},
 	}
-	cli := test.NewFakeClientBuilder(nexus, svc).Build()
+	cli := test.NewFakeClientBuilder(instance, svc).Build()
 	s := server{
-		nexus:     nexus,
+		nexus:     instance,
 		k8sclient: cli,
 	}
 	URL, err := s.getNexusEndpoint()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, URL)
-	assert.Contains(t, URL, nexus.Name)
+	assert.Contains(t, URL, instance.Name)
 	_, err = url.Parse(URL)
 	assert.NoError(t, err)
 }
 
 func Test_server_getNexusEndpointNoURL(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 	}
-	cli := test.NewFakeClientBuilder(nexus).Build()
+	cli := test.NewFakeClientBuilder(instance).Build()
 	s := server{
-		nexus:     nexus,
+		nexus:     instance,
 		k8sclient: cli,
 	}
 	URL, err := s.getNexusEndpoint()
@@ -108,7 +108,7 @@ func Test_server_getNexusEndpointNoURL(t *testing.T) {
 }
 
 func Test_server_isServerReady(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 		Status: v1alpha1.NexusStatus{
@@ -117,33 +117,33 @@ func Test_server_isServerReady(t *testing.T) {
 			},
 		},
 	}
-	s := server{nexus: nexus, status: &v1alpha1.OperationsStatus{}}
+	s := server{nexus: instance, status: &v1alpha1.OperationsStatus{}}
 	assert.True(t, s.isServerReady())
 }
 
 func Test_server_serverNotReady(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 	}
-	s := server{nexus: nexus, status: &v1alpha1.OperationsStatus{}}
+	s := server{nexus: instance, status: &v1alpha1.OperationsStatus{}}
 	assert.False(t, s.isServerReady())
 }
 
 func Test_HandleServerOperationsNoFake(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 	}
-	cli := test.NewFakeClientBuilder(nexus).Build()
+	cli := test.NewFakeClientBuilder(instance).Build()
 
-	status, err := HandleServerOperations(nexus, cli)
+	status, err := HandleServerOperations(instance, cli)
 	assert.NoError(t, err)
 	assert.False(t, status.ServerReady)
 }
 
 func Test_handleServerOperations(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 		Status: v1alpha1.NexusStatus{
@@ -153,7 +153,7 @@ func Test_handleServerOperations(t *testing.T) {
 		},
 	}
 	svc := &corev1.Service{
-		ObjectMeta: meta.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultObjectMeta(instance),
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				{
@@ -165,12 +165,12 @@ func Test_handleServerOperations(t *testing.T) {
 					},
 				},
 			},
-			Selector:        meta.GenerateLabels(nexus),
+			Selector:        meta.GenerateLabels(instance),
 			SessionAffinity: corev1.ServiceAffinityNone,
 		},
 	}
-	cli := test.NewFakeClientBuilder(nexus, svc, &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: nexus.Name, Namespace: nexus.Namespace}}).Build()
-	status, err := handleServerOperations(nexus, cli, nexusAPIFakeBuilder)
+	cli := test.NewFakeClientBuilder(instance, svc, &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}}).Build()
+	status, err := handleServerOperations(instance, cli, nexusAPIFakeBuilder)
 	assert.NoError(t, err)
 	assert.NotNil(t, status)
 	assert.True(t, status.CommunityRepositoriesCreated)
@@ -181,7 +181,7 @@ func Test_handleServerOperations(t *testing.T) {
 }
 
 func Test_handleServerOperationsNoEndpoint(t *testing.T) {
-	nexus := &v1alpha1.Nexus{
+	instance := &v1alpha1.Nexus{
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 		Status: v1alpha1.NexusStatus{
@@ -190,8 +190,8 @@ func Test_handleServerOperationsNoEndpoint(t *testing.T) {
 			},
 		},
 	}
-	cli := test.NewFakeClientBuilder(nexus).Build()
-	status, err := handleServerOperations(nexus, cli, nexusAPIFakeBuilder)
+	cli := test.NewFakeClientBuilder(instance).Build()
+	status, err := handleServerOperations(instance, cli, nexusAPIFakeBuilder)
 	assert.NoError(t, err)
 	assert.NotNil(t, status)
 	assert.False(t, status.CommunityRepositoriesCreated)

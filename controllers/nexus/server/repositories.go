@@ -15,6 +15,10 @@
 package server
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/m88i/aicura/nexus"
 )
 
@@ -62,7 +66,9 @@ func (r *repositoryOperation) addCommunityReposToMavenCentralGroup() error {
 		log.Info("Maven Central repository group not found in the server instance, won't add community repos to the group")
 		return nil
 	}
-
+	if err := r.setMavenPublicURL(mavenCentral); err != nil {
+		return err
+	}
 	var newMembers []string
 	for newMember := range communityMavenProxies {
 		found := false
@@ -115,6 +121,25 @@ func (r *repositoryOperation) createCommunityReposIfNotExists() error {
 	}
 	log.Debug("Community repositories already created, skipping")
 	r.status.CommunityRepositoriesCreated = true
+	return nil
+}
+
+func (r *repositoryOperation) setMavenPublicURL(repository *nexus.MavenGroupRepository) error {
+	if len(*repository.URL) == 0 {
+		return nil
+	}
+	serverEndpoint, err := r.getNexusEndpoint()
+	if err != nil {
+		return err
+	}
+	URL, err := url.Parse(*repository.URL)
+	if err != nil {
+		return err
+	}
+	if strings.LastIndex(serverEndpoint, "/") == -1 {
+		serverEndpoint = serverEndpoint + "/"
+	}
+	r.status.MavenPublicURL = fmt.Sprintf("%s%s", serverEndpoint, URL.Path)
 	return nil
 }
 
