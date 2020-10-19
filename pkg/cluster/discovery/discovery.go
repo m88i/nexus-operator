@@ -18,13 +18,13 @@ import (
 	"strings"
 
 	"k8s.io/client-go/discovery"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 )
 
-var cli discovery.DiscoveryInterface = discovery.NewDiscoveryClientForConfigOrDie(controllerruntime.GetConfigOrDie())
+var cli discovery.DiscoveryInterface
 
 // SetClient sets the package-level Discovery client.
-// You probably don't need this for production. Exists to facilitate testing.
+// You probably don't need this for production as it gets called from main.
+// Knock yourself out for testing.
 func SetClient(disc discovery.DiscoveryInterface) {
 	cli = disc
 }
