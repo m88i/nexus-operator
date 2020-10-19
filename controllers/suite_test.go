@@ -20,7 +20,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -72,13 +71,11 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).ToNot(BeNil())
 
-	discoveryClient := discovery.NewDiscoveryClientForConfigOrDie(k8sManager.GetConfig())
 	err = (&NexusReconciler{
-		Client:          k8sManager.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Nexus"),
-		DiscoveryClient: discoveryClient,
-		Supervisor:      resource.NewSupervisor(k8sManager.GetClient(), discoveryClient),
-		Scheme:          k8sManager.GetScheme(),
+		Client:     k8sManager.GetClient(),
+		Log:        ctrl.Log.WithName("controllers").WithName("Nexus"),
+		Supervisor: resource.NewSupervisor(k8sManager.GetClient()),
+		Scheme:     k8sManager.GetScheme(),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

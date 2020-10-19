@@ -29,6 +29,7 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
@@ -42,8 +43,9 @@ var nodePortNexus = &v1alpha1.Nexus{
 
 func TestManager_IngressAvailable(t *testing.T) {
 	client := test.NewFakeClientBuilder().Build()
+	discovery.SetClient(client)
 	nexus := &v1alpha1.Nexus{}
-	mgr, err := NewManager(nexus, client, client)
+	mgr, err := NewManager(nexus, client)
 	assert.Nil(t, err)
 
 	assert.Equal(t, mgr.ingressAvailable, mgr.IngressAvailable())
@@ -51,8 +53,9 @@ func TestManager_IngressAvailable(t *testing.T) {
 
 func TestManager_RouteAvailable(t *testing.T) {
 	client := test.NewFakeClientBuilder().Build()
+	discovery.SetClient(client)
 	nexus := &v1alpha1.Nexus{}
-	mgr, err := NewManager(nexus, client, client)
+	mgr, err := NewManager(nexus, client)
 	assert.Nil(t, err)
 
 	assert.Equal(t, mgr.ingressAvailable, mgr.IngressAvailable())
@@ -105,7 +108,8 @@ func TestNewManager(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := NewManager(nodePortNexus, tt.wantClient, tt.wantClient)
+		discovery.SetClient(tt.wantClient)
+		got, err := NewManager(nodePortNexus, tt.wantClient)
 		assert.NoError(t, err)
 		assert.NotNil(t, got.client)
 		assert.NotNil(t, got.nexus)
@@ -117,7 +121,8 @@ func TestNewManager(t *testing.T) {
 	// simulate discovery 500 response, expect error
 	mockErrorMsg := "mock 500"
 	k8sClient.SetMockErrorForOneRequest(errors.NewInternalError(fmt.Errorf(mockErrorMsg)))
-	mgr, err := NewManager(nodePortNexus, k8sClient, k8sClient)
+	discovery.SetClient(k8sClient)
+	mgr, err := NewManager(nodePortNexus, k8sClient)
 	assert.Nil(t, mgr)
 	assert.Contains(t, err.Error(), mockErrorMsg)
 }

@@ -23,12 +23,10 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
-	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
@@ -50,18 +48,18 @@ type Manager struct {
 
 // NewManager creates a networking resources manager
 // It is expected that the Nexus has been previously validated.
-func NewManager(nexus *v1alpha1.Nexus, client client.Client, disc discovery.DiscoveryInterface) (*Manager, error) {
-	routeAvailable, err := openshift.IsRouteAvailable(disc)
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
+	routeAvailable, err := discovery.IsRouteAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
 	}
 
-	ingressAvailable, err := kubernetes.IsIngressAvailable(disc)
+	ingressAvailable, err := discovery.IsIngressAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
 
-	ocp, err := openshift.IsOpenShift(disc)
+	ocp, err := discovery.IsOpenShift()
 	if err != nil {
 		return nil, fmt.Errorf(discOCPFailureFormat, err)
 	}

@@ -25,7 +25,6 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/discovery"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -90,13 +89,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	discoveryClient := discovery.NewDiscoveryClientForConfigOrDie(mgr.GetConfig())
 	if err = (&controllers.NexusReconciler{
-		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Nexus"),
-		Scheme:          mgr.GetScheme(),
-		DiscoveryClient: discoveryClient,
-		Supervisor:      resource.NewSupervisor(mgr.GetClient(), discoveryClient),
+		Client:     mgr.GetClient(),
+		Log:        ctrl.Log.WithName("controllers").WithName("Nexus"),
+		Scheme:     mgr.GetScheme(),
+		Supervisor: resource.NewSupervisor(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Nexus")
 		os.Exit(1)

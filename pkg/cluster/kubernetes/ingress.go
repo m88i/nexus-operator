@@ -21,38 +21,10 @@ import (
 	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/pkg/util"
 )
-
-const ingressGroup = networking.GroupName
-
-// It would be nice to keep the version as constant as well, but the package only offers it as a variable.
-// FIXME if this ever changes and turn this into a const
-var ingressVersion = networking.SchemeGroupVersion.Version
-
-// IsIngressAvailable checks if th cluster supports Ingresses from k8s.io/api/networking/v1beta1
-// <lcaparelli> TODO: consider an implementation on which callers don't need a discovery interface and that caches results from calls (these don't usually change, so a high TTL should be ok). Same applies to similar functions on this package
-func IsIngressAvailable(d discovery.DiscoveryInterface) (bool, error) {
-	serverGroups, err := d.ServerGroups()
-	if err != nil {
-		return false, err
-	}
-	for _, serverGroup := range serverGroups.Groups {
-		if serverGroup.Name == ingressGroup {
-			for _, version := range serverGroup.Versions {
-				if version.Version == ingressVersion {
-					return true, nil
-				}
-			}
-			// we found the correct group, but not the correct version, so fail
-			return false, nil
-		}
-	}
-	return false, nil
-}
 
 // GetIngressURI discover the URI for Ingress
 func GetIngressURI(cli client.Client, ingressName types.NamespacedName) (string, error) {

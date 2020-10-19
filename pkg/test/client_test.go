@@ -28,8 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
-	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 )
 
 const testErrorMsg = "test"
@@ -83,45 +82,48 @@ func TestFakeClientBuilder_Build(t *testing.T) {
 
 	b := NewFakeClientBuilder(nexus)
 	c := b.Build()
+	discovery.SetClient(c)
 	assert.NotNil(t, c.disc)
 	assert.NotNil(t, c.client)
 	assert.NoError(t, c.client.Get(ctx.TODO(), client.ObjectKey{
 		Namespace: nexus.Namespace,
 		Name:      nexus.Name,
 	}, nexus))
-	ocp, _ := openshift.IsOpenShift(c)
+	ocp, _ := discovery.IsOpenShift()
 	assert.False(t, ocp)
-	withRoute, _ := openshift.IsRouteAvailable(c)
+	withRoute, _ := discovery.IsRouteAvailable()
 	assert.False(t, withRoute)
-	withIngress, _ := kubernetes.IsIngressAvailable(c)
+	withIngress, _ := discovery.IsIngressAvailable()
 	assert.False(t, withIngress)
 
 	// on Openshift
 	b = NewFakeClientBuilder(nexus, route).OnOpenshift()
 	c = b.Build()
+	discovery.SetClient(c)
 	assert.NoError(t, c.client.Get(ctx.TODO(), client.ObjectKey{
 		Namespace: route.Namespace,
 		Name:      route.Name,
 	}, route))
-	ocp, _ = openshift.IsOpenShift(c)
+	ocp, _ = discovery.IsOpenShift()
 	assert.True(t, ocp)
-	withRoute, _ = openshift.IsRouteAvailable(c)
+	withRoute, _ = discovery.IsRouteAvailable()
 	assert.True(t, withRoute)
-	withIngress, _ = kubernetes.IsIngressAvailable(c)
+	withIngress, _ = discovery.IsIngressAvailable()
 	assert.False(t, withIngress)
 
 	// with Ingress
 	b = NewFakeClientBuilder(nexus, ingress).WithIngress()
 	c = b.Build()
+	discovery.SetClient(c)
 	assert.NoError(t, c.client.Get(ctx.TODO(), client.ObjectKey{
 		Namespace: ingress.Namespace,
 		Name:      ingress.Name,
 	}, ingress))
-	ocp, _ = openshift.IsOpenShift(c)
+	ocp, _ = discovery.IsOpenShift()
 	assert.False(t, ocp)
-	withRoute, _ = openshift.IsRouteAvailable(c)
+	withRoute, _ = discovery.IsRouteAvailable()
 	assert.False(t, withRoute)
-	withIngress, _ = kubernetes.IsIngressAvailable(c)
+	withIngress, _ = discovery.IsIngressAvailable()
 	assert.True(t, withIngress)
 }
 

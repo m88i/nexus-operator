@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package openshift
+package discovery
 
 import (
-	"strings"
-
-	"k8s.io/client-go/discovery"
+	routev1 "github.com/openshift/api/route/v1"
 )
 
 const (
@@ -25,22 +23,11 @@ const (
 )
 
 // IsOpenShift verify if the operator is running on OpenShift
-func IsOpenShift(discovery discovery.DiscoveryInterface) (bool, error) {
-	return hasGroup(openshiftGroup, discovery)
+func IsOpenShift() (bool, error) {
+	return hasGroup(openshiftGroup)
 }
 
-// hasGroup check if the given group name is available in the cluster
-func hasGroup(group string, discovery discovery.DiscoveryInterface) (bool, error) {
-	if discovery != nil {
-		groups, err := discovery.ServerGroups()
-		if err != nil {
-			return false, err
-		}
-		for _, g := range groups.Groups {
-			if strings.Contains(g.Name, group) {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
+// IsRouteAvailable verifies if the current cluster has the Route API from OpenShift available
+func IsRouteAvailable() (bool, error) {
+	return hasGroupVersion(routev1.GroupName, routev1.GroupVersion.Version)
 }

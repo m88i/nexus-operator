@@ -32,7 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -40,6 +39,7 @@ import (
 	"github.com/m88i/nexus-operator/controllers/nexus/resource"
 	"github.com/m88i/nexus-operator/controllers/nexus/server"
 	"github.com/m88i/nexus-operator/controllers/nexus/update"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	"github.com/m88i/nexus-operator/pkg/framework"
@@ -55,10 +55,9 @@ const (
 // NexusReconciler reconciles a Nexus object
 type NexusReconciler struct {
 	client.Client
-	Log             logr.Logger
-	Scheme          *runtime.Scheme
-	DiscoveryClient discovery.DiscoveryInterface
-	Supervisor      resource.Supervisor
+	Log        logr.Logger
+	Scheme     *runtime.Scheme
+	Supervisor resource.Supervisor
 }
 
 // +kubebuilder:rbac:groups=apps.m88i.io,resources=nexus,verbs=get;list;watch;create;update;patch;delete
@@ -94,7 +93,7 @@ func (r *NexusReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return result, err
 	}
 
-	v, err := validation.NewValidator(r, r.Scheme, r.DiscoveryClient)
+	v, err := validation.NewValidator(r, r.Scheme)
 	if err != nil {
 		// Error using the discovery API - requeue the request.
 		return result, err
@@ -170,7 +169,7 @@ func (r *NexusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Owns(&corev1.ServiceAccount{})
 
-	ocp, err := openshift.IsOpenShift(r.DiscoveryClient)
+	ocp, err := discovery.IsOpenShift()
 	if err != nil {
 		return err
 	}
@@ -298,7 +297,7 @@ func (r *NexusReconciler) getNexusURL(nexus *appsv1alpha1.Nexus) error {
 		uri := ""
 		if nexus.Spec.Networking.ExposeAs == appsv1alpha1.RouteExposeType {
 			r.Log.Info("Checking Route Status")
-			uri, err = openshift.GetRouteURI(r, r.DiscoveryClient, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
+			uri, err = openshift.GetRouteURI(r, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
 		} else if nexus.Spec.Networking.ExposeAs == appsv1alpha1.IngressExposeType {
 			r.Log.Info("Checking Ingress Status")
 			uri, err = kubernetes.GetIngressURI(r, types.NamespacedName{Namespace: nexus.Namespace, Name: nexus.Name})
