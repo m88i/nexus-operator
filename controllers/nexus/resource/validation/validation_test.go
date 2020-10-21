@@ -24,6 +24,7 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/update"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
@@ -64,7 +65,8 @@ func TestNewValidator(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := NewValidator(tt.client, tt.client.Scheme(), tt.client)
+		discovery.SetClient(tt.client)
+		got, err := NewValidator(tt.client, tt.client.Scheme())
 		assert.Nil(t, err)
 		tt.want.client = tt.client
 		tt.want.scheme = tt.client.Scheme()
@@ -77,7 +79,8 @@ func TestNewValidator(t *testing.T) {
 	client := test.NewFakeClientBuilder().Build()
 	errString := "test error"
 	client.SetMockErrorForOneRequest(fmt.Errorf(errString))
-	_, err := NewValidator(client, client.Scheme(), client)
+	discovery.SetClient(client)
+	_, err := NewValidator(client, client.Scheme())
 	assert.Contains(t, err.Error(), errString)
 }
 
@@ -193,7 +196,7 @@ func TestValidator_setUpdateDefaults(t *testing.T) {
 	client := test.NewFakeClientBuilder().Build()
 	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
 	nexus.Spec.Image = NexusCommunityImage
-	v, _ := NewValidator(client, client.Scheme(), client)
+	v, _ := NewValidator(client, client.Scheme())
 	v.log = logger.GetLoggerWithResource("test", nexus)
 
 	v.setUpdateDefaults(nexus)

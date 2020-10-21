@@ -18,43 +18,35 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/openshift/api/route/v1"
+	routev1 "github.com/openshift/api/route/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/util"
 )
 
-const (
-	routesGroup = "route.openshift.io"
-)
-
-// IsRouteAvailable verifies if the current cluster has the Route API from OpenShift available
-func IsRouteAvailable(discovery discovery.DiscoveryInterface) (bool, error) {
-	return hasGroup(routesGroup, discovery)
-}
-
 // GetRouteURI will discover the route scheme based on the given namespaced name for the route
-func GetRouteURI(client client.Client, discovery discovery.DiscoveryInterface, routeName types.NamespacedName) (uri string, err error) {
-	ok, err := IsRouteAvailable(discovery)
-	if err != nil {
+func GetRouteURI(client client.Client, routeName types.NamespacedName) (uri string, err error) {
+	routeAvailable, err := discovery.IsRouteAvailable()
+	if err != nil || !routeAvailable {
 		return "", err
 	}
-	if ok {
-		route := &v1.Route{}
-		if err := client.Get(context.TODO(), routeName, route); err != nil {
-			if !errors.IsNotFound(err) {
-				return "", err
-			}
-		}
-		if len(route.Spec.Host) > 0 {
-			if nil == route.Spec.TLS {
-				return fmt.Sprintf("%s%s", util.HTTPPrefixSchema, route.Spec.Host), nil
-			}
-			return fmt.Sprintf("%s%s", util.HTTPSPrefixSchema, route.Spec.Host), nil
+
+	route := &routev1.Route{}
+	if err := client.Get(context.TODO(), routeName, route); err != nil {
+		if !errors.IsNotFound(err) {
+			return "", err
 		}
 	}
+
+	if len(route.Spec.Host) > 0 {
+		if route.Spec.TLS != nil {
+			return fmt.Sprintf("%s%s", util.HTTPSPrefixSchema, route.Spec.Host), nil
+		}
+		return fmt.Sprintf("%s%s", util.HTTPPrefixSchema, route.Spec.Host), nil
+	}
+
 	return "", nil
 }

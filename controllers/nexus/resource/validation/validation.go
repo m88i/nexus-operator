@@ -20,13 +20,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/update"
-	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
-	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
@@ -44,18 +42,18 @@ type Validator struct {
 }
 
 // NewValidator creates a new validator to set defaults, validate and update the Nexus CR
-func NewValidator(client client.Client, scheme *runtime.Scheme, disc discovery.DiscoveryInterface) (*Validator, error) {
-	routeAvailable, err := openshift.IsRouteAvailable(disc)
+func NewValidator(client client.Client, scheme *runtime.Scheme) (*Validator, error) {
+	routeAvailable, err := discovery.IsRouteAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
 	}
 
-	ingressAvailable, err := kubernetes.IsIngressAvailable(disc)
+	ingressAvailable, err := discovery.IsIngressAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
 
-	ocp, err := openshift.IsOpenShift(disc)
+	ocp, err := discovery.IsOpenShift()
 	if err != nil {
 		return nil, fmt.Errorf(discOCPFailureFormat, err)
 	}

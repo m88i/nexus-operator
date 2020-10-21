@@ -20,7 +20,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/client-go/discovery"
+	k8sdisc "k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,6 +32,7 @@ import (
 
 	appsv1alpha1 "github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -72,13 +73,12 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).ToNot(BeNil())
 
-	discoveryClient := discovery.NewDiscoveryClientForConfigOrDie(k8sManager.GetConfig())
+	discovery.SetClient(k8sdisc.NewDiscoveryClientForConfigOrDie(cfg))
 	err = (&NexusReconciler{
-		Client:          k8sManager.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Nexus"),
-		DiscoveryClient: discoveryClient,
-		Supervisor:      resource.NewSupervisor(k8sManager.GetClient(), discoveryClient),
-		Scheme:          k8sManager.GetScheme(),
+		Client:     k8sManager.GetClient(),
+		Log:        ctrl.Log.WithName("controllers").WithName("Nexus"),
+		Supervisor: resource.NewSupervisor(k8sManager.GetClient()),
+		Scheme:     k8sManager.GetScheme(),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

@@ -21,7 +21,6 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	"github.com/go-logr/logr"
-	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
@@ -35,24 +34,22 @@ import (
 const mgrsNotInit = "resource managers have not been initialized"
 
 type supervisor struct {
-	client          client.Client
-	discoveryClient discovery.DiscoveryInterface
-	managers        []Manager
-	log             logr.Logger
+	client   client.Client
+	managers []Manager
+	log      logr.Logger
 }
 
 // NewSupervisor creates a new resource manager for nexus CR
-func NewSupervisor(client client.Client, discoveryClient discovery.DiscoveryInterface) Supervisor {
+func NewSupervisor(client client.Client) Supervisor {
 	return &supervisor{
-		client:          client,
-		discoveryClient: discoveryClient,
+		client: client,
 	}
 }
 
 // InitManagers initializes the managers responsible for the resources life cycle
 func (s *supervisor) InitManagers(nexus *v1alpha1.Nexus) error {
 	s.log = logger.GetLoggerWithResource("resource_supervisor", nexus)
-	networkManager, err := networking.NewManager(nexus, s.client, s.discoveryClient)
+	networkManager, err := networking.NewManager(nexus, s.client)
 	if err != nil {
 		return fmt.Errorf("unable to create networking manager: %v", err)
 	}
