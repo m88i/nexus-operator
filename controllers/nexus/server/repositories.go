@@ -125,19 +125,23 @@ func (r *repositoryOperation) createCommunityReposIfNotExists() error {
 }
 
 func (r *repositoryOperation) setMavenPublicURL(repository *nexus.MavenGroupRepository) error {
-	if len(*repository.URL) == 0 {
+	if repository == nil || len(*repository.URL) == 0 {
 		return nil
+	}
+	repositoryURL := *repository.URL
+	if !strings.HasSuffix(repositoryURL, "/") {
+		repositoryURL += "/"
 	}
 	serverEndpoint, err := r.getNexusEndpoint()
 	if err != nil {
 		return err
 	}
-	URL, err := url.Parse(*repository.URL)
+	if strings.HasSuffix(serverEndpoint, "/") {
+		serverEndpoint = strings.TrimSuffix(serverEndpoint, "/")
+	}
+	URL, err := url.Parse(repositoryURL)
 	if err != nil {
 		return err
-	}
-	if strings.LastIndex(serverEndpoint, "/") == -1 {
-		serverEndpoint = serverEndpoint + "/"
 	}
 	r.status.MavenPublicURL = fmt.Sprintf("%s%s", serverEndpoint, URL.Path)
 	return nil

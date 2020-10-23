@@ -37,7 +37,7 @@ func TestAddCommReposNoCentralGroup(t *testing.T) {
 }
 
 func Test_repositoryOperation_setMavenPublicURL(t *testing.T) {
-	expectedURL := "http://nexus3." + t.Name() + "/repository/maven-public"
+	expectedURL := "http://nexus3." + t.Name() + "/repository/maven-public/"
 	server, _ := createNewServerAndKubeCli(t, &v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "nexus3", Namespace: t.Name()}})
 	operations := &repositoryOperation{server: *server}
 	repository := &nexus.MavenGroupRepository{}
