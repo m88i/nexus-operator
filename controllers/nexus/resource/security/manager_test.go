@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
@@ -38,11 +39,12 @@ func TestNewManager(t *testing.T) {
 	// so here we just check if the resulting manager took in the arguments correctly
 	nexus := baseNexus
 	client := test.NewFakeClientBuilder().Build()
+	discovery.SetClient(client)
 	want := &Manager{
 		nexus:  nexus,
 		client: client,
 	}
-	got, err := NewManager(nexus, client, client)
+	got, err := NewManager(nexus, client)
 	assert.Nil(t, err)
 	assert.Equal(t, want.nexus, got.nexus)
 	assert.Equal(t, want.client, got.client)
@@ -69,7 +71,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first with no deployed resources
 	fakeClient := test.NewFakeClientBuilder().Build()
-	mgr, _ := NewManager(baseNexus, fakeClient, fakeClient)
+	mgr, _ := NewManager(baseNexus, fakeClient)
 
 	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)

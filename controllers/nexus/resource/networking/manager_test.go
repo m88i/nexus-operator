@@ -211,7 +211,8 @@ func TestManager_createIngress(t *testing.T) {
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first with no deployed resources
 	fakeClient := test.NewFakeClientBuilder().WithIngress().OnOpenshift().Build()
-	mgr, _ := NewManager(nodePortNexus, fakeClient, fakeClient)
+	discovery.SetClient(fakeClient)
+	mgr, _ := NewManager(nodePortNexus, fakeClient)
 
 	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
