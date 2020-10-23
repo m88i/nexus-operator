@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	routev1 "github.com/openshift/api/route/v1"
+	secv1 "github.com/openshift/api/security/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sdisc "k8s.io/client-go/discovery"
@@ -45,8 +46,9 @@ var (
 )
 
 func init() {
-	// adding routev1
-	utilruntime.Must(routev1.AddToScheme(scheme))
+	// adding routev1 (routes) and secv1 (SCCs)
+	utilruntime.Must(routev1.Install(scheme))
+	utilruntime.Must(secv1.Install(scheme))
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(appsv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme

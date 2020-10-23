@@ -175,6 +175,7 @@ spec:
           verbs:
           - create
           - get
+          - list
           - update
           - watch
         - apiGroups:
@@ -196,6 +197,7 @@ spec:
           verbs:
           - create
           - get
+          - list
           - update
           - watch
         - apiGroups:

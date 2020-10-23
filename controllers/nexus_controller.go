@@ -71,8 +71,8 @@ type NexusReconciler struct {
 // +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;create
 // +kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=create;delete;get;list;patch;update;watch
-// +kubebuilder:rbac:groups=security.openshift.io,resources=scc,verbs=create;get;update;watch
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrole;rolebinding,verbs=create;get;update;watch
+// +kubebuilder:rbac:groups=security.openshift.io,resources=scc,verbs=create;get;list;update;watch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrole;rolebinding,verbs=create;get;list;update;watch
 
 func (r *NexusReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
