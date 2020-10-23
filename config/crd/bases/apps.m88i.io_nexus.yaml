@@ -8,6 +8,27 @@ metadata:
   creationTimestamp: null
   name: nexus.apps.m88i.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.networking.exposeAs
+    description: Type of networking access
+    name: Expose As
+    type: string
+  - JSONPath: .spec.automaticUpdate.disabled
+    description: Flag that indicates if automatic updates are disabled or not
+    name: Update Disabled
+    type: boolean
+  - JSONPath: .status.nexusStatus
+    description: Instance Status
+    name: Status
+    type: string
+  - JSONPath: .status.reason
+    description: Status reason
+    name: Reason
+    type: string
+  - JSONPath: .status.serverOperationsStatus.mavenPublicURL
+    description: Internal Group Maven Public URL
+    name: Maven Public URL
+    type: string
   group: apps.m88i.io
   names:
     kind: Nexus
@@ -374,6 +395,8 @@ spec:
                   type: boolean
                 mavenCentralUpdated:
                   type: boolean
+                mavenPublicURL:
+                  type: string
                 operatorUserCreated:
                   type: boolean
                 reason:

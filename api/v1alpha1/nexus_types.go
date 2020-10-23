@@ -249,6 +249,7 @@ type OperationsStatus struct {
 	CommunityRepositoriesCreated bool   `json:"communityRepositoriesCreated,omitempty"`
 	MavenCentralUpdated          bool   `json:"mavenCentralUpdated,omitempty"`
 	Reason                       string `json:"reason,omitempty"`
+	MavenPublicURL               string `json:"mavenPublicURL,omitempty"`
 }
 
 type NexusStatusType string
@@ -264,6 +265,11 @@ const (
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path=nexus,scope=Namespaced
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Expose As",type="string",JSONPath=".spec.networking.exposeAs",description="Type of networking access"
+// +kubebuilder:printcolumn:name="Update Disabled",type="boolean",JSONPath=".spec.automaticUpdate.disabled",description="Flag that indicates if automatic updates are disabled or not"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.nexusStatus",description="Instance Status"
+// +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.reason",description="Status reason"
+// +kubebuilder:printcolumn:name="Maven Public URL",type="string",JSONPath=".status.serverOperationsStatus.mavenPublicURL",description="Internal Group Maven Public URL"
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="Nexus"
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Deployment,v1,\"A Kubernetes Deployment\""
 // +operator-sdk:gen-csv:customresourcedefinitions.resources="Service,v1,\"A Kubernetes Service\""

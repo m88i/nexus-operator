@@ -15,7 +15,12 @@
 package server
 
 import (
+	"encoding/json"
 	"testing"
+
+	"github.com/m88i/aicura/nexus"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -29,4 +34,17 @@ func TestAddCommReposNoCentralGroup(t *testing.T) {
 	repos, err := server.nexuscli.MavenProxyRepositoryService.List()
 	assert.NoError(t, err)
 	assert.Len(t, repos, len(communityMavenProxies))
+}
+
+func Test_repositoryOperation_setMavenPublicURL(t *testing.T) {
+	expectedURL := "http://nexus3." + t.Name() + "/repository/maven-public/"
+	server, _ := createNewServerAndKubeCli(t, &v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "nexus3", Namespace: t.Name()}})
+	operations := &repositoryOperation{server: *server}
+	repository := &nexus.MavenGroupRepository{}
+	repositoryJSON := "  {\n    \"name\": \"maven-public\",\n    \"format\": \"maven2\",\n    \"url\": \"http://localhost:8081/repository/maven-public\",\n    \"online\": true,\n    \"storage\": {\n      \"blobStoreName\": \"default\",\n      \"strictContentTypeValidation\": true\n    },\n    \"group\": {\n      \"memberNames\": [\n        \"maven-releases\",\n        \"maven-snapshots\",\n        \"maven-central\"\n      ]\n    },\n    \"type\": \"group\"\n  }"
+	err := json.Unmarshal([]byte(repositoryJSON), repository)
+	assert.NoError(t, err)
+	err = operations.setMavenPublicURL(repository)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedURL, operations.status.MavenPublicURL)
 }
