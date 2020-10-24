@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
 
@@ -39,11 +39,13 @@ func TestNewManager(t *testing.T) {
 	// so here we just check if the resulting manager took in the arguments correctly
 	nexus := baseNexus
 	client := test.NewFakeClientBuilder().Build()
+	discovery.SetClient(client)
 	want := &Manager{
 		nexus:  nexus,
 		client: client,
 	}
-	got := NewManager(nexus, client)
+	got, err := NewManager(nexus, client)
+	assert.Nil(t, err)
 	assert.Equal(t, want.nexus, got.nexus)
 	assert.Equal(t, want.client, got.client)
 }
@@ -57,7 +59,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 		log:    logger.GetLoggerWithResource("test", baseNexus),
 	}
 
-	// the default service accout is _always_ created
+	// the default service account is _always_ created
 	// even if the user specified a different one
 	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)
@@ -69,10 +71,8 @@ func TestManager_GetRequiredResources(t *testing.T) {
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first with no deployed resources
 	fakeClient := test.NewFakeClientBuilder().Build()
-	mgr := &Manager{
-		nexus:  baseNexus,
-		client: fakeClient,
-	}
+	mgr, _ := NewManager(baseNexus, fakeClient)
+
 	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Len(t, resources, 0)
@@ -93,24 +93,6 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	resources, err = mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Contains(t, err.Error(), mockErrorMsg)
-}
-
-func TestManager_getDeployedSvcAccnt(t *testing.T) {
-	mgr := &Manager{
-		nexus:  baseNexus,
-		client: test.NewFakeClientBuilder().Build(),
-	}
-
-	// first, test without creating the svcAccnt
-	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef[framework.SvcAccountKind], framework.SvcAccountKind)
-	assert.True(t, errors.IsNotFound(err))
-
-	// now test after creating the svcAccnt
-	svcAccnt := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
-	assert.NoError(t, mgr.client.Create(ctx.TODO(), svcAccnt))
-	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt, framework.SvcAccountKind)
-	assert.NotNil(t, svcAccnt)
-	assert.NoError(t, err)
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {

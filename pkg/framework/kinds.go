@@ -15,11 +15,14 @@
 package framework
 
 const (
-	DeploymentKind = "Deployment"
-	IngressKind    = "Ingress"
-	PVCKind        = "Persistent Volume Claim"
-	RouteKind      = "Route"
-	SecretKind     = "Secret"
-	ServiceKind    = "Service"
-	SvcAccountKind = "Service Account"
+	ClusterRoleKind = "Cluster Role"
+	DeploymentKind  = "Deployment"
+	IngressKind     = "Ingress"
+	PVCKind         = "Persistent Volume Claim"
+	RoleBindingKind = "Role Binding"
+	RouteKind       = "Route"
+	SecretKind      = "Secret"
+	ServiceKind     = "Service"
+	SCCKind         = "Security Context Constraint"
+	SvcAccountKind  = "Service Account"
 )

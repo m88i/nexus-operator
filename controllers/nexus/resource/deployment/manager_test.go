@@ -79,10 +79,8 @@ func TestManager_GetRequiredResources(t *testing.T) {
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first no deployed resources
 	fakeClient := test.NewFakeClientBuilder().Build()
-	mgr := &Manager{
-		nexus:  allDefaultsCommunityNexus,
-		client: fakeClient,
-	}
+	mgr := NewManager(allDefaultsCommunityNexus, fakeClient)
+
 	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Len(t, resources, 0)

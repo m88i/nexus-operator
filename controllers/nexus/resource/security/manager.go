@@ -17,57 +17,85 @@ package security
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
+	secv1 "github.com/openshift/api/security/v1"
 	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/controllers/nexus/resource/validation"
+	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
-var managedObjectsRef = map[string]resource.KubernetesResource{
-	framework.SecretKind:     &core.Secret{},
-	framework.SvcAccountKind: &core.ServiceAccount{},
-}
-
 // Manager is responsible for creating security resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
-	nexus  *v1alpha1.Nexus
-	client client.Client
-	log    logger.Logger
+	nexus             *v1alpha1.Nexus
+	client            client.Client
+	log               logger.Logger
+	isOCP             bool
+	managedObjectsRef map[string]resource.KubernetesResource
 }
 
 // NewManager creates a security resources Manager
-func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
-	return &Manager{
+func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
+	mgr := &Manager{
 		nexus:  nexus,
 		client: client,
 		log:    logger.GetLoggerWithResource("security_manager", nexus),
+
+		managedObjectsRef: map[string]resource.KubernetesResource{
+			framework.SecretKind:     &core.Secret{},
+			framework.SvcAccountKind: &core.ServiceAccount{},
+		},
 	}
+
+	isOCP, err := discovery.IsOpenShift()
+	if err != nil {
+		return nil, fmt.Errorf("unable to determine if on Openshift: %v", err)
+	}
+	if isOCP {
+		mgr.isOCP = true
+		mgr.managedObjectsRef[framework.SCCKind] = &secv1.SecurityContextConstraints{}
+		mgr.managedObjectsRef[framework.RoleBindingKind] = &rbacv1.RoleBinding{}
+		mgr.managedObjectsRef[framework.ClusterRoleKind] = &rbacv1.ClusterRole{}
+	}
+
+	return mgr, nil
 }
 
 // GetRequiredResources returns the resources initialized by the Manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	m.log.Debug("Generating required resource", "kind", framework.SvcAccountKind)
 	m.log.Debug("Generating required resource", "kind", framework.SecretKind)
-	return []resource.KubernetesResource{defaultServiceAccount(m.nexus), defaultSecret(m.nexus)}, nil
+	resources := []resource.KubernetesResource{defaultServiceAccount(m.nexus), defaultSecret(m.nexus)}
+
+	if m.isOCP {
+		// the SCC and the ClusterRole are cluster-scoped, but still part of the desired state
+		// so we should ensure they're properly configured on each reconciliation
+		m.log.Debug("Generating required resource", "kind", framework.SCCKind)
+		resources = append(resources, defaultSCC())
+		m.log.Debug("Generating required resource", "kind", framework.ClusterRoleKind)
+		resources = append(resources, defaultClusterRole())
+
+		// we only want to bind the Service Account to the ClusterRole if using the community image
+		if m.nexus.Spec.Image == strings.Split(validation.NexusCommunityImage, ":")[0] {
+			m.log.Debug("Generating required resource", "kind", framework.RoleBindingKind)
+			resources = append(resources, defaultRoleBinding(m.nexus))
+		}
+	}
+
+	return resources, nil
 }
 
 // GetDeployedResources returns the security resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	var resources []resource.KubernetesResource
-	for resType, resRef := range managedObjectsRef {
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
-			resources = append(resources, resRef)
-		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, m.nexus.Namespace, m.nexus.Name, err)
-		}
-	}
-	return resources, nil
+	return framework.FetchDeployedResources(m.managedObjectsRef, m.nexus, m.client)
 }
 
 // GetCustomComparator returns the custom comp function used to compare a security resource.

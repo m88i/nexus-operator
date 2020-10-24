@@ -477,6 +477,17 @@ rules:
   - update
   - watch
 - apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrole
+  - rolebinding
+  verbs:
+  - create
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
   - route.openshift.io
   resources:
   - routes
@@ -486,6 +497,16 @@ rules:
   - get
   - list
   - patch
+  - update
+  - watch
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - scc
+  verbs:
+  - create
+  - get
+  - list
   - update
   - watch
 ---

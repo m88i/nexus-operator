@@ -79,7 +79,6 @@ func TestNewManager(t *testing.T) {
 				client:           test.NewFakeClientBuilder().WithIngress().Build(),
 				routeAvailable:   false,
 				ingressAvailable: true,
-				ocp:              false,
 			},
 			k8sClientWithIngress,
 		},
@@ -90,7 +89,6 @@ func TestNewManager(t *testing.T) {
 				client:           test.NewFakeClientBuilder().Build(),
 				routeAvailable:   false,
 				ingressAvailable: false,
-				ocp:              false,
 			},
 			k8sClient,
 		},
@@ -101,7 +99,6 @@ func TestNewManager(t *testing.T) {
 				client:           test.NewFakeClientBuilder().OnOpenshift().Build(),
 				routeAvailable:   true,
 				ingressAvailable: false,
-				ocp:              true,
 			},
 			ocpClient,
 		},
@@ -115,7 +112,6 @@ func TestNewManager(t *testing.T) {
 		assert.NotNil(t, got.nexus)
 		assert.Equal(t, tt.want.routeAvailable, got.routeAvailable)
 		assert.Equal(t, tt.want.ingressAvailable, got.ingressAvailable)
-		assert.Equal(t, tt.want.ocp, got.ocp)
 	}
 
 	// simulate discovery 500 response, expect error
@@ -147,7 +143,6 @@ func TestManager_GetRequiredResources(t *testing.T) {
 		client:         test.NewFakeClientBuilder().OnOpenshift().Build(),
 		log:            logger.GetLoggerWithResource("test", routeNexus),
 		routeAvailable: true,
-		ocp:            true,
 	}
 	resources, err = mgr.GetRequiredResources()
 	assert.Nil(t, err)
@@ -216,13 +211,9 @@ func TestManager_createIngress(t *testing.T) {
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first with no deployed resources
 	fakeClient := test.NewFakeClientBuilder().WithIngress().OnOpenshift().Build()
-	mgr := &Manager{
-		nexus:            nodePortNexus,
-		client:           fakeClient,
-		ingressAvailable: true,
-		routeAvailable:   true,
-		ocp:              true,
-	}
+	discovery.SetClient(fakeClient)
+	mgr, _ := NewManager(nodePortNexus, fakeClient)
+
 	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
 	assert.Len(t, resources, 0)

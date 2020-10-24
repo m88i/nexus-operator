@@ -16,13 +16,30 @@ package framework
 
 import (
 	ctx "context"
+	"fmt"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/api/v1alpha1"
 )
 
+// FetchDeployedResources fetches deployed resources whose Kind is present in "managedObjectsRef"
+func FetchDeployedResources(managedObjectsRef map[string]resource.KubernetesResource, nexus *v1alpha1.Nexus, cli client.Client) ([]resource.KubernetesResource, error) {
+	var resources []resource.KubernetesResource
+	for resType, resRef := range managedObjectsRef {
+		if err := Fetch(cli, Key(nexus), resRef, resType); err == nil {
+			resources = append(resources, resRef)
+		} else if !errors.IsNotFound(err) {
+			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, nexus.Namespace, nexus.Name, err)
+		}
+	}
+	return resources, nil
+}
+
+// Fetch fetches a single deployed resource and stores it in "instance"
 func Fetch(client client.Client, key types.NamespacedName, instance resource.KubernetesResource, kind string) error {
 	log.Info("Attempting to fetch deployed resource", "kind", kind, "namespacedName", key)
 	if err := client.Get(ctx.TODO(), key, instance); err != nil {
