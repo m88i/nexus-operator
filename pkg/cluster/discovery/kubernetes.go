@@ -15,10 +15,16 @@
 package discovery
 
 import (
-	networking "k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
-// IsIngressAvailable checks if th cluster supports Ingresses from k8s.io/api/networking/v1beta1
+// IsIngressAvailable checks if the cluster supports Ingresses from k8s.io/api/networking/v1
 func IsIngressAvailable() (bool, error) {
-	return hasGroupVersion(networking.GroupName, networking.SchemeGroupVersion.Version)
+	return hasGroupVersion(networkingv1.GroupName, networkingv1.SchemeGroupVersion.Version)
+}
+
+// IsLegacyIngressAvailable checks if the cluster supports Ingresses from k8s.io/api/networking/v1beta1
+func IsLegacyIngressAvailable() (bool, error) {
+	return hasGroupVersion(networkingv1beta1.GroupName, networkingv1beta1.SchemeGroupVersion.Version)
 }

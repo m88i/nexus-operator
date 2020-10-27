@@ -21,8 +21,8 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	routev1 "github.com/openshift/api/route/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
@@ -32,23 +32,36 @@ import (
 )
 
 const (
-	discOCPFailureFormat = "unable to determine if cluster is Openshift: %v"
 	discFailureFormat    = "unable to determine if %s are available: %v" // resource type, error
 	resUnavailableFormat = "%s are not available in this cluster"        // resource type
+)
+
+var (
+	legacyIngressType = reflect.TypeOf(&networkingv1beta1.Ingress{})
+	ingressType       = reflect.TypeOf(&networkingv1.Ingress{})
 )
 
 // Manager is responsible for creating networking resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
-	nexus                                 *v1alpha1.Nexus
-	client                                client.Client
-	log                                   logger.Logger
-	routeAvailable, ingressAvailable, ocp bool
+	nexus             *v1alpha1.Nexus
+	client            client.Client
+	log               logger.Logger
+	managedObjectsRef map[string]resource.KubernetesResource
+
+	routeAvailable, ingressAvailable, legacyIngressAvailable bool
 }
 
 // NewManager creates a networking resources manager
 // It is expected that the Nexus has been previously validated.
 func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
+	mgr := &Manager{
+		nexus:             nexus,
+		client:            client,
+		log:               logger.GetLoggerWithResource("networking_manager", nexus),
+		managedObjectsRef: make(map[string]resource.KubernetesResource),
+	}
+
 	routeAvailable, err := discovery.IsRouteAvailable()
 	if err != nil {
 		return nil, fmt.Errorf(discFailureFormat, "routes", err)
@@ -59,27 +72,25 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
 
-	ocp, err := discovery.IsOpenShift()
+	legacyIngressAvailable, err := discovery.IsLegacyIngressAvailable()
 	if err != nil {
-		return nil, fmt.Errorf(discOCPFailureFormat, err)
+		return nil, fmt.Errorf(discFailureFormat, "v1beta1 ingresses", err)
 	}
 
-	return &Manager{
-		nexus:            nexus,
-		client:           client,
-		routeAvailable:   routeAvailable,
-		ingressAvailable: ingressAvailable,
-		ocp:              ocp,
-		log:              logger.GetLoggerWithResource("networking_manager", nexus),
-	}, nil
-}
+	if ingressAvailable {
+		mgr.ingressAvailable = true
+		mgr.managedObjectsRef[framework.IngressKind] = &networkingv1.Ingress{}
+	} else if legacyIngressAvailable {
+		mgr.legacyIngressAvailable = true
+		mgr.managedObjectsRef[framework.IngressKind] = &networkingv1beta1.Ingress{}
+	}
 
-func (m *Manager) IngressAvailable() bool {
-	return m.ingressAvailable
-}
+	if routeAvailable {
+		mgr.routeAvailable = true
+		mgr.managedObjectsRef[framework.RouteKind] = &routev1.Route{}
+	}
 
-func (m *Manager) RouteAvailable() bool {
-	return m.routeAvailable
+	return mgr, nil
 }
 
 // GetRequiredResources returns the resources initialized by the manager
@@ -100,7 +111,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 		resources = append(resources, route)
 
 	case v1alpha1.IngressExposeType:
-		if !m.ingressAvailable {
+		if !m.ingressAvailable && !m.legacyIngressAvailable {
 			return nil, fmt.Errorf(resUnavailableFormat, "ingresses")
 		}
 
@@ -119,7 +130,15 @@ func (m *Manager) createRoute() *routev1.Route {
 	return builder.build()
 }
 
-func (m *Manager) createIngress() *networkingv1beta1.Ingress {
+func (m *Manager) createIngress() resource.KubernetesResource {
+	// we're only here if either ingress is available, no need to check legacy is
+	if !m.ingressAvailable {
+		builder := newLegacyIngressBuilder(m.nexus)
+		if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
+			builder = builder.withCustomTLS()
+		}
+		return builder.build()
+	}
 	builder := newIngressBuilder(m.nexus)
 	if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
 		builder = builder.withCustomTLS()
@@ -129,47 +148,49 @@ func (m *Manager) createIngress() *networkingv1beta1.Ingress {
 
 // GetDeployedResources returns the networking resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	var resources []resource.KubernetesResource
-	if m.routeAvailable {
-		route := &routev1.Route{}
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), route, framework.RouteKind); err == nil {
-			resources = append(resources, route)
-		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", framework.RouteKind, m.nexus.Namespace, m.nexus.Name, err)
-		}
-	}
-	if m.ingressAvailable {
-		ingress := &networkingv1beta1.Ingress{}
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), ingress, framework.IngressKind); err == nil {
-			resources = append(resources, ingress)
-		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", framework.IngressKind, m.nexus.Namespace, m.nexus.Name, err)
-		}
-	}
-	return resources, nil
+	return framework.FetchDeployedResources(m.managedObjectsRef, m.nexus, m.client)
 }
 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.
 // Returns nil if there is none
 func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-	if t == reflect.TypeOf(&networkingv1beta1.Ingress{}) {
+	switch t {
+	case legacyIngressType:
+		return legacyIngressEqual
+	case ingressType:
 		return ingressEqual
+	default:
+		return nil
 	}
-	return nil
 }
 
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
 func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-	ingressType := reflect.TypeOf(networkingv1beta1.Ingress{})
 	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
-		ingressType: ingressEqual,
+		legacyIngressType: legacyIngressEqual,
+		ingressType:       ingressEqual,
 	}
 }
 
-func ingressEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+func legacyIngressEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	ingress1 := deployed.(*networkingv1beta1.Ingress)
 	ingress2 := requested.(*networkingv1beta1.Ingress)
+	var pairs [][2]interface{}
+	pairs = append(pairs, [2]interface{}{ingress1.Name, ingress2.Name})
+	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
+	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
+
+	equal := compare.EqualPairs(pairs)
+	if !equal {
+		logger.GetLogger("networking_manager").Info("Resources are not equal", "deployed", deployed, "requested", requested)
+	}
+	return equal
+}
+
+func ingressEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	ingress1 := deployed.(*networkingv1.Ingress)
+	ingress2 := requested.(*networkingv1.Ingress)
 	var pairs [][2]interface{}
 	pairs = append(pairs, [2]interface{}{ingress1.Name, ingress2.Name})
 	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})

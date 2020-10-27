@@ -54,7 +54,16 @@ func TestNewValidator(t *testing.T) {
 			},
 		},
 		{
-			"On K8s with ingress",
+			"On K8s with v1beta1 ingress",
+			test.NewFakeClientBuilder().WithLegacyIngress().Build(),
+			&Validator{
+				routeAvailable:   false,
+				ingressAvailable: true,
+				ocp:              false,
+			},
+		},
+		{
+			"On K8s with v1 ingress",
 			test.NewFakeClientBuilder().WithIngress().Build(),
 			&Validator{
 				routeAvailable:   false,
