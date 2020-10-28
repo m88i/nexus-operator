@@ -28,6 +28,7 @@ import (
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
@@ -79,15 +80,15 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
 
 	if ingressAvailable {
 		mgr.ingressAvailable = true
-		mgr.managedObjectsRef[framework.IngressKind] = &networkingv1.Ingress{}
+		mgr.managedObjectsRef[kind.IngressKind] = &networkingv1.Ingress{}
 	} else if legacyIngressAvailable {
 		mgr.legacyIngressAvailable = true
-		mgr.managedObjectsRef[framework.IngressKind] = &networkingv1beta1.Ingress{}
+		mgr.managedObjectsRef[kind.IngressKind] = &networkingv1beta1.Ingress{}
 	}
 
 	if routeAvailable {
 		mgr.routeAvailable = true
-		mgr.managedObjectsRef[framework.RouteKind] = &routev1.Route{}
+		mgr.managedObjectsRef[kind.RouteKind] = &routev1.Route{}
 	}
 
 	return mgr, nil
@@ -106,7 +107,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 			return nil, fmt.Errorf(resUnavailableFormat, "routes")
 		}
 
-		m.log.Debug("Generating required resource", "kind", framework.RouteKind)
+		m.log.Debug("Generating required resource", "kind", kind.RouteKind)
 		route := m.createRoute()
 		resources = append(resources, route)
 
@@ -115,7 +116,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 			return nil, fmt.Errorf(resUnavailableFormat, "ingresses")
 		}
 
-		m.log.Debug("Generating required resource", "kind", framework.IngressKind)
+		m.log.Debug("Generating required resource", "kind", kind.IngressKind)
 		ingress := m.createIngress()
 		resources = append(resources, ingress)
 	}

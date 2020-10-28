@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/util"
 )
 
@@ -67,21 +68,21 @@ func (b *FakeClientBuilder) OnOpenshift() *FakeClientBuilder {
 	util.Must(schemeBuilderOnOCP().AddToScheme(b.scheme))
 	b.resources = append(b.resources,
 		&metav1.APIResourceList{GroupVersion: openshiftGroupVersion},
-		&metav1.APIResourceList{GroupVersion: routev1.GroupVersion.String()})
+		&metav1.APIResourceList{GroupVersion: routev1.GroupVersion.String(), APIResources: []metav1.APIResource{{Kind: kind.RouteKind}}})
 	return b
 }
 
 // WithIngress makes the fake client aware of v1 Ingresses
 func (b *FakeClientBuilder) WithIngress() *FakeClientBuilder {
 	util.Must(schemeBuilderWithIngress().AddToScheme(b.scheme))
-	b.resources = append(b.resources, &metav1.APIResourceList{GroupVersion: networkingv1.SchemeGroupVersion.String()})
+	b.resources = append(b.resources, &metav1.APIResourceList{GroupVersion: networkingv1.SchemeGroupVersion.String(), APIResources: []metav1.APIResource{{Kind: kind.IngressKind}}})
 	return b
 }
 
 // WithLegacyIngress makes the fake client aware of v1beta1 Ingresses
 func (b *FakeClientBuilder) WithLegacyIngress() *FakeClientBuilder {
 	util.Must(schemeBuilderWithLegacyIngress().AddToScheme(b.scheme))
-	b.resources = append(b.resources, &metav1.APIResourceList{GroupVersion: networkingv1beta1.SchemeGroupVersion.String()})
+	b.resources = append(b.resources, &metav1.APIResourceList{GroupVersion: networkingv1beta1.SchemeGroupVersion.String(), APIResources: []metav1.APIResource{{Kind: kind.IngressKind}}})
 	return b
 }
 

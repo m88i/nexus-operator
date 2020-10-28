@@ -16,6 +16,8 @@ package discovery
 
 import (
 	routev1 "github.com/openshift/api/route/v1"
+
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 )
 
 const (
@@ -29,5 +31,5 @@ func IsOpenShift() (bool, error) {
 
 // IsRouteAvailable verifies if the current cluster has the Route API from OpenShift available
 func IsRouteAvailable() (bool, error) {
-	return hasGroupVersion(routev1.GroupName, routev1.GroupVersion.Version)
+	return hasGroupVersionKind(routev1.GroupVersion.Group, routev1.GroupVersion.Version, kind.RouteKind)
 }

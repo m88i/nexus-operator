@@ -32,7 +32,7 @@ import (
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
-	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
@@ -65,7 +65,7 @@ func TestNewManager(t *testing.T) {
 				ingressAvailable:       true,
 				legacyIngressAvailable: false,
 				managedObjectsRef: map[string]resource.KubernetesResource{
-					framework.IngressKind: &networkingv1.Ingress{},
+					kind.IngressKind: &networkingv1.Ingress{},
 				},
 			},
 			k8sClientWithIngress,
@@ -78,7 +78,7 @@ func TestNewManager(t *testing.T) {
 				ingressAvailable:       false,
 				legacyIngressAvailable: true,
 				managedObjectsRef: map[string]resource.KubernetesResource{
-					framework.IngressKind: &networkingv1beta1.Ingress{},
+					kind.IngressKind: &networkingv1beta1.Ingress{},
 				},
 			},
 			k8sClientWithLegacyIngress,
@@ -102,7 +102,7 @@ func TestNewManager(t *testing.T) {
 				ingressAvailable:       false,
 				legacyIngressAvailable: false,
 				managedObjectsRef: map[string]resource.KubernetesResource{
-					framework.RouteKind: &routev1.Route{},
+					kind.RouteKind: &routev1.Route{},
 				},
 			},
 			ocpClient,
@@ -240,8 +240,8 @@ func TestManager_GetDeployedResources(t *testing.T) {
 		ingressAvailable: true,
 		routeAvailable:   true,
 		managedObjectsRef: map[string]resource.KubernetesResource{
-			framework.RouteKind:   &routev1.Route{},
-			framework.IngressKind: &networkingv1.Ingress{},
+			kind.RouteKind:   &routev1.Route{},
+			kind.IngressKind: &networkingv1.Ingress{},
 		},
 	}
 	resources, err := mgr.GetDeployedResources()

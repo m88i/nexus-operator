@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
 
@@ -34,10 +35,10 @@ func TestFetchDeployedResources(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: nexus.ObjectMeta}
 	service := &corev1.Service{ObjectMeta: nexus.ObjectMeta}
 	managedObjectsRef := map[string]resource.KubernetesResource{
-		ServiceKind:    &corev1.Service{},
-		DeploymentKind: &appsv1.Deployment{},
+		kind.ServiceKind:    &corev1.Service{},
+		kind.DeploymentKind: &appsv1.Deployment{},
 		// we won't have a SA, but this is useful to test no error is triggered when a resource isn't found
-		SvcAccountKind: &corev1.ServiceAccount{},
+		kind.SvcAccountKind: &corev1.ServiceAccount{},
 	}
 	cli := test.NewFakeClientBuilder(deployment, service).Build()
 
@@ -50,7 +51,7 @@ func TestFetchDeployedResources(t *testing.T) {
 func TestFetchDeployedResourcesFailure(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus-test", Namespace: t.Name()}}
 	// managedObjectsRef cannot be empty in order to raise error, the content is irrelevant though
-	managedObjectsRef := map[string]resource.KubernetesResource{DeploymentKind: &appsv1.Deployment{}}
+	managedObjectsRef := map[string]resource.KubernetesResource{kind.DeploymentKind: &appsv1.Deployment{}}
 	cli := test.NewFakeClientBuilder().Build()
 	mockErrorMsg := "mock error"
 
@@ -63,14 +64,14 @@ func TestFetchDeployedResourcesFailure(t *testing.T) {
 func TestFetch(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment", Namespace: t.Name()}}
 	cli := test.NewFakeClientBuilder(deployment).Build()
-	err := Fetch(cli, Key(deployment), deployment, DeploymentKind)
+	err := Fetch(cli, Key(deployment), deployment, kind.DeploymentKind)
 	assert.NoError(t, err)
 }
 
 func TestNotFoundFetch(t *testing.T) {
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment", Namespace: t.Name()}}
 	cli := test.NewFakeClientBuilder().Build()
-	err := Fetch(cli, Key(deployment), deployment, DeploymentKind)
+	err := Fetch(cli, Key(deployment), deployment, kind.DeploymentKind)
 	assert.Error(t, err)
 	assert.True(t, errors.IsNotFound(err))
 }

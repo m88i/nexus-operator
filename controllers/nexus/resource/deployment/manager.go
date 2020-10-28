@@ -28,12 +28,13 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 var managedObjectsRef = map[string]resource.KubernetesResource{
-	framework.DeploymentKind: &appsv1.Deployment{},
-	framework.ServiceKind:    &corev1.Service{},
+	kind.DeploymentKind: &appsv1.Deployment{},
+	kind.ServiceKind:    &corev1.Service{},
 }
 
 // Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
@@ -56,8 +57,8 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 
 // GetRequiredResources returns the resources initialized by the manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	m.log.Debug("Generating required resource", "kind", framework.DeploymentKind)
-	m.log.Debug("Generating required resource", "kind", framework.ServiceKind)
+	m.log.Debug("Generating required resource", "kind", kind.DeploymentKind)
+	m.log.Debug("Generating required resource", "kind", kind.ServiceKind)
 	return []resource.KubernetesResource{newDeployment(m.nexus), newService(m.nexus)}, nil
 }
 

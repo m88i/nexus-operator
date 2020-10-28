@@ -25,11 +25,12 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 var managedObjectsRef = map[string]resource.KubernetesResource{
-	framework.PVCKind: &corev1.PersistentVolumeClaim{},
+	kind.PVCKind: &corev1.PersistentVolumeClaim{},
 }
 
 // Manager is responsible for creating persistence resources, fetching deployed ones and comparing them
@@ -57,7 +58,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 		return resources, nil
 	}
 
-	m.log.Debug("Generating required resource", "kind", framework.PVCKind)
+	m.log.Debug("Generating required resource", "kind", kind.PVCKind)
 	pvc := newPVC(m.nexus)
 	resources = append(resources, pvc)
 
