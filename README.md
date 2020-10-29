@@ -7,6 +7,8 @@
 Table of Contents
 =================
 
+<!--ts-->
+   * [Table of Contents](#table-of-contents)
    * [Nexus Operator](#nexus-operator)
       * [Pre Requisites](#pre-requisites)
       * [Quick Install](#quick-install)
@@ -19,7 +21,7 @@ Table of Contents
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
          * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
-           * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
+            * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
          * [TLS/SSL](#tlsssl)
       * [Persistence](#persistence)
          * [Minikube](#minikube)
@@ -29,6 +31,10 @@ Table of Contents
       * [Image Pull Policy](#image-pull-policy)
       * [Repositories Auto Creation](#repositories-auto-creation)
       * [Contributing](#contributing)
+
+
+<!--te-->
+
 
 # Nexus Operator
 
