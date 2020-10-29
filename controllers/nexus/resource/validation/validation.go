@@ -53,6 +53,11 @@ func NewValidator(client client.Client, scheme *runtime.Scheme) (*Validator, err
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
 
+	legacyIngressAvailable, err := discovery.IsLegacyIngressAvailable()
+	if err != nil {
+		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
+	}
+
 	ocp, err := discovery.IsOpenShift()
 	if err != nil {
 		return nil, fmt.Errorf(discOCPFailureFormat, err)
@@ -62,7 +67,7 @@ func NewValidator(client client.Client, scheme *runtime.Scheme) (*Validator, err
 		client:           client,
 		scheme:           scheme,
 		routeAvailable:   routeAvailable,
-		ingressAvailable: ingressAvailable,
+		ingressAvailable: ingressAvailable || legacyIngressAvailable,
 		ocp:              ocp,
 	}, nil
 }
@@ -236,8 +241,10 @@ func (v *Validator) setUpdateDefaults(nexus *v1alpha1.Nexus) {
 		tag, _ = update.GetLatestMicro(minor)
 	}
 	newImage := fmt.Sprintf("%s:%s", image, tag)
-	v.log.Debug("Replacing 'spec.image'", "OldImage", nexus.Spec.Image, "NewImage", newImage)
-	nexus.Spec.Image = newImage
+	if newImage != nexus.Spec.Image {
+		v.log.Debug("Replacing 'spec.image'", "OldImage", nexus.Spec.Image, "NewImage", newImage)
+		nexus.Spec.Image = newImage
+	}
 }
 
 func (v *Validator) setNetworkingDefaults(nexus *v1alpha1.Nexus) {

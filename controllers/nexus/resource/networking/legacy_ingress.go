@@ -15,41 +15,34 @@
 package networking
 
 import (
-	v1 "k8s.io/api/networking/v1"
+	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/meta"
 )
 
-const ingressBasePath = "/"
-
-// hack to take the address of v1.PathExactType
-var pathTypeExact = v1.PathTypeExact
-
-type ingressBuilder struct {
-	*v1.Ingress
+type legacyIngressBuilder struct {
+	*v1beta1.Ingress
 	nexus *v1alpha1.Nexus
 }
 
-func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
-	ingress := &v1.Ingress{
+func newLegacyIngressBuilder(nexus *v1alpha1.Nexus) *legacyIngressBuilder {
+	ingress := &v1beta1.Ingress{
 		ObjectMeta: meta.DefaultObjectMeta(nexus),
-		Spec: v1.IngressSpec{
-			Rules: []v1.IngressRule{
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
 				{
 					Host: nexus.Spec.Networking.Host,
-					IngressRuleValue: v1.IngressRuleValue{
-						HTTP: &v1.HTTPIngressRuleValue{
-							Paths: []v1.HTTPIngressPath{
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
 								{
-									PathType: &pathTypeExact,
-									Path:     ingressBasePath,
-									Backend: v1.IngressBackend{
-										Service: &v1.IngressServiceBackend{
-											Name: nexus.Name,
-											Port: v1.ServiceBackendPort{Number: deployment.NexusServicePort},
-										},
+									Path: ingressBasePath,
+									Backend: v1beta1.IngressBackend{
+										ServiceName: nexus.Name,
+										ServicePort: intstr.FromInt(deployment.NexusServicePort),
 									},
 								},
 							},
@@ -60,24 +53,24 @@ func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 		},
 	}
 
-	return &ingressBuilder{Ingress: ingress, nexus: nexus}
+	return &legacyIngressBuilder{Ingress: ingress, nexus: nexus}
 }
 
-func (i *ingressBuilder) withCustomTLS() *ingressBuilder {
-	i.Spec.TLS = []v1.IngressTLS{
+func (i *legacyIngressBuilder) withCustomTLS() *legacyIngressBuilder {
+	i.Spec.TLS = []v1beta1.IngressTLS{
 		{
-			Hosts:      hosts(i.Spec.Rules),
+			Hosts:      legacyHosts(i.Spec.Rules),
 			SecretName: i.nexus.Spec.Networking.TLS.SecretName,
 		},
 	}
 	return i
 }
 
-func (i *ingressBuilder) build() *v1.Ingress {
+func (i *legacyIngressBuilder) build() *v1beta1.Ingress {
 	return i.Ingress
 }
 
-func hosts(rules []v1.IngressRule) []string {
+func legacyHosts(rules []v1beta1.IngressRule) []string {
 	var hosts []string
 	for _, rule := range rules {
 		hosts = append(hosts, rule.Host)

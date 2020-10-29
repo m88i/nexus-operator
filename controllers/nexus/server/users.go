@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 )
 
 const (
@@ -107,7 +108,7 @@ func (u *userOperation) createOperatorUserIfNotExists() (*nexus.User, error) {
 func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 	secret := &corev1.Secret{}
 	log.Debug("Attempt to store operator user credentials into Secret")
-	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, framework.SecretKind); err != nil {
+	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, kind.SecretKind); err != nil {
 		return err
 	}
 	if secret.StringData == nil {
@@ -124,7 +125,7 @@ func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 
 func (u *userOperation) getOperatorUserCredentials() (user, password string, err error) {
 	secret := &corev1.Secret{}
-	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, framework.SecretKind); err != nil {
+	if err := framework.Fetch(u.k8sclient, framework.Key(u.nexus), secret, kind.SecretKind); err != nil {
 		return "", "", err
 	}
 	return string(secret.Data[SecretKeyUsername]), string(secret.Data[SecretKeyPassword]), nil

@@ -15,6 +15,7 @@
 package discovery
 
 import (
+	"fmt"
 	"strings"
 
 	"k8s.io/client-go/discovery"
@@ -58,6 +59,24 @@ func hasGroupVersion(group, version string) (bool, error) {
 			}
 			// we found the correct group, but not the correct version, so fail
 			return false, nil
+		}
+	}
+	return false, nil
+}
+
+// hasGroupVersionKind checks if the given group name, version and kind is available in the cluster
+func hasGroupVersionKind(group, version, kind string) (bool, error) {
+	if hasGroupVersion, err := hasGroupVersion(group, version); err != nil || !hasGroupVersion {
+		return false, err
+	}
+
+	resources, err := cli.ServerResourcesForGroupVersion(fmt.Sprintf("%s/%s", group, version))
+	if err != nil {
+		return false, err
+	}
+	for _, resource := range resources.APIResources {
+		if resource.Kind == kind {
+			return true, nil
 		}
 	}
 	return false, nil

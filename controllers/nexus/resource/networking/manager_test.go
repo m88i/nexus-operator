@@ -20,8 +20,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/RHsyseng/operator-utils/pkg/resource"
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
+	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +32,7 @@ import (
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
@@ -41,30 +44,12 @@ var nodePortNexus = &v1alpha1.Nexus{
 	},
 }
 
-func TestManager_IngressAvailable(t *testing.T) {
-	client := test.NewFakeClientBuilder().Build()
-	discovery.SetClient(client)
-	nexus := &v1alpha1.Nexus{}
-	mgr, err := NewManager(nexus, client)
-	assert.Nil(t, err)
-
-	assert.Equal(t, mgr.ingressAvailable, mgr.IngressAvailable())
-}
-
-func TestManager_RouteAvailable(t *testing.T) {
-	client := test.NewFakeClientBuilder().Build()
-	discovery.SetClient(client)
-	nexus := &v1alpha1.Nexus{}
-	mgr, err := NewManager(nexus, client)
-	assert.Nil(t, err)
-
-	assert.Equal(t, mgr.ingressAvailable, mgr.IngressAvailable())
-}
-
 func TestNewManager(t *testing.T) {
 	k8sClient := test.NewFakeClientBuilder().Build()
 	k8sClientWithIngress := test.NewFakeClientBuilder().WithIngress().Build()
+	k8sClientWithLegacyIngress := test.NewFakeClientBuilder().WithLegacyIngress().Build()
 	ocpClient := test.NewFakeClientBuilder().OnOpenshift().Build()
+
 	//default-setting logic is tested elsewhere
 	//so here we just check if the resulting manager took in the arguments correctly
 	tests := []struct {
@@ -73,35 +58,52 @@ func TestNewManager(t *testing.T) {
 		wantClient *test.FakeClient
 	}{
 		{
-			"On Kubernetes with Ingresses available",
+			"On Kubernetes with v1 Ingresses available",
 			&Manager{
-				nexus:            nodePortNexus,
-				client:           test.NewFakeClientBuilder().WithIngress().Build(),
-				routeAvailable:   false,
-				ingressAvailable: true,
-				ocp:              false,
+				nexus:                  nodePortNexus,
+				routeAvailable:         false,
+				ingressAvailable:       true,
+				legacyIngressAvailable: false,
+				managedObjectsRef: map[string]resource.KubernetesResource{
+					kind.IngressKind: &networkingv1.Ingress{},
+				},
 			},
 			k8sClientWithIngress,
 		},
 		{
+			"On Kubernetes with v1beta1 Ingresses available",
+			&Manager{
+				nexus:                  nodePortNexus,
+				routeAvailable:         false,
+				ingressAvailable:       false,
+				legacyIngressAvailable: true,
+				managedObjectsRef: map[string]resource.KubernetesResource{
+					kind.IngressKind: &networkingv1beta1.Ingress{},
+				},
+			},
+			k8sClientWithLegacyIngress,
+		},
+		{
 			"On Kubernetes without Ingresses",
 			&Manager{
-				nexus:            nodePortNexus,
-				client:           test.NewFakeClientBuilder().Build(),
-				routeAvailable:   false,
-				ingressAvailable: false,
-				ocp:              false,
+				nexus:                  nodePortNexus,
+				routeAvailable:         false,
+				ingressAvailable:       false,
+				legacyIngressAvailable: false,
+				managedObjectsRef:      make(map[string]resource.KubernetesResource),
 			},
 			k8sClient,
 		},
 		{
 			"On Openshift",
 			&Manager{
-				nexus:            nodePortNexus,
-				client:           test.NewFakeClientBuilder().OnOpenshift().Build(),
-				routeAvailable:   true,
-				ingressAvailable: false,
-				ocp:              true,
+				nexus:                  nodePortNexus,
+				routeAvailable:         true,
+				ingressAvailable:       false,
+				legacyIngressAvailable: false,
+				managedObjectsRef: map[string]resource.KubernetesResource{
+					kind.RouteKind: &routev1.Route{},
+				},
 			},
 			ocpClient,
 		},
@@ -111,11 +113,12 @@ func TestNewManager(t *testing.T) {
 		discovery.SetClient(tt.wantClient)
 		got, err := NewManager(nodePortNexus, tt.wantClient)
 		assert.NoError(t, err)
-		assert.NotNil(t, got.client)
-		assert.NotNil(t, got.nexus)
+		assert.Equal(t, tt.wantClient, got.client)
+		assert.Equal(t, tt.want.nexus, got.nexus)
 		assert.Equal(t, tt.want.routeAvailable, got.routeAvailable)
 		assert.Equal(t, tt.want.ingressAvailable, got.ingressAvailable)
-		assert.Equal(t, tt.want.ocp, got.ocp)
+		assert.Equal(t, tt.want.legacyIngressAvailable, got.legacyIngressAvailable)
+		assert.Equal(t, tt.want.managedObjectsRef, got.managedObjectsRef)
 	}
 
 	// simulate discovery 500 response, expect error
@@ -147,7 +150,6 @@ func TestManager_GetRequiredResources(t *testing.T) {
 		client:         test.NewFakeClientBuilder().OnOpenshift().Build(),
 		log:            logger.GetLoggerWithResource("test", routeNexus),
 		routeAvailable: true,
-		ocp:            true,
 	}
 	resources, err = mgr.GetRequiredResources()
 	assert.Nil(t, err)
@@ -167,14 +169,14 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// now an ingress
 	mgr = &Manager{
 		nexus:            ingressNexus,
-		client:           test.NewFakeClientBuilder().WithIngress().Build(),
+		client:           test.NewFakeClientBuilder().WithLegacyIngress().Build(),
 		log:              logger.GetLoggerWithResource("test", ingressNexus),
 		ingressAvailable: true,
 	}
 	resources, err = mgr.GetRequiredResources()
 	assert.Nil(t, err)
 	assert.Len(t, resources, 1)
-	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&networkingv1beta1.Ingress{})))
+	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&networkingv1.Ingress{})))
 
 	// still an ingress, but in a cluster without ingresses
 	mgr = &Manager{
@@ -203,13 +205,29 @@ func TestManager_createRoute(t *testing.T) {
 func TestManager_createIngress(t *testing.T) {
 	mgr := &Manager{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{TLS: v1alpha1.NexusNetworkingTLS{}}}}}
 
+	// Let's test out everything with v1beta1 ingresses
+	mgr.legacyIngressAvailable = true
+
 	// first without TLS
-	ingress := mgr.createIngress()
+	legacyIngress := mgr.createIngress().(*networkingv1beta1.Ingress)
+	assert.Empty(t, legacyIngress.Spec.TLS)
+
+	// now with TLS
+	mgr.nexus.Spec.Networking.TLS.SecretName = "test-secret"
+	legacyIngress = mgr.createIngress().(*networkingv1beta1.Ingress)
+	assert.Len(t, legacyIngress.Spec.TLS, 1)
+
+	// Now repeat, but with networkingv1 ingresses
+	mgr.nexus.Spec.Networking.TLS = v1alpha1.NexusNetworkingTLS{}
+	mgr.ingressAvailable = true
+
+	// first without TLS
+	ingress := mgr.createIngress().(*networkingv1.Ingress)
 	assert.Empty(t, ingress.Spec.TLS)
 
 	// now with TLS
 	mgr.nexus.Spec.Networking.TLS.SecretName = "test-secret"
-	ingress = mgr.createIngress()
+	ingress = mgr.createIngress().(*networkingv1.Ingress)
 	assert.Len(t, ingress.Spec.TLS, 1)
 }
 
@@ -221,7 +239,10 @@ func TestManager_GetDeployedResources(t *testing.T) {
 		client:           fakeClient,
 		ingressAvailable: true,
 		routeAvailable:   true,
-		ocp:              true,
+		managedObjectsRef: map[string]resource.KubernetesResource{
+			kind.RouteKind:   &routev1.Route{},
+			kind.IngressKind: &networkingv1.Ingress{},
+		},
 	}
 	resources, err := mgr.GetDeployedResources()
 	assert.Nil(t, resources)
@@ -232,14 +253,14 @@ func TestManager_GetDeployedResources(t *testing.T) {
 	route := &routev1.Route{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), route))
 
-	ingress := &networkingv1beta1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
+	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), ingress))
 
 	resources, err = mgr.GetDeployedResources()
 	assert.Nil(t, err)
 	assert.Len(t, resources, 2)
 	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&routev1.Route{})))
-	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&networkingv1beta1.Ingress{})))
+	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&networkingv1.Ingress{})))
 
 	// make the client return a mocked 500 response to test errors other than NotFound
 	mockErrorMsg := "mock 500"
@@ -257,8 +278,11 @@ func TestManager_GetCustomComparator(t *testing.T) {
 	// there is no custom comparator function for routes
 	routeComp := mgr.GetCustomComparator(reflect.TypeOf(&routev1.Route{}))
 	assert.Nil(t, routeComp)
-	// there is a custom comparator function for ingresses
-	ingressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1beta1.Ingress{}))
+	// there is a custom comparator function for v1beta1 ingresses
+	legacyIngressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1beta1.Ingress{}))
+	assert.NotNil(t, legacyIngressComp)
+	// there is a custom comparator function for v1 ingresses
+	ingressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1.Ingress{}))
 	assert.NotNil(t, ingressComp)
 }
 
@@ -267,12 +291,12 @@ func TestManager_GetCustomComparators(t *testing.T) {
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
-	// there is one custom comparator (ingresses)
+	// there are two custom comparators (v1 and v1beta1 ingresses)
 	comparators := mgr.GetCustomComparators()
-	assert.Len(t, comparators, 1)
+	assert.Len(t, comparators, 2)
 }
 
-func TestIngressEqual(t *testing.T) {
+func Test_legacyIngressEqual(t *testing.T) {
 	// base ingress which will be used in all comparisons
 	baseIngress := &networkingv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test", UID: "base UID"},
@@ -336,6 +360,97 @@ func TestIngressEqual(t *testing.T) {
 			func() *networkingv1beta1.Ingress {
 				ingress := baseIngress.DeepCopy()
 				ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.ServiceName = "a different service"
+				return ingress
+			}(),
+			false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		if legacyIngressEqual(baseIngress, testCase.modifiedIngress) != testCase.wantEqual {
+			assert.Failf(t, "%s\nbase: %+v\nmodified: %+v\nwantedEqual: %v", testCase.name, baseIngress, testCase.modifiedIngress, testCase.wantEqual)
+		}
+	}
+}
+
+func Test_ingressEqual(t *testing.T) {
+	var bogusPathType networkingv1.PathType = "not a real path type"
+
+	// base ingress which will be used in all comparisons
+	baseIngress := &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test", UID: "base UID"},
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				{
+					Host: "test.example.com",
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								{
+									PathType: &pathTypeExact,
+									Path:     ingressBasePath,
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: "test",
+											Port: networkingv1.ServiceBackendPort{Number: deployment.NexusServicePort},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name            string
+		modifiedIngress *networkingv1.Ingress
+		wantEqual       bool
+	}{
+		{
+			"Two ingresses that are equal where it matters and different where it doesn't",
+			func() *networkingv1.Ingress {
+				ingress := baseIngress.DeepCopy()
+				// simulates a field that would be different in runtime
+				ingress.UID = "a different UID"
+				return ingress
+			}(),
+			true,
+		},
+		{
+			"All equal except name",
+			func() *networkingv1.Ingress {
+				ingress := baseIngress.DeepCopy()
+				ingress.Name = "a different name"
+				return ingress
+			}(),
+			false,
+		},
+		{
+			"All equal except namespace",
+			func() *networkingv1.Ingress {
+				ingress := baseIngress.DeepCopy()
+				ingress.Namespace = "a different namespace"
+				return ingress
+			}(),
+			false,
+		},
+		{
+			"All equal except the service name",
+			func() *networkingv1.Ingress {
+				ingress := baseIngress.DeepCopy()
+				ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.Service.Name = "a different service"
+				return ingress
+			}(),
+			false,
+		},
+		{
+			"All equal except the Path Type",
+			func() *networkingv1.Ingress {
+				ingress := baseIngress.DeepCopy()
+				ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].PathType = &bogusPathType
 				return ingress
 			}(),
 			false,

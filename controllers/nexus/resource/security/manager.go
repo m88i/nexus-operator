@@ -25,12 +25,13 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
 var managedObjectsRef = map[string]resource.KubernetesResource{
-	framework.SecretKind:     &core.Secret{},
-	framework.SvcAccountKind: &core.ServiceAccount{},
+	kind.SecretKind:     &core.Secret{},
+	kind.SvcAccountKind: &core.ServiceAccount{},
 }
 
 // Manager is responsible for creating security resources, fetching deployed ones and comparing them
@@ -52,8 +53,8 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 
 // GetRequiredResources returns the resources initialized by the Manager
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
-	m.log.Debug("Generating required resource", "kind", framework.SvcAccountKind)
-	m.log.Debug("Generating required resource", "kind", framework.SecretKind)
+	m.log.Debug("Generating required resource", "kind", kind.SvcAccountKind)
+	m.log.Debug("Generating required resource", "kind", kind.SecretKind)
 	return []resource.KubernetesResource{defaultServiceAccount(m.nexus), defaultSecret(m.nexus)}, nil
 }
 

@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
@@ -102,13 +103,13 @@ func TestManager_getDeployedSvcAccnt(t *testing.T) {
 	}
 
 	// first, test without creating the svcAccnt
-	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef[framework.SvcAccountKind], framework.SvcAccountKind)
+	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef[kind.SvcAccountKind], kind.SvcAccountKind)
 	assert.True(t, errors.IsNotFound(err))
 
 	// now test after creating the svcAccnt
 	svcAccnt := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), svcAccnt))
-	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt, framework.SvcAccountKind)
+	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt, kind.SvcAccountKind)
 	assert.NotNil(t, svcAccnt)
 	assert.NoError(t, err)
 }

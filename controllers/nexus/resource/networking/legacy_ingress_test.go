@@ -18,67 +18,47 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
 )
 
-var (
-	ingressNexus = &v1alpha1.Nexus{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "nexus3",
-			Namespace: "nexus",
-		},
-		Spec: v1alpha1.NexusSpec{
-			Networking: v1alpha1.NexusNetworking{
-				Expose:   true,
-				ExposeAs: v1alpha1.IngressExposeType,
-				Host:     "ingress.tls.test.com",
-				TLS: v1alpha1.NexusNetworkingTLS{
-					SecretName: "test-tls",
-				},
-			},
-		},
-	}
-)
-
-func TestHosts(t *testing.T) {
-	ingress := &v1.Ingress{
-		Spec: v1.IngressSpec{
-			Rules: []v1.IngressRule{},
+func TestLegacyHosts(t *testing.T) {
+	ingress := &v1beta1.Ingress{
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{},
 		},
 	}
 
-	h := hosts(ingress.Spec.Rules)
+	h := legacyHosts(ingress.Spec.Rules)
 	assert.Len(t, h, 0)
 
 	host := "a"
-	ingress.Spec.Rules = append(ingress.Spec.Rules, v1.IngressRule{Host: host})
-	h = hosts(ingress.Spec.Rules)
+	ingress.Spec.Rules = append(ingress.Spec.Rules, v1beta1.IngressRule{Host: host})
+	h = legacyHosts(ingress.Spec.Rules)
 	assert.Len(t, h, 1)
 	assert.Equal(t, h[0], host)
 
 	host = "b"
-	ingress.Spec.Rules = append(ingress.Spec.Rules, v1.IngressRule{Host: host})
-	h = hosts(ingress.Spec.Rules)
+	ingress.Spec.Rules = append(ingress.Spec.Rules, v1beta1.IngressRule{Host: host})
+	h = legacyHosts(ingress.Spec.Rules)
 	assert.Len(t, h, 2)
 	assert.Equal(t, h[1], host)
 }
 
-func TestNewIngress(t *testing.T) {
-	ingress := newIngressBuilder(ingressNexus).build()
-	assertIngressBasic(t, ingress)
+func TestNewLegacyIngress(t *testing.T) {
+	ingress := newLegacyIngressBuilder(ingressNexus).build()
+	assertLegacyIngressBasic(t, ingress)
 }
 
-func TestNewIngressWithSecretName(t *testing.T) {
-	ingress := newIngressBuilder(ingressNexus).withCustomTLS().build()
-	assertIngressBasic(t, ingress)
-	assertIngressSecretName(t, ingress)
+func TestNewLegacyIngressWithSecretName(t *testing.T) {
+	ingress := newLegacyIngressBuilder(ingressNexus).withCustomTLS().build()
+	assertLegacyIngressBasic(t, ingress)
+	assertLegacyIngressSecretName(t, ingress)
 }
 
-func assertIngressBasic(t *testing.T, ingress *v1.Ingress) {
+func assertLegacyIngressBasic(t *testing.T, ingress *v1beta1.Ingress) {
 	assert.Equal(t, ingressNexus.Name, ingress.Name)
 	assert.Equal(t, ingressNexus.Namespace, ingress.Namespace)
 
@@ -96,11 +76,11 @@ func assertIngressBasic(t *testing.T, ingress *v1.Ingress) {
 
 	assert.Equal(t, ingressBasePath, path.Path)
 	assert.NotNil(t, path.Backend)
-	assert.Equal(t, int32(deployment.NexusServicePort), path.Backend.Service.Port.Number)
-	assert.Equal(t, ingressNexus.Name, path.Backend.Service.Name)
+	assert.Equal(t, intstr.FromInt(deployment.NexusServicePort), path.Backend.ServicePort)
+	assert.Equal(t, ingressNexus.Name, path.Backend.ServiceName)
 }
 
-func assertIngressSecretName(t *testing.T, ingress *v1.Ingress) {
+func assertLegacyIngressSecretName(t *testing.T, ingress *v1beta1.Ingress) {
 	assert.Len(t, ingress.Spec.TLS, 1)
 	assert.Equal(t, ingressNexus.Spec.Networking.TLS.SecretName, ingress.Spec.TLS[0].SecretName)
 
