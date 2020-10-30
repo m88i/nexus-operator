@@ -81,6 +81,7 @@ fmt:
 vet:
 	go vet ./...
 	./hack/go-lint.sh
+	./hack/generate-toc.sh
 
 # Generate code
 generate: controller-gen
