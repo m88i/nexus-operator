@@ -15,6 +15,7 @@
 package networking
 
 import (
+	"github.com/RHsyseng/operator-utils/pkg/resource"
 	v1 "k8s.io/api/networking/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
@@ -22,10 +23,16 @@ import (
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/meta"
 )
 
-const ingressBasePath = "/"
+const (
+	ingressBasePath   = "/?(.*)"
+	ingressClassKey   = "kubernetes.io/ingress.class"
+	ingressClassNginx = "nginx"
+	nginxRewriteKey   = "nginx.ingress.kubernetes.io/rewrite-target"
+	nginxRewriteValue = "/$1"
+)
 
 // hack to take the address of v1.PathExactType
-var pathTypeExact = v1.PathTypeExact
+var pathTypePrefix = v1.PathTypePrefix
 
 type ingressBuilder struct {
 	*v1.Ingress
@@ -43,12 +50,12 @@ func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 						HTTP: &v1.HTTPIngressRuleValue{
 							Paths: []v1.HTTPIngressPath{
 								{
-									PathType: &pathTypeExact,
+									PathType: &pathTypePrefix,
 									Path:     ingressBasePath,
 									Backend: v1.IngressBackend{
 										Service: &v1.IngressServiceBackend{
 											Name: nexus.Name,
-											Port: v1.ServiceBackendPort{Number: deployment.NexusServicePort},
+											Port: v1.ServiceBackendPort{Number: deployment.DefaultHTTPPort},
 										},
 									},
 								},
@@ -59,7 +66,7 @@ func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 			},
 		},
 	}
-
+	addNginxAnnotations(ingress)
 	return &ingressBuilder{Ingress: ingress, nexus: nexus}
 }
 
@@ -83,4 +90,11 @@ func hosts(rules []v1.IngressRule) []string {
 		hosts = append(hosts, rule.Host)
 	}
 	return hosts
+}
+
+func addNginxAnnotations(resource resource.KubernetesResource) {
+	resource.SetAnnotations(map[string]string{
+		ingressClassKey: ingressClassNginx,
+		nginxRewriteKey: nginxRewriteValue,
+	})
 }

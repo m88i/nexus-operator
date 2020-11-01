@@ -38,7 +38,7 @@ import (
 )
 
 var nodePortNexus = &v1alpha1.Nexus{
-	ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"},
+	ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexusIngress"},
 	Spec: v1alpha1.NexusSpec{
 		Networking: v1alpha1.NexusNetworking{Expose: true, NodePort: 31031, ExposeAs: v1alpha1.NodePortExposeType},
 	},
@@ -168,9 +168,9 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 	// now an ingress
 	mgr = &Manager{
-		nexus:            ingressNexus,
+		nexus:            nexusIngress,
 		client:           test.NewFakeClientBuilder().WithLegacyIngress().Build(),
-		log:              logger.GetLoggerWithResource("test", ingressNexus),
+		log:              logger.GetLoggerWithResource("test", nexusIngress),
 		ingressAvailable: true,
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -180,8 +180,8 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 	// still an ingress, but in a cluster without ingresses
 	mgr = &Manager{
-		nexus:  ingressNexus,
-		log:    logger.GetLoggerWithResource("test", ingressNexus),
+		nexus:  nexusIngress,
+		log:    logger.GetLoggerWithResource("test", nexusIngress),
 		client: test.NewFakeClientBuilder().Build(),
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -271,7 +271,7 @@ func TestManager_GetDeployedResources(t *testing.T) {
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {
-	// the nexus and the client should have no effect on the
+	// the nexusIngress and the client should have no effect on the
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
@@ -287,7 +287,7 @@ func TestManager_GetCustomComparator(t *testing.T) {
 }
 
 func TestManager_GetCustomComparators(t *testing.T) {
-	// the nexus and the client should have no effect on the
+	// the nexusIngress and the client should have no effect on the
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
@@ -311,7 +311,7 @@ func Test_legacyIngressEqual(t *testing.T) {
 									Path: ingressBasePath,
 									Backend: networkingv1beta1.IngressBackend{
 										ServiceName: "test",
-										ServicePort: intstr.FromInt(deployment.NexusServicePort),
+										ServicePort: intstr.FromInt(deployment.DefaultHTTPPort),
 									},
 								},
 							},
@@ -387,12 +387,12 @@ func Test_ingressEqual(t *testing.T) {
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
 								{
-									PathType: &pathTypeExact,
+									PathType: &pathTypePrefix,
 									Path:     ingressBasePath,
 									Backend: networkingv1.IngressBackend{
 										Service: &networkingv1.IngressServiceBackend{
 											Name: "test",
-											Port: networkingv1.ServiceBackendPort{Number: deployment.NexusServicePort},
+											Port: networkingv1.ServiceBackendPort{Number: deployment.DefaultHTTPPort},
 										},
 									},
 								},

@@ -78,7 +78,7 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          NexusPortName,
-									ContainerPort: NexusServicePort,
+									ContainerPort: nexusContainerPort,
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
@@ -112,7 +112,7 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/service/rest/v1/status",
 				Port: intstr.IntOrString{
-					IntVal: NexusServicePort,
+					IntVal: nexusContainerPort,
 				},
 				Scheme: corev1.URISchemeHTTP,
 			},
@@ -129,7 +129,7 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/service/rest/v1/status",
 				Port: intstr.IntOrString{
-					IntVal: NexusServicePort,
+					IntVal: nexusContainerPort,
 				},
 				Scheme: corev1.URISchemeHTTP,
 			},

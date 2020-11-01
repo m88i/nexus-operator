@@ -39,7 +39,7 @@ func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
 				Name: nexus.Name,
 			},
 			Port: &v1.RoutePort{
-				TargetPort: intstr.FromInt(deployment.NexusServicePort),
+				TargetPort: intstr.FromString(deployment.NexusPortName),
 			},
 		},
 	}

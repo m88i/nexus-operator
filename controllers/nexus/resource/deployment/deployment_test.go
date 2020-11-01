@@ -54,8 +54,8 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 	assert.Equal(t, validation.NexusCommunityImage, deployment.Spec.Template.Spec.Containers[0].Image)
 	assert.Equal(t, int32(1), *deployment.Spec.Replicas)
 
-	assert.Equal(t, int32(NexusServicePort), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.HTTPGet.Port.IntVal)
-	assert.Equal(t, int32(NexusServicePort), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.HTTPGet.Port.IntVal)
+	assert.Equal(t, int32(nexusContainerPort), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.HTTPGet.Port.IntVal)
+	assert.Equal(t, int32(nexusContainerPort), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.HTTPGet.Port.IntVal)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 0)
 	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 0)
