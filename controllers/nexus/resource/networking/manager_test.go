@@ -38,7 +38,7 @@ import (
 )
 
 var nodePortNexus = &v1alpha1.Nexus{
-	ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexusIngress"},
+	ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"},
 	Spec: v1alpha1.NexusSpec{
 		Networking: v1alpha1.NexusNetworking{Expose: true, NodePort: 31031, ExposeAs: v1alpha1.NodePortExposeType},
 	},
@@ -271,7 +271,7 @@ func TestManager_GetDeployedResources(t *testing.T) {
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {
-	// the nexusIngress and the client should have no effect on the
+	// the nexus and the client should have no effect on the
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
@@ -287,7 +287,7 @@ func TestManager_GetCustomComparator(t *testing.T) {
 }
 
 func TestManager_GetCustomComparators(t *testing.T) {
-	// the nexusIngress and the client should have no effect on the
+	// the nexus and the client should have no effect on the
 	// comparator functions offered by the manager
 	mgr := &Manager{}
 
