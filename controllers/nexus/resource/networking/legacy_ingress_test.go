@@ -48,26 +48,26 @@ func TestLegacyHosts(t *testing.T) {
 }
 
 func TestNewLegacyIngress(t *testing.T) {
-	ingress := newLegacyIngressBuilder(ingressNexus).build()
+	ingress := newLegacyIngressBuilder(nexusIngress).build()
 	assertLegacyIngressBasic(t, ingress)
 }
 
 func TestNewLegacyIngressWithSecretName(t *testing.T) {
-	ingress := newLegacyIngressBuilder(ingressNexus).withCustomTLS().build()
+	ingress := newLegacyIngressBuilder(nexusIngress).withCustomTLS().build()
 	assertLegacyIngressBasic(t, ingress)
 	assertLegacyIngressSecretName(t, ingress)
 }
 
 func assertLegacyIngressBasic(t *testing.T, ingress *v1beta1.Ingress) {
-	assert.Equal(t, ingressNexus.Name, ingress.Name)
-	assert.Equal(t, ingressNexus.Namespace, ingress.Namespace)
+	assert.Equal(t, nexusIngress.Name, ingress.Name)
+	assert.Equal(t, nexusIngress.Namespace, ingress.Namespace)
 
 	assert.NotNil(t, ingress.Spec)
 
 	assert.Len(t, ingress.Spec.Rules, 1)
 	rule := ingress.Spec.Rules[0]
 
-	assert.Equal(t, ingressNexus.Spec.Networking.Host, rule.Host)
+	assert.Equal(t, nexusIngress.Spec.Networking.Host, rule.Host)
 	assert.NotNil(t, rule.IngressRuleValue)
 	assert.NotNil(t, rule.IngressRuleValue.HTTP)
 
@@ -76,14 +76,16 @@ func assertLegacyIngressBasic(t *testing.T, ingress *v1beta1.Ingress) {
 
 	assert.Equal(t, ingressBasePath, path.Path)
 	assert.NotNil(t, path.Backend)
-	assert.Equal(t, intstr.FromInt(deployment.NexusServicePort), path.Backend.ServicePort)
-	assert.Equal(t, ingressNexus.Name, path.Backend.ServiceName)
+	assert.Equal(t, intstr.FromInt(deployment.DefaultHTTPPort), path.Backend.ServicePort)
+	assert.Equal(t, nexusIngress.Name, path.Backend.ServiceName)
+	assert.NotEmpty(t, ingress.Annotations[nginxRewriteKey])
+	assert.Equal(t, ingressClassNginx, ingress.Annotations[ingressClassKey])
 }
 
 func assertLegacyIngressSecretName(t *testing.T, ingress *v1beta1.Ingress) {
 	assert.Len(t, ingress.Spec.TLS, 1)
-	assert.Equal(t, ingressNexus.Spec.Networking.TLS.SecretName, ingress.Spec.TLS[0].SecretName)
+	assert.Equal(t, nexusIngress.Spec.Networking.TLS.SecretName, ingress.Spec.TLS[0].SecretName)
 
 	assert.Len(t, ingress.Spec.TLS[0].Hosts, 1)
-	assert.Equal(t, ingressNexus.Spec.Networking.Host, ingress.Spec.TLS[0].Hosts[0])
+	assert.Equal(t, nexusIngress.Spec.Networking.Host, ingress.Spec.TLS[0].Hosts[0])
 }

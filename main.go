@@ -18,7 +18,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"strings"
 
@@ -46,7 +45,7 @@ var (
 
 func init() {
 	// adding routev1
-	utilruntime.Must(routev1.AddToScheme(scheme))
+	utilruntime.Must(routev1.Install(scheme))
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(appsv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
@@ -63,11 +62,8 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
-	watchNamespace, err := getWatchNamespace()
-	if err != nil {
-		setupLog.Error(err, "unable to get WatchNamespace, "+
-			"the manager will watch and manage resources in all namespaces")
-	}
+	watchNamespace := getWatchNamespace()
+
 	options := ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
@@ -111,7 +107,7 @@ func main() {
 }
 
 // getWatchNamespace returns the Namespace the operator should be watching for changes
-func getWatchNamespace() (string, error) {
+func getWatchNamespace() string {
 	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
 	// which specifies the Namespace to watch.
 	// An empty value means the operator is running with cluster scope.
@@ -119,7 +115,10 @@ func getWatchNamespace() (string, error) {
 
 	ns, found := os.LookupEnv(watchNamespaceEnvVar)
 	if !found {
-		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+		setupLog.Info("unable to get WatchNamespace, "+
+			"the manager will watch and manage resources in all namespaces",
+			"Env Var lookup", watchNamespaceEnvVar)
+		return ""
 	}
-	return ns, nil
+	return ns
 }

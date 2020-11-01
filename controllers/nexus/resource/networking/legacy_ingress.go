@@ -42,7 +42,7 @@ func newLegacyIngressBuilder(nexus *v1alpha1.Nexus) *legacyIngressBuilder {
 									Path: ingressBasePath,
 									Backend: v1beta1.IngressBackend{
 										ServiceName: nexus.Name,
-										ServicePort: intstr.FromInt(deployment.NexusServicePort),
+										ServicePort: intstr.FromInt(deployment.DefaultHTTPPort),
 									},
 								},
 							},
@@ -52,7 +52,7 @@ func newLegacyIngressBuilder(nexus *v1alpha1.Nexus) *legacyIngressBuilder {
 			},
 		},
 	}
-
+	addNginxAnnotations(ingress)
 	return &legacyIngressBuilder{Ingress: ingress, nexus: nexus}
 }
 

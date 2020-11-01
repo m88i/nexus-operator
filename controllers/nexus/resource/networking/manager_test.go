@@ -168,9 +168,9 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 	// now an ingress
 	mgr = &Manager{
-		nexus:            ingressNexus,
+		nexus:            nexusIngress,
 		client:           test.NewFakeClientBuilder().WithLegacyIngress().Build(),
-		log:              logger.GetLoggerWithResource("test", ingressNexus),
+		log:              logger.GetLoggerWithResource("test", nexusIngress),
 		ingressAvailable: true,
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -180,8 +180,8 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 	// still an ingress, but in a cluster without ingresses
 	mgr = &Manager{
-		nexus:  ingressNexus,
-		log:    logger.GetLoggerWithResource("test", ingressNexus),
+		nexus:  nexusIngress,
+		log:    logger.GetLoggerWithResource("test", nexusIngress),
 		client: test.NewFakeClientBuilder().Build(),
 	}
 	resources, err = mgr.GetRequiredResources()
@@ -311,7 +311,7 @@ func Test_legacyIngressEqual(t *testing.T) {
 									Path: ingressBasePath,
 									Backend: networkingv1beta1.IngressBackend{
 										ServiceName: "test",
-										ServicePort: intstr.FromInt(deployment.NexusServicePort),
+										ServicePort: intstr.FromInt(deployment.DefaultHTTPPort),
 									},
 								},
 							},
@@ -387,12 +387,12 @@ func Test_ingressEqual(t *testing.T) {
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
 								{
-									PathType: &pathTypeExact,
+									PathType: &pathTypePrefix,
 									Path:     ingressBasePath,
 									Backend: networkingv1.IngressBackend{
 										Service: &networkingv1.IngressServiceBackend{
 											Name: "test",
-											Port: networkingv1.ServiceBackendPort{Number: deployment.NexusServicePort},
+											Port: networkingv1.ServiceBackendPort{Number: deployment.DefaultHTTPPort},
 										},
 									},
 								},

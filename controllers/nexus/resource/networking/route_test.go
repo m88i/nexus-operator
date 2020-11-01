@@ -53,7 +53,7 @@ var (
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
-				{TargetPort: intstr.FromInt(deployment.NexusServicePort)},
+				{TargetPort: intstr.FromString(deployment.NexusPortName)},
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func assertRouteBasic(t *testing.T, route *v1.Route) {
 	assert.Equal(t, routeNexus.Name, route.Name)
 	assert.Equal(t, routeNexus.Namespace, route.Namespace)
 	assert.Len(t, route.Labels, 1)
-	assert.Equal(t, ingressNexus.Name, route.Labels[meta.AppLabel])
+	assert.Equal(t, nexusIngress.Name, route.Labels[meta.AppLabel])
 
 	assert.NotNil(t, route.Spec)
 
