@@ -608,9 +608,6 @@ spec:
         image: quay.io/m88i/nexus-operator:0.4.0
         name: manager
         resources:
-          limits:
-            cpu: 100m
-            memory: 30Mi
           requests:
             cpu: 100m
             memory: 20Mi
