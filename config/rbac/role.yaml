@@ -45,6 +45,14 @@ rules:
 - apiGroups:
   - apps.m88i.io
   resources:
+  - nexus/finalizers
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps.m88i.io
+  resources:
   - nexus/status
   verbs:
   - get

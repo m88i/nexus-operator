@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+declare readme_changed=$(git status -s | grep  'README.md' || :)
+if [ -z "${readme_changed}" ]; then
+  exit 0
+fi
 
 command -v bin/gh-md-toc > /dev/null || curl https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc -o bin/gh-md-toc && chmod +x bin/gh-md-toc
 

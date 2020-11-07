@@ -62,6 +62,7 @@ type NexusReconciler struct {
 
 // +kubebuilder:rbac:groups=apps.m88i.io,resources=nexus,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps.m88i.io,resources=nexus/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps.m88i.io,resources=nexus/finalizers,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=services;persistentvolumeclaims;events;secrets;serviceaccounts,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;create
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get

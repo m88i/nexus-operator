@@ -16,7 +16,7 @@
 
 VERSION=$1
 
-if [ -z ${VERSION} ]; then
+if [ -z "${VERSION}" ]; then
     VERSION=$(curl https://api.github.com/repos/m88i/nexus-operator/releases/latest | python -c "import sys, json; print(json.load(sys.stdin)['tag_name'])")
 fi
 
