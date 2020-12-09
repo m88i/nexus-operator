@@ -26,14 +26,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/m88i/nexus-operator/api/v1alpha1.NexusPersistence": schema_m88i_nexus_operator_api_v1alpha1_NexusPersistence(ref),
-		"github.com/m88i/nexus-operator/api/v1alpha1.NexusProbe":       schema_m88i_nexus_operator_api_v1alpha1_NexusProbe(ref),
-		"github.com/m88i/nexus-operator/api/v1alpha1.NexusSpec":        schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref),
-		"github.com/m88i/nexus-operator/api/v1alpha1.NexusStatus":      schema_m88i_nexus_operator_api_v1alpha1_NexusStatus(ref),
+		"./api/v1alpha1.NexusPersistence": schema__api_v1alpha1_NexusPersistence(ref),
+		"./api/v1alpha1.NexusProbe":       schema__api_v1alpha1_NexusProbe(ref),
+		"./api/v1alpha1.NexusSpec":        schema__api_v1alpha1_NexusSpec(ref),
+		"./api/v1alpha1.NexusStatus":      schema__api_v1alpha1_NexusStatus(ref),
 	}
 }
 
-func schema_m88i_nexus_operator_api_v1alpha1_NexusPersistence(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema__api_v1alpha1_NexusPersistence(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -68,7 +68,7 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusPersistence(ref common.Referen
 	}
 }
 
-func schema_m88i_nexus_operator_api_v1alpha1_NexusProbe(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema__api_v1alpha1_NexusProbe(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -116,7 +116,7 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusProbe(ref common.ReferenceCall
 	}
 }
 
-func schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema__api_v1alpha1_NexusSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -140,7 +140,7 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref common.ReferenceCallb
 					"automaticUpdate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Automatic updates configuration",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.NexusAutomaticUpdate"),
+							Ref:         ref("./api/v1alpha1.NexusAutomaticUpdate"),
 						},
 					},
 					"imagePullPolicy": {
@@ -159,7 +159,7 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref common.ReferenceCallb
 					"persistence": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Persistence definition",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.NexusPersistence"),
+							Ref:         ref("./api/v1alpha1.NexusPersistence"),
 						},
 					},
 					"useRedHatImage": {
@@ -179,7 +179,7 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref common.ReferenceCallb
 					"networking": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Networking definition",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.NexusNetworking"),
+							Ref:         ref("./api/v1alpha1.NexusNetworking"),
 						},
 					},
 					"serviceAccountName": {
@@ -192,19 +192,19 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref common.ReferenceCallb
 					"livenessProbe": {
 						SchemaProps: spec.SchemaProps{
 							Description: "LivenessProbe describes how the Nexus container liveness probe should work",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.NexusProbe"),
+							Ref:         ref("./api/v1alpha1.NexusProbe"),
 						},
 					},
 					"readinessProbe": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ReadinessProbe describes how the Nexus container readiness probe should work",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.NexusProbe"),
+							Ref:         ref("./api/v1alpha1.NexusProbe"),
 						},
 					},
 					"serverOperations": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ServerOperations describes the options for the operations performed on the deployed server instance",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.ServerOperationsOpts"),
+							Ref:         ref("./api/v1alpha1.ServerOperationsOpts"),
 						},
 					},
 				},
@@ -212,11 +212,11 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusSpec(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/m88i/nexus-operator/api/v1alpha1.NexusAutomaticUpdate", "github.com/m88i/nexus-operator/api/v1alpha1.NexusNetworking", "github.com/m88i/nexus-operator/api/v1alpha1.NexusPersistence", "github.com/m88i/nexus-operator/api/v1alpha1.NexusProbe", "github.com/m88i/nexus-operator/api/v1alpha1.ServerOperationsOpts", "k8s.io/api/core/v1.ResourceRequirements"},
+			"./api/v1alpha1.NexusAutomaticUpdate", "./api/v1alpha1.NexusNetworking", "./api/v1alpha1.NexusPersistence", "./api/v1alpha1.NexusProbe", "./api/v1alpha1.ServerOperationsOpts", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
-func schema_m88i_nexus_operator_api_v1alpha1_NexusStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema__api_v1alpha1_NexusStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -272,13 +272,13 @@ func schema_m88i_nexus_operator_api_v1alpha1_NexusStatus(ref common.ReferenceCal
 					"serverOperationsStatus": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ServerOperationsStatus describes the general status for the operations performed in the Nexus server instance",
-							Ref:         ref("github.com/m88i/nexus-operator/api/v1alpha1.OperationsStatus"),
+							Ref:         ref("./api/v1alpha1.OperationsStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/m88i/nexus-operator/api/v1alpha1.OperationsStatus", "k8s.io/api/apps/v1.DeploymentStatus"},
+			"./api/v1alpha1.OperationsStatus", "k8s.io/api/apps/v1.DeploymentStatus"},
 	}
 }
