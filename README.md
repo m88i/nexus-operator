@@ -30,6 +30,7 @@ Table of Contents
       * [Red Hat Certified Images](#red-hat-certified-images)
       * [Image Pull Policy](#image-pull-policy)
       * [Repositories Auto Creation](#repositories-auto-creation)
+      * [Scaling](#scaling)
       * [Contributing](#contributing)
 
 
@@ -412,6 +413,37 @@ The Operator also will create three Maven repositories by default:
 All of these repositories will be also added to the `maven-public` group. This group will gather the vast majority of jars needed by the most common use cases out there. If you won't need them, just disable this behavior by setting the attribute `spec.serverOperatons.disableRepositoryCreation` to `true` in the Nexus CR. 
 
 All of these operations are disabled if the attribute `spec.generateRandomAdminPassword` is set to `true`, since default credentials are needed to create the `nexus-operator` user. You can safely change the default credentials after this user has been created.
+
+## Scaling
+
+For now, the Nexus Operator won't accept a number higher than `1` to the `spec.replicas` attribute.
+This is because the Nexus server can't share its mounted persistent volume with other pods. See #191 for more details.
+
+Horizontal scaling will only work once we add HA support to the operator (see #61). 
+If you need to scale the server, you should take the vertical approach and increase the numbers of resource limits used
+by the Nexus server. For example:
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  replicas: 1
+  # Set the resources requests and limits for Nexus pods. See: https://help.sonatype.com/repomanager3/system-requirements
+  resources:
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+  persistence:
+    persistent: true
+    volumeSize: 10Gi
+```
+
+We are working to support HA in the future.
 
 ## Contributing
 

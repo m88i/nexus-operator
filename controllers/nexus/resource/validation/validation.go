@@ -80,7 +80,21 @@ func (v *Validator) SetDefaultsAndValidate(nexus *v1alpha1.Nexus) (*v1alpha1.Nex
 }
 
 func (v *Validator) validate(nexus *v1alpha1.Nexus) error {
-	return v.validateNetworking(nexus)
+	validators := []func(*v1alpha1.Nexus) error{v.validateDeployment, v.validateNetworking}
+	for _, v := range validators {
+		if err := v(nexus); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *Validator) validateDeployment(nexus *v1alpha1.Nexus) error {
+	if nexus.Spec.Replicas > 1 {
+		v.log.Warn("Nexus server only supports 1 replica.", "Desired Replicas", nexus.Spec.Replicas)
+		nexus.Spec.Replicas = ensureMaximum(nexus.Spec.Replicas, 1)
+	}
+	return nil
 }
 
 func (v *Validator) validateNetworking(nexus *v1alpha1.Nexus) error {
@@ -284,6 +298,13 @@ func (v *Validator) setSecurityDefaults(nexus *v1alpha1.Nexus) {
 func ensureMinimum(value, minimum int32) int32 {
 	if value < minimum {
 		return minimum
+	}
+	return value
+}
+
+func ensureMaximum(value, max int32) int32 {
+	if value > max {
+		return max
 	}
 	return value
 }

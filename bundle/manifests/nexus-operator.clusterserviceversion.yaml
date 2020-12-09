@@ -35,7 +35,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Developer Tools
     certified: "false"
-    containerImage: quay.io/m88i/nexus-operator:0.4.0
+    containerImage: quay.io/m88i/nexus-operator:0.5.0
     createdAt: "2019-11-16T13:12:22Z"
     description: Nexus Operator to deploy and manage Nexus 3.x servers
     operators.operatorframework.io/builder: operator-sdk-v1.0.1
@@ -43,7 +43,7 @@ metadata:
     repository: https://github.com/m88i/nexus-operator
     support: m88i Labs
     tectonic-visibility: ocs
-  name: nexus-operator.v0.4.0
+  name: nexus-operator.v0.5.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -219,7 +219,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
-                image: quay.io/m88i/nexus-operator:0.4.0
+                image: quay.io/m88i/nexus-operator:0.5.0
                 name: manager
                 resources:
                   requests:
@@ -301,5 +301,5 @@ spec:
   maturity: alpha
   provider:
     name: m88i Labs
-  replaces: nexus-operator.v0.3.0
-  version: 0.4.0
+  replaces: nexus-operator.v0.4.0
+  version: 0.5.0
