@@ -35,7 +35,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Developer Tools
     certified: "false"
-    containerImage: quay.io/m88i/nexus-operator:0.4.0
+    containerImage: quay.io/kaitou786/nexus-operator:0.5.0
     createdAt: "2019-11-16T13:12:22Z"
     description: Nexus Operator to deploy and manage Nexus 3.x servers
     operators.operatorframework.io/builder: operator-sdk-v1.0.1
@@ -43,7 +43,7 @@ metadata:
     repository: https://github.com/m88i/nexus-operator
     support: m88i Labs
     tectonic-visibility: ocs
-  name: nexus-operator.v0.4.0
+  name: nexus-operator.v0.5.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -215,17 +215,6 @@ spec:
             spec:
               containers:
               - args:
-                - --metrics-addr=127.0.0.1:8080
-                - --enable-leader-election
-                command:
-                - /manager
-                image: quay.io/m88i/nexus-operator:0.4.0
-                name: manager
-                resources:
-                  requests:
-                    cpu: 100m
-                    memory: 20Mi
-              - args:
                 - --secure-listen-address=0.0.0.0:8443
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
@@ -236,6 +225,17 @@ spec:
                 - containerPort: 8443
                   name: https
                 resources: {}
+              - args:
+                - --metrics-addr=127.0.0.1:8080
+                - --enable-leader-election
+                command:
+                - /manager
+                image: quay.io/kaitou786/nexus-operator:0.5.0
+                name: manager
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:
@@ -302,4 +302,4 @@ spec:
   provider:
     name: m88i Labs
   replaces: nexus-operator.v0.3.0
-  version: 0.4.0
+  version: 0.5.0

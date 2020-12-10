@@ -102,7 +102,6 @@ jobs:
   integration_tests:
       name: Integration Tests
       # we should wait for an ok from the other two
-      needs: [golint, unit_test]
       runs-on: ubuntu-latest
       env:
         CLUSTER_NAME: operator-test
@@ -134,18 +133,11 @@ jobs:
         - name: Install Operator SDK
           run: |
             ./hack/ci/install-operator-sdk.sh
-        - name: Install KIND
-          run: |
-            ./hack/ci/install-kind.sh
-            echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-        - name: Start KIND
-          run: ./hack/ci/start-kind.sh
-
-        - name: Generate Manifests
-          run: make bundle
-
-        - name: Build Operator Image
-          run: make operator-build BUILDER=docker
-
         - name: Run Operator OLM Integration Test
           run: make ci-olm-test
+        - name: Archive test results
+          if: ${{ always() }}
+          uses: actions/upload-artifact@v2
+          with:
+            name: test-logs
+            path: /tmp/op-test/log.out

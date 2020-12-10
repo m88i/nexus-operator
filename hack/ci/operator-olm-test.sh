@@ -17,32 +17,11 @@
 source ./hack/verify-version.sh
 source ./hack/ci/operator-ensure-manifest.sh
 
-CATALOG_IMAGE="operatorhubio-catalog:temp"
-OP_PATH="community-operators/nexus-operator-m88i"
-INSTALL_MODE="SingleNamespace"
-OPERATOR_TESTING_IMAGE="quay.io/operator-framework/operator-testing:latest"
 
-if [ -z ${KUBECONFIG} ]; then
-    KUBECONFIG=${HOME}/.kube/config
-    echo "---> KUBECONFIG environment variable not set, defining to:"
-    ls -la ${KUBECONFIG}
-fi
-
-csv_file=${OUTPUT}/nexus-operator-m88i/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml
-echo "---> Updating CSV file '${csv_file}' to imagePullPolicy: Never"
-sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' ${csv_file}
-echo "---> Resulting imagePullPolicy on manifest files"
-grep -rn imagePullPolicy ${OUTPUT}/nexus-operator-m88i
-
-echo "---> Building temporary catalog Image"
-docker build --build-arg PERMISSIVE_LOAD=false -f ./hack/ci/operatorhubio-catalog.Dockerfile -t ${CATALOG_IMAGE} .
-echo "---> Loading Catalog Image into Kind"
-kind load docker-image ${CATALOG_IMAGE} --name ${CLUSTER_NAME}
-
-# running tests
-docker pull ${OPERATOR_TESTING_IMAGE}
-docker run --network=host --rm \
-    -v ${KUBECONFIG}:/root/.kube/config:z \
-    -v ${OUTPUT}:/community-operators:z ${OPERATOR_TESTING_IMAGE} \
-    operator.test --no-print-directory \
-    OP_PATH=${OP_PATH} VERBOSE=true NO_KIND=0 CATALOG_IMAGE=${CATALOG_IMAGE} INSTALL_MODE=${INSTALL_MODE}
+OP_TEST_DEBUG=2
+echo "===============>"
+echo ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
+ls -l ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
+bash <(curl -sL https://cutt.ly/operator-test) \
+lemon \
+${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
