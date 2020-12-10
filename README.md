@@ -419,7 +419,7 @@ All of these operations are disabled if the attribute `spec.generateRandomAdminP
 For now, the Nexus Operator won't accept a number higher than `1` to the `spec.replicas` attribute.
 This is because the Nexus server can't share its mounted persistent volume with other pods. See #191 for more details.
 
-Horizontal scaling will only work once we add HA support to the operator (see #61). 
+Horizontal scaling will only work once we add [HA support](https://help.sonatype.com/repomanager3/high-availability) to the operator (see #61). 
 If you need to scale the server, you should take the vertical approach and increase the numbers of resource limits used
 by the Nexus server. For example:
 
