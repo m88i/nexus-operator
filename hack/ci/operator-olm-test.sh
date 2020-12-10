@@ -17,10 +17,8 @@
 source ./hack/verify-version.sh
 source ./hack/ci/operator-ensure-manifest.sh
 
-echo "---> Resulting imagePullPolicy on manifest files"
-grep -rn imagePullPolicy ${OUTPUT}/nexus-operator-m88i
-
+export OP_TEST_DEBUG=3
 
 bash <(curl -sL https://cutt.ly/operator-test) \
 all \
-${OUTPUT}/nexus-operator-m88i/${OP_VERSION}
+${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}

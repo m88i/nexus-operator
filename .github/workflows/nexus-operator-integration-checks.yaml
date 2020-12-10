@@ -133,12 +133,6 @@ jobs:
         - name: Install Operator SDK
           run: |
             ./hack/ci/install-operator-sdk.sh
-        - name: Generate Manifests
-          run: make bundle
-
-        - name: Build Operator Image
-          run: make operator-build BUILDER=docker
-
         - name: Run Operator OLM Integration Test
           run: make ci-olm-test
         - name: Archive test results
