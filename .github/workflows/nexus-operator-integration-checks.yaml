@@ -149,8 +149,6 @@ jobs:
         - name: Run Operator OLM Integration Test
           run: make ci-olm-test
         - name: check logs
-          if: ${{ failure() }}
-          run: tail -f /tmp/op-test/log.out
         - name: Archive code coverage results
           uses: actions/upload-artifact@v2
           with:
