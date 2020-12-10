@@ -148,7 +148,8 @@ jobs:
 
         - name: Run Operator OLM Integration Test
           run: make ci-olm-test
-        - name: Archive code coverage results
+        - name: Archive test results
+          if: ${{ always() }}
           uses: actions/upload-artifact@v2
           with:
             name: test-logs
