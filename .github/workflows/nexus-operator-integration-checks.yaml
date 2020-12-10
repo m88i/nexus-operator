@@ -130,7 +130,9 @@ jobs:
             key: ${{ runner.os }}-go-${{ env.GO_VERSION }}
             restore-keys: |
               ${{ runner.os }}-go-${{ env.GO_VERSION }}
-
+        - name: Install Operator SDK
+          run: |
+            ./hack/ci/install-operator-sdk.sh
         - name: Generate Manifests
           run: make bundle
 
