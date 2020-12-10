@@ -17,8 +17,9 @@
 source ./hack/verify-version.sh
 source ./hack/ci/operator-ensure-manifest.sh
 
-export OP_TEST_DEBUG=3
-
+echo "===============>"
+echo ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
+ls -l ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
 bash <(curl -sL https://cutt.ly/operator-test) \
 all \
 ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
