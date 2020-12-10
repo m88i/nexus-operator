@@ -43,7 +43,7 @@ metadata:
     repository: https://github.com/m88i/nexus-operator
     support: m88i Labs
     tectonic-visibility: ocs
-  name: nexus-operator.v1.0.0-snapshot
+  name: nexus-operator.v0.5.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -230,7 +230,7 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
-                image: quay.io/m88i/nexus-operator:1.0.0-snapshot
+                image: quay.io/m88i/nexus-operator:0.5.0
                 name: manager
                 resources:
                   requests:
@@ -302,4 +302,4 @@ spec:
   provider:
     name: m88i Labs
   replaces: nexus-operator.v0.4.0
-  version: 1.0.0-snapshot
+  version: 0.5.0
