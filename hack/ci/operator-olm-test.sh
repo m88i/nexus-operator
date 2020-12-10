@@ -23,5 +23,5 @@ echo "===============>"
 echo ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
 ls -l ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
 bash <(curl -sL https://cutt.ly/operator-test) \
-all \
+lemon \
 ${OUTPUT}/community-operators/nexus-operator-m88i/${OP_VERSION}
