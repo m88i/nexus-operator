@@ -17,15 +17,6 @@
 source ./hack/verify-version.sh
 source ./hack/ci/operator-ensure-manifest.sh
 
-if [ -z ${KUBECONFIG} ]; then
-    KUBECONFIG=${HOME}/.kube/config
-    echo "---> KUBECONFIG environment variable not set, defining to:"
-    ls -la ${KUBECONFIG}
-fi
-
-csv_file=${OUTPUT}/nexus-operator-m88i/${OP_VERSION}/nexus-operator.v${OP_VERSION}.clusterserviceversion.yaml
-echo "---> Updating CSV file '${csv_file}' to imagePullPolicy: Never"
-sed -i 's/imagePullPolicy: Always/imagePullPolicy: Never/g' ${csv_file}
 echo "---> Resulting imagePullPolicy on manifest files"
 grep -rn imagePullPolicy ${OUTPUT}/nexus-operator-m88i
 

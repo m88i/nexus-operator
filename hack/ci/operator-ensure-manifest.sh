@@ -16,7 +16,7 @@
 
 source ./hack/verify-version.sh
 
-OUTPUT="${PWD}/build/_output/operatorhub/upstream-community-operators"
+OUTPUT="${PWD}/build/_output/operatorhub/community-operators"
 
 echo "---> Output dir is set to ${OUTPUT}"
 

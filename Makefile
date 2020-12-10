@@ -18,7 +18,7 @@ IMG ?= controller:latest
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # Image URL for the operator final image
-OPERATOR_IMG ?= quay.io/m88i/nexus-operator:$(VERSION)
+OPERATOR_IMG ?= quay.io/kaitou786/nexus-operator:$(VERSION)
 export OP_VERSION = $(VERSION)
 
 BUILDER ?= podman
@@ -149,7 +149,7 @@ bundle-build:
 #################### CUSTOM NEXUS OPERATOR TASKS ######################
 # Run the OLM test on CI
 ci-olm-test:
-	./hack/ci/load-operator-image.sh
+	#./hack/ci/load-operator-image.sh
 	./hack/ci/operator-olm-test.sh
 
 .PHONY: pr-prep

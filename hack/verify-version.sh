@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-if [ -z "${OP_VERSION}"]; then
+if [ -z "${OP_VERSION}" ]; then
     echo "---> Operator version not defined. Export OP_VERSION variable or call this script from the Makefile"
     exit 1
 fi

@@ -130,15 +130,6 @@ jobs:
             key: ${{ runner.os }}-go-${{ env.GO_VERSION }}
             restore-keys: |
               ${{ runner.os }}-go-${{ env.GO_VERSION }}
-        - name: Install Operator SDK
-          run: |
-            ./hack/ci/install-operator-sdk.sh
-        - name: Install KIND
-          run: |
-            ./hack/ci/install-kind.sh
-            echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-        - name: Start KIND
-          run: ./hack/ci/start-kind.sh
 
         - name: Generate Manifests
           run: make bundle
