@@ -32,4 +32,4 @@ grep -rn imagePullPolicy ${OUTPUT}/nexus-operator-m88i
 
 bash <(curl -sL https://cutt.ly/operator-test) \
 all \
-${output}/nexus-operator-m88i/${OP_VERSION}
+${OUTPUT}/nexus-operator-m88i/${OP_VERSION}
