@@ -102,7 +102,6 @@ jobs:
   integration_tests:
       name: Integration Tests
       # we should wait for an ok from the other two
-      needs: [golint, unit_test]
       runs-on: ubuntu-latest
       env:
         CLUSTER_NAME: operator-test
