@@ -148,3 +148,10 @@ jobs:
 
         - name: Run Operator OLM Integration Test
           run: make ci-olm-test
+        - name: check logs
+          if: ${{ failure() }}
+        - name: Archive code coverage results
+          uses: actions/upload-artifact@v2
+          with:
+            name: test-logs
+            path: /tmp/op-test/log.out
