@@ -33,6 +33,8 @@ const (
 	probeDefaultPeriodSeconds       = int32(10)
 	probeDefaultSuccessThreshold    = int32(1)
 	probeDefaultFailureThreshold    = int32(3)
+
+	maxReplicas = int32(1)
 )
 
 var (

@@ -80,21 +80,7 @@ func (v *Validator) SetDefaultsAndValidate(nexus *v1alpha1.Nexus) (*v1alpha1.Nex
 }
 
 func (v *Validator) validate(nexus *v1alpha1.Nexus) error {
-	validators := []func(*v1alpha1.Nexus) error{v.validateDeployment, v.validateNetworking}
-	for _, v := range validators {
-		if err := v(nexus); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *Validator) validateDeployment(nexus *v1alpha1.Nexus) error {
-	if nexus.Spec.Replicas > 1 {
-		v.log.Warn("Nexus server only supports 1 replica.", "Desired Replicas", nexus.Spec.Replicas)
-		nexus.Spec.Replicas = ensureMaximum(nexus.Spec.Replicas, 1)
-	}
-	return nil
+	return v.validateNetworking(nexus)
 }
 
 func (v *Validator) validateNetworking(nexus *v1alpha1.Nexus) error {
@@ -147,9 +133,17 @@ func (v *Validator) setDefaults(nexus *v1alpha1.Nexus) *v1alpha1.Nexus {
 }
 
 func (v *Validator) setDeploymentDefaults(nexus *v1alpha1.Nexus) {
+	v.setReplicasDefaults(nexus)
 	v.setResourcesDefaults(nexus)
 	v.setImageDefaults(nexus)
 	v.setProbeDefaults(nexus)
+}
+
+func (v *Validator) setReplicasDefaults(nexus *v1alpha1.Nexus) {
+	if nexus.Spec.Replicas > maxReplicas {
+		v.log.Warn("Number of replicas not supported", "MaxSupportedReplicas", maxReplicas, "DesiredReplicas", nexus.Spec.Replicas)
+		nexus.Spec.Replicas = ensureMaximum(nexus.Spec.Replicas, maxReplicas)
+	}
 }
 
 func (v *Validator) setResourcesDefaults(nexus *v1alpha1.Nexus) {
