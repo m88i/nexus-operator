@@ -189,6 +189,19 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 			}(),
 			AllDefaultsCommunityNexus.DeepCopy(),
 		},
+		{
+			"Invalid 'spec.replicas'",
+			func() *v1alpha1.Nexus {
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
+				nexus.Spec.Replicas = 3
+				return nexus
+			}(),
+			func() *v1alpha1.Nexus {
+				nexus := AllDefaultsCommunityNexus.DeepCopy()
+				nexus.Spec.Replicas = 1
+				return nexus
+			}(),
+		},
 	}
 
 	for _, tt := range tests {

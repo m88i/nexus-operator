@@ -68,6 +68,9 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: meta.GenerateLabels(nexus),
 			},
+			Strategy: appsv1.DeploymentStrategy{
+				Type: appsv1.RecreateDeploymentStrategyType,
+			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: meta.DefaultObjectMeta(nexus),
 				Spec: corev1.PodSpec{

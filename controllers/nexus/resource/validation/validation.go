@@ -133,9 +133,17 @@ func (v *Validator) setDefaults(nexus *v1alpha1.Nexus) *v1alpha1.Nexus {
 }
 
 func (v *Validator) setDeploymentDefaults(nexus *v1alpha1.Nexus) {
+	v.setReplicasDefaults(nexus)
 	v.setResourcesDefaults(nexus)
 	v.setImageDefaults(nexus)
 	v.setProbeDefaults(nexus)
+}
+
+func (v *Validator) setReplicasDefaults(nexus *v1alpha1.Nexus) {
+	if nexus.Spec.Replicas > maxReplicas {
+		v.log.Warn("Number of replicas not supported", "MaxSupportedReplicas", maxReplicas, "DesiredReplicas", nexus.Spec.Replicas)
+		nexus.Spec.Replicas = ensureMaximum(nexus.Spec.Replicas, maxReplicas)
+	}
 }
 
 func (v *Validator) setResourcesDefaults(nexus *v1alpha1.Nexus) {
@@ -284,6 +292,13 @@ func (v *Validator) setSecurityDefaults(nexus *v1alpha1.Nexus) {
 func ensureMinimum(value, minimum int32) int32 {
 	if value < minimum {
 		return minimum
+	}
+	return value
+}
+
+func ensureMaximum(value, max int32) int32 {
+	if value > max {
+		return max
 	}
 	return value
 }
