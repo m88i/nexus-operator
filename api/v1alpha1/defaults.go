@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package validation
+package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
 	k8sres "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/m88i/nexus-operator/api/v1alpha1"
 )
 
 const (
@@ -49,7 +47,7 @@ var (
 		},
 	}
 
-	DefaultProbe = &v1alpha1.NexusProbe{
+	DefaultProbe = &NexusProbe{
 		InitialDelaySeconds: probeDefaultInitialDelaySeconds,
 		TimeoutSeconds:      probeDefaultTimeoutSeconds,
 		PeriodSeconds:       probeDefaultPeriodSeconds,
@@ -57,30 +55,30 @@ var (
 		FailureThreshold:    probeDefaultFailureThreshold,
 	}
 
-	DefaultPersistence = v1alpha1.NexusPersistence{
+	DefaultPersistence = NexusPersistence{
 		Persistent:   false,
 		VolumeSize:   DefaultVolumeSize,
 		StorageClass: "",
 	}
 
-	DefaultNetworking = v1alpha1.NexusNetworking{
+	DefaultNetworking = NexusNetworking{
 		Expose: false,
 		TLS:    DefaultTLS,
 	}
 
-	DefaultTLS = v1alpha1.NexusNetworkingTLS{
+	DefaultTLS = NexusNetworkingTLS{
 		Mandatory:  false,
 		SecretName: "",
 	}
 
-	DefaultUpdate = v1alpha1.NexusAutomaticUpdate{
+	DefaultUpdate = NexusAutomaticUpdate{
 		// this isn't really the default, but we need this off for most tests anyway
 		Disabled: true,
 	}
 
-	AllDefaultsCommunityNexus = v1alpha1.Nexus{
+	AllDefaultsCommunityNexus = Nexus{
 		ObjectMeta: metav1.ObjectMeta{Name: "default-community-nexus", Namespace: "default"},
-		Spec: v1alpha1.NexusSpec{
+		Spec: NexusSpec{
 			Replicas:                    0,
 			Image:                       NexusCommunityImage,
 			ImagePullPolicy:             "",

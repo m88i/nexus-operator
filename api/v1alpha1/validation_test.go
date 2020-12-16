@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package validation
+package v1alpha1
 
 import (
 	"fmt"
@@ -22,79 +22,74 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/controllers/nexus/update"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
+	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
+
+// TODO: fix the tests
+// TODO: move mutation tests to mutation_test.go
 
 func TestNewValidator(t *testing.T) {
 	tests := []struct {
 		name   string
 		client *test.FakeClient
-		want   *Validator
+		want   *validator
 	}{
 		{
 			"On OCP",
 			test.NewFakeClientBuilder().OnOpenshift().Build(),
-			&Validator{
+			&validator{
 				routeAvailable:   true,
 				ingressAvailable: false,
-				ocp:              true,
 			},
 		},
 		{
 			"On K8s, no ingress",
 			test.NewFakeClientBuilder().Build(),
-			&Validator{
+			&validator{
 				routeAvailable:   false,
 				ingressAvailable: false,
-				ocp:              false,
 			},
 		},
 		{
 			"On K8s with v1beta1 ingress",
 			test.NewFakeClientBuilder().WithLegacyIngress().Build(),
-			&Validator{
+			&validator{
 				routeAvailable:   false,
 				ingressAvailable: true,
-				ocp:              false,
 			},
 		},
 		{
 			"On K8s with v1 ingress",
 			test.NewFakeClientBuilder().WithIngress().Build(),
-			&Validator{
+			&validator{
 				routeAvailable:   false,
 				ingressAvailable: true,
-				ocp:              false,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		discovery.SetClient(tt.client)
-		got, err := NewValidator(tt.client, tt.client.Scheme())
-		assert.Nil(t, err)
-		tt.want.client = tt.client
-		tt.want.scheme = tt.client.Scheme()
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("%s\nWant: %+v\nGot: %+v", tt.name, tt.want, got)
-		}
+		// the nexus CR is not important here
+		assert.Equal(t, tt.want, newValidator(nil))
 	}
 
 	// now let's test out error
-	client := test.NewFakeClientBuilder().Build()
+	client := test.NewFakeClientBuilder().WithIngress().Build()
 	errString := "test error"
-	client.SetMockErrorForOneRequest(fmt.Errorf(errString))
+	client.SetMockError(fmt.Errorf(errString))
 	discovery.SetClient(client)
-	_, err := NewValidator(client, client.Scheme())
-	assert.Contains(t, err.Error(), errString)
+	got := newValidator(nil)
+	// all calls to discovery failed, so all should be false
+	assert.False(t, got.routeAvailable)
+	assert.False(t, got.ingressAvailable)
 }
 
 func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
-	minimumDefaultProbe := &v1alpha1.NexusProbe{
+	minimumDefaultProbe := &NexusProbe{
 		InitialDelaySeconds: 0,
 		TimeoutSeconds:      1,
 		PeriodSeconds:       1,
@@ -104,12 +99,12 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input *v1alpha1.Nexus
-		want  *v1alpha1.Nexus
+		input *Nexus
+		want  *Nexus
 	}{
 		{
 			"'spec.resources' left blank",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.Resources = corev1.ResourceRequirements{}
 				return nexus
@@ -118,13 +113,13 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"'spec.useRedHatImage' set to true and 'spec.image' not left blank",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.UseRedHatImage = true
 				nexus.Spec.Image = "some-image"
 				return nexus
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.UseRedHatImage = true
 				n.Spec.Image = NexusCertifiedImage
@@ -133,7 +128,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"'spec.useRedHatImage' set to false and 'spec.image' left blank",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.Image = ""
 				return nexus
@@ -142,7 +137,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"'spec.livenessProbe.successThreshold' not equal to 1",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe.SuccessThreshold = 2
 				return nexus
@@ -151,9 +146,9 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"'spec.livenessProbe.*' and 'spec.readinessProbe.*' don't meet minimum values",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
-				nexus.Spec.LivenessProbe = &v1alpha1.NexusProbe{
+				nexus.Spec.LivenessProbe = &NexusProbe{
 					InitialDelaySeconds: -1,
 					TimeoutSeconds:      -1,
 					PeriodSeconds:       -1,
@@ -163,7 +158,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 				nexus.Spec.ReadinessProbe = nexus.Spec.LivenessProbe.DeepCopy()
 				return nexus
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe = minimumDefaultProbe.DeepCopy()
 				nexus.Spec.ReadinessProbe = minimumDefaultProbe.DeepCopy()
@@ -172,7 +167,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"Unset 'spec.livenessProbe' and 'spec.readinessProbe'",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.LivenessProbe = nil
 				nexus.Spec.ReadinessProbe = nil
@@ -182,7 +177,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"Invalid 'spec.imagePullPolicy'",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.ImagePullPolicy = "invalid"
 				return nexus
@@ -191,12 +186,12 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 		},
 		{
 			"Invalid 'spec.replicas'",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.Replicas = 3
 				return nexus
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.Replicas = 1
 				return nexus
@@ -205,7 +200,7 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		v := &Validator{}
+		v := &validator{}
 		got, err := v.SetDefaultsAndValidate(tt.input)
 		assert.Nil(t, err)
 		if !reflect.DeepEqual(got, tt.want) {
@@ -216,13 +211,13 @@ func TestValidator_SetDefaultsAndValidate_Deployment(t *testing.T) {
 
 func TestValidator_setUpdateDefaults(t *testing.T) {
 	client := test.NewFakeClientBuilder().Build()
-	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus := &Nexus{Spec: NexusSpec{AutomaticUpdate: NexusAutomaticUpdate{}}}
 	nexus.Spec.Image = NexusCommunityImage
-	v, _ := NewValidator(client, client.Scheme())
+	v, _ := newValidator(client, client.Scheme())
 	v.log = logger.GetLoggerWithResource("test", nexus)
 
 	v.setUpdateDefaults(nexus)
-	latestMinor, err := update.GetLatestMinor()
+	latestMinor, err := framework.GetLatestMinor()
 	if err != nil {
 		// If we couldn't fetch the tags updates should be disabled
 		assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
@@ -231,22 +226,21 @@ func TestValidator_setUpdateDefaults(t *testing.T) {
 	}
 
 	// Now an invalid image
-	nexus = &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus = &Nexus{Spec: NexusSpec{AutomaticUpdate: NexusAutomaticUpdate{}}}
 	nexus.Spec.Image = "some-image"
 	v.setUpdateDefaults(nexus)
 	assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
 
 	// Informed a minor which does not exist
-	nexus = &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{AutomaticUpdate: v1alpha1.NexusAutomaticUpdate{}}}
+	nexus = &Nexus{Spec: NexusSpec{AutomaticUpdate: NexusAutomaticUpdate{}}}
 	nexus.Spec.Image = NexusCommunityImage
 	bogusMinor := -1
 	nexus.Spec.AutomaticUpdate.MinorVersion = &bogusMinor
 	v.setUpdateDefaults(nexus)
-	latestMinor, err = update.GetLatestMinor()
+	latestMinor, err = framework.GetLatestMinor()
 	if err != nil {
 		// If we couldn't fetch the tags updates should be disabled
 		assert.True(t, nexus.Spec.AutomaticUpdate.Disabled)
-		assert.True(t, test.EventExists(client, changedNexusReason))
 	} else {
 		assert.Equal(t, latestMinor, *nexus.Spec.AutomaticUpdate.MinorVersion)
 	}
@@ -258,23 +252,23 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 		ocp              bool
 		routeAvailable   bool
 		ingressAvailable bool
-		input            *v1alpha1.Nexus
-		want             *v1alpha1.Nexus
+		input            *Nexus
+		want             *Nexus
 	}{
 		{
 			"'spec.networking.exposeAs' left blank on OCP",
 			true,
 			true,
 			false, // unimportant
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				return n
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
-				n.Spec.Networking.ExposeAs = v1alpha1.RouteExposeType
+				n.Spec.Networking.ExposeAs = RouteExposeType
 				return n
 			}(),
 		},
@@ -283,15 +277,15 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 			false,
 			false,
 			true,
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				return n
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
-				n.Spec.Networking.ExposeAs = v1alpha1.IngressExposeType
+				n.Spec.Networking.ExposeAs = IngressExposeType
 				return n
 			}(),
 		},
@@ -300,22 +294,22 @@ func TestValidator_setNetworkingDefaults(t *testing.T) {
 			false,
 			false,
 			false,
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
 				return n
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Networking.Expose = true
-				n.Spec.Networking.ExposeAs = v1alpha1.NodePortExposeType
+				n.Spec.Networking.ExposeAs = NodePortExposeType
 				return n
 			}(),
 		},
 	}
 
 	for _, tt := range tests {
-		v := &Validator{
+		v := &validator{
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
 			ocp:              tt.ocp,
@@ -335,7 +329,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 		ocp              bool
 		routeAvailable   bool
 		ingressAvailable bool
-		input            *v1alpha1.Nexus
+		input            *Nexus
 		wantError        bool
 	}{
 		{
@@ -343,7 +337,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false, // unimportant
 			false, // unimportant
 			false, // unimportant
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: false}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: false}}},
 			false,
 		},
 		{
@@ -351,7 +345,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false,
 			false,
 			true,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, Host: "example.com"}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: IngressExposeType, Host: "example.com"}}},
 			false,
 		},
 		{
@@ -359,7 +353,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false,
 			false,
 			true,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, Host: "example.com", TLS: v1alpha1.NexusNetworkingTLS{SecretName: "tt-secret"}}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: IngressExposeType, Host: "example.com", TLS: NexusNetworkingTLS{SecretName: "tt-secret"}}}},
 			false,
 		},
 		{
@@ -367,7 +361,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false,
 			false,
 			false,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, Host: "example.com"}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: IngressExposeType, Host: "example.com"}}},
 			true,
 		},
 		{
@@ -375,7 +369,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false,
 			false,
 			true,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: IngressExposeType}}},
 			true,
 		},
 		{
@@ -383,7 +377,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false,
 			false,
 			true,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, Host: "example.com", TLS: v1alpha1.NexusNetworkingTLS{Mandatory: true}}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: IngressExposeType, Host: "example.com", TLS: NexusNetworkingTLS{Mandatory: true}}}},
 			true,
 		},
 		{
@@ -391,7 +385,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false,
 			false,
 			true,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.RouteExposeType}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: RouteExposeType}}},
 			true,
 		},
 		{
@@ -399,7 +393,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			true,
 			true,
 			false,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.RouteExposeType}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: RouteExposeType}}},
 			false,
 		},
 		{
@@ -407,7 +401,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			true,
 			true,
 			false,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.RouteExposeType, TLS: v1alpha1.NexusNetworkingTLS{Mandatory: true}}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: RouteExposeType, TLS: NexusNetworkingTLS{Mandatory: true}}}},
 			false,
 		},
 		{
@@ -415,7 +409,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			true,
 			true,
 			false,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.RouteExposeType, TLS: v1alpha1.NexusNetworkingTLS{SecretName: "test-secret"}}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: RouteExposeType, TLS: NexusNetworkingTLS{SecretName: "test-secret"}}}},
 			true,
 		},
 		{
@@ -423,7 +417,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			true,
 			true,
 			false,
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.IngressExposeType, Host: "example.com"}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: IngressExposeType, Host: "example.com"}}},
 			true,
 		},
 		{
@@ -431,7 +425,7 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false, // unimportant
 			false, // unimportant
 			false, // unimportant
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.NodePortExposeType, NodePort: 8080}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: NodePortExposeType, NodePort: 8080}}},
 			false,
 		},
 		{
@@ -439,13 +433,13 @@ func TestValidator_validateNetworking(t *testing.T) {
 			false, // unimportant
 			false, // unimportant
 			false, // unimportant
-			&v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: true, ExposeAs: v1alpha1.NodePortExposeType}}},
+			&Nexus{Spec: NexusSpec{Networking: NexusNetworking{Expose: true, ExposeAs: NodePortExposeType}}},
 			true,
 		},
 	}
 
 	for _, tt := range tests {
-		v := &Validator{
+		v := &validator{
 			routeAvailable:   tt.routeAvailable,
 			ingressAvailable: tt.ingressAvailable,
 			ocp:              tt.ocp,
@@ -460,17 +454,17 @@ func TestValidator_validateNetworking(t *testing.T) {
 func TestValidator_SetDefaultsAndValidate_Persistence(t *testing.T) {
 	tests := []struct {
 		name  string
-		input *v1alpha1.Nexus
-		want  *v1alpha1.Nexus
+		input *Nexus
+		want  *Nexus
 	}{
 		{
 			"'spec.persistence.volumeSize' left blank",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Persistence.Persistent = true
 				return n
 			}(),
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				n := AllDefaultsCommunityNexus.DeepCopy()
 				n.Spec.Persistence.Persistent = true
 				n.Spec.Persistence.VolumeSize = DefaultVolumeSize
@@ -479,7 +473,7 @@ func TestValidator_SetDefaultsAndValidate_Persistence(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		v := &Validator{}
+		v := &validator{}
 		got, err := v.SetDefaultsAndValidate(tt.input)
 		assert.Nil(t, err)
 		if !reflect.DeepEqual(got, tt.want) {
@@ -492,12 +486,12 @@ func TestValidator_SetDefaultsAndValidate_Security(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input *v1alpha1.Nexus
-		want  *v1alpha1.Nexus
+		input *Nexus
+		want  *Nexus
 	}{
 		{
 			"'spec.serviceAccountName' left blank",
-			func() *v1alpha1.Nexus {
+			func() *Nexus {
 				nexus := AllDefaultsCommunityNexus.DeepCopy()
 				nexus.Spec.ServiceAccountName = ""
 				return nexus
@@ -506,7 +500,7 @@ func TestValidator_SetDefaultsAndValidate_Security(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		v := &Validator{}
+		v := &validator{}
 		got, err := v.SetDefaultsAndValidate(tt.input)
 		assert.Nil(t, err)
 		if !reflect.DeepEqual(got, tt.want) {

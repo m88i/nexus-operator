@@ -42,7 +42,7 @@ func TestFetchDeployedResources(t *testing.T) {
 	}
 	cli := test.NewFakeClientBuilder(deployment, service).Build()
 
-	gotResources, err := FetchDeployedResources(managedObjectsRef, nexus, cli)
+	gotResources, err := FetchDeployedResources(managedObjectsRef, Key(nexus), cli)
 
 	assert.Nil(t, err)
 	assert.Len(t, gotResources, 2)
@@ -56,7 +56,7 @@ func TestFetchDeployedResourcesFailure(t *testing.T) {
 	mockErrorMsg := "mock error"
 
 	cli.SetMockError(goerrors.New(mockErrorMsg))
-	_, err := FetchDeployedResources(managedObjectsRef, nexus, cli)
+	_, err := FetchDeployedResources(managedObjectsRef, Key(nexus), cli)
 
 	assert.Contains(t, err.Error(), mockErrorMsg)
 }

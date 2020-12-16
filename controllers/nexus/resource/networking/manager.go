@@ -149,7 +149,7 @@ func (m *Manager) createIngress() resource.KubernetesResource {
 
 // GetDeployedResources returns the networking resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	return framework.FetchDeployedResources(m.managedObjectsRef, m.nexus, m.client)
+	return framework.FetchDeployedResources(m.managedObjectsRef, framework.Key(m.nexus), m.client)
 }
 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package update
+package framework
 
 import (
 	"fmt"
@@ -43,11 +43,11 @@ var (
 
 // HigherVersion checks if thisTag is of a higher version than otherTag
 func HigherVersion(thisTag, otherTag string) (bool, error) {
-	thisMinor, err := getMinor(thisTag)
+	thisMinor, err := GetMinor(thisTag)
 	if err != nil {
 		return false, fmt.Errorf(tagParseFailureFormat, thisTag, err)
 	}
-	otherMinor, err := getMinor(otherTag)
+	otherMinor, err := GetMinor(otherTag)
 	if err != nil {
 		return false, fmt.Errorf(tagParseFailureFormat, otherTag, err)
 	}
@@ -137,7 +137,7 @@ func getTags() ([]string, error) {
 func parseTagsAndUpdate(tags []string) error {
 	for _, candidateTag := range tags {
 		if candidateTag != "latest" {
-			candidateMinor, err := getMinor(candidateTag)
+			candidateMinor, err := GetMinor(candidateTag)
 			if err != nil {
 				return fmt.Errorf(tagParseFailureFormat, candidateTag, err)
 			}
@@ -160,7 +160,7 @@ func parseTagsAndUpdate(tags []string) error {
 	return nil
 }
 
-func getMinor(tag string) (int, error) {
+func GetMinor(tag string) (int, error) {
 	return strconv.Atoi(strings.Split(tag, ".")[1])
 }
 

@@ -41,6 +41,10 @@ const (
 	openshiftGroupVersion = "openshift.io/v1"
 )
 
+// TODO: break this in FakeClient and FakeDiscovery
+// TODO: move FakeClient and the actual client to a separate package
+// TODO: move FakeDiscovery to the discovery package
+
 // FakeClientBuilder allows building a FakeClient according to
 // the desired cluster capabilities
 type FakeClientBuilder struct {

@@ -17,8 +17,7 @@ package update
 import "github.com/m88i/nexus-operator/pkg/logger"
 
 const (
-	defaultLogName = "update"
 	monitorLogName = "update_monitor"
 )
 
-var log = logger.GetLogger(defaultLogName)
+var log = logger.GetLogger(monitorLogName)
