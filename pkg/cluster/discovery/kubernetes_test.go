@@ -18,29 +18,27 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 func TestIsIngressAvailable(t *testing.T) {
-	cli = test.NewFakeClientBuilder().Build()
+	SetClient(NewFakeDiscBuilder().Build())
 	ingressAvailable, err := IsIngressAvailable()
 	assert.Nil(t, err)
 	assert.False(t, ingressAvailable)
 
-	cli = test.NewFakeClientBuilder().WithIngress().Build()
+	SetClient(NewFakeDiscBuilder().WithIngress().Build())
 	ingressAvailable, err = IsIngressAvailable()
 	assert.Nil(t, err)
 	assert.True(t, ingressAvailable)
 }
 
 func TestIsLegacyIngressAvailable(t *testing.T) {
-	cli = test.NewFakeClientBuilder().Build()
+	SetClient(NewFakeDiscBuilder().Build())
 	ingressAvailable, err := IsLegacyIngressAvailable()
 	assert.Nil(t, err)
 	assert.False(t, ingressAvailable)
 
-	cli = test.NewFakeClientBuilder().WithLegacyIngress().Build()
+	SetClient(NewFakeDiscBuilder().WithLegacyIngress().Build())
 	ingressAvailable, err = IsLegacyIngressAvailable()
 	assert.Nil(t, err)
 	assert.True(t, ingressAvailable)

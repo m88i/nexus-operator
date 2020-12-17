@@ -27,9 +27,9 @@ const admissionLogName = "admission"
 // log is for logging in this package.
 var log = logger.GetLogger(admissionLogName)
 
-func (r *Nexus) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (n *Nexus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+		For(n).
 		Complete()
 }
 
@@ -40,12 +40,12 @@ func (r *Nexus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Defaulter = &Nexus{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Nexus) Default() {
-	log = logger.GetLoggerWithResource(admissionLogName, r)
+func (n *Nexus) Default() {
+	log = logger.GetLoggerWithResource(admissionLogName, n)
 	defer func() { log = logger.GetLogger(admissionLogName) }()
 
 	log.Info("Setting defaults and making necessary changes to the Nexus")
-	newMutator(r).mutate()
+	newMutator(n).mutate()
 }
 
 // if we ever need validation upon delete requests change verbs to "verbs=create;update;delete".
@@ -54,25 +54,25 @@ func (r *Nexus) Default() {
 var _ webhook.Validator = &Nexus{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Nexus) ValidateCreate() error {
-	log = logger.GetLoggerWithResource(admissionLogName, r)
+func (n *Nexus) ValidateCreate() error {
+	log = logger.GetLoggerWithResource(admissionLogName, n)
 	defer func() { log = logger.GetLogger(admissionLogName) }()
 
 	log.Info("Validating a new Nexus")
-	return newValidator(r).validate()
+	return newValidator(n).validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Nexus) ValidateUpdate(old runtime.Object) error {
-	log = logger.GetLoggerWithResource(admissionLogName, r)
+func (n *Nexus) ValidateUpdate(old runtime.Object) error {
+	log = logger.GetLoggerWithResource(admissionLogName, n)
 	defer func() { log = logger.GetLogger(admissionLogName) }()
 
 	log.Info("Validating an update to a existing Nexus")
-	return newValidator(r).validate()
+	return newValidator(n).validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Nexus) ValidateDelete() error {
+func (n *Nexus) ValidateDelete() error {
 	// we don't care about validation on delete requests
 	return nil
 }

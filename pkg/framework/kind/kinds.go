@@ -17,6 +17,7 @@ package kind
 const (
 	DeploymentKind = "Deployment"
 	IngressKind    = "Ingress"
+	NexusKind      = "Nexus"
 	PVCKind        = "Persistent Volume Claim"
 	RouteKind      = "Route"
 	SecretKind     = "Secret"

@@ -25,7 +25,6 @@ import (
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/logger"
-	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 // TODO: fix the tests

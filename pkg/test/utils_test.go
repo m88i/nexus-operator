@@ -28,3 +28,30 @@ func TestContainsType(t *testing.T) {
 	assert.True(t, ContainsType(resources, reflect.TypeOf(&corev1.ServiceAccount{})))
 	assert.False(t, ContainsType(resources, reflect.TypeOf(&corev1.Service{})))
 }
+
+func TestEventExists(t *testing.T) {
+	testReason := "reason"
+	testEvent := &corev1.Event{Reason: testReason}
+	c := NewFakeClient(testEvent)
+
+	assert.False(t, EventExists(c, "some other reason"))
+	assert.True(t, EventExists(c, testReason))
+}
+
+type foo interface {
+	bar()
+}
+type concrete struct{}
+
+func (*concrete) bar() {}
+func TestIsInterfaceValueNil(t *testing.T) {
+	var f foo
+	assert.True(t, IsInterfaceValueNil(f))
+
+	var c *concrete
+	f = c
+	assert.True(t, IsInterfaceValueNil(f))
+
+	f = &concrete{}
+	assert.False(t, IsInterfaceValueNil(f))
+}
