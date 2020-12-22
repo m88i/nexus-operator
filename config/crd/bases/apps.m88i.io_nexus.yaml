@@ -35,6 +35,7 @@ spec:
     listKind: NexusList
     plural: nexus
     singular: nexus
+  preserveUnknownFields: false
   scope: Namespaced
   subresources:
     status: {}
