@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package test
+package client
 
 import (
 	ctx "context"
@@ -24,8 +24,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 const testErrorMsg = "test"
@@ -34,7 +34,7 @@ func TestNewFakeClient(t *testing.T) {
 	dep := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "dep", Namespace: t.Name()}}
 	key := framework.Key(dep)
 	c := NewFakeClient(dep)
-	assert.False(t, IsInterfaceValueNil(c.client)) // make sure there actually is a client
+	assert.False(t, test.IsInterfaceValueNil(c.client)) // make sure there actually is a client
 	assert.NoError(t, c.Get(ctx.Background(), key, dep))
 }
 
@@ -42,11 +42,11 @@ func TestFakeClient_Get(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.Get(ctx.TODO(), client.ObjectKey{}, &v1alpha1.Nexus{})
+	err := c.Get(ctx.TODO(), client.ObjectKey{}, &appsv1.Deployment{})
 	assert.Equal(t, mockErr, err)
 
-	want := c.client.Get(ctx.TODO(), client.ObjectKey{}, &v1alpha1.Nexus{})
-	got := c.Get(ctx.TODO(), client.ObjectKey{}, &v1alpha1.Nexus{})
+	want := c.client.Get(ctx.TODO(), client.ObjectKey{}, &appsv1.Deployment{})
+	got := c.Get(ctx.TODO(), client.ObjectKey{}, &appsv1.Deployment{})
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }
@@ -55,11 +55,11 @@ func TestFakeClient_List(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.List(ctx.TODO(), &v1alpha1.NexusList{})
+	err := c.List(ctx.TODO(), &appsv1.DeploymentList{})
 	assert.Equal(t, mockErr, err)
 
-	want := c.client.List(ctx.TODO(), &v1alpha1.NexusList{})
-	got := c.List(ctx.TODO(), &v1alpha1.NexusList{})
+	want := c.client.List(ctx.TODO(), &appsv1.DeploymentList{})
+	got := c.List(ctx.TODO(), &appsv1.DeploymentList{})
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }
@@ -68,11 +68,11 @@ func TestFakeClient_Create(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.Create(ctx.TODO(), &v1alpha1.Nexus{})
+	err := c.Create(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, mockErr, err)
 
-	want := c.client.Create(ctx.TODO(), &v1alpha1.Nexus{})
-	got := c.Create(ctx.TODO(), &v1alpha1.Nexus{})
+	want := c.client.Create(ctx.TODO(), &appsv1.Deployment{})
+	got := c.Create(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }
@@ -81,11 +81,11 @@ func TestFakeClient_Delete(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.Delete(ctx.TODO(), &v1alpha1.Nexus{})
+	err := c.Delete(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, mockErr, err)
 
-	want := c.client.Delete(ctx.TODO(), &v1alpha1.Nexus{})
-	got := c.Delete(ctx.TODO(), &v1alpha1.Nexus{})
+	want := c.client.Delete(ctx.TODO(), &appsv1.Deployment{})
+	got := c.Delete(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }
@@ -94,11 +94,11 @@ func TestFakeClient_Update(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.Update(ctx.TODO(), &v1alpha1.Nexus{})
+	err := c.Update(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, mockErr, err)
 
-	want := c.client.Update(ctx.TODO(), &v1alpha1.Nexus{})
-	got := c.Update(ctx.TODO(), &v1alpha1.Nexus{})
+	want := c.client.Update(ctx.TODO(), &appsv1.Deployment{})
+	got := c.Update(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }
@@ -107,11 +107,11 @@ func TestFakeClient_Patch(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.Patch(ctx.TODO(), &v1alpha1.Nexus{}, client.MergeFrom(&v1alpha1.Nexus{}))
+	err := c.Patch(ctx.TODO(), &appsv1.Deployment{}, client.MergeFrom(&appsv1.Deployment{}))
 	assert.Equal(t, mockErr, err)
 
-	want := c.Patch(ctx.TODO(), &v1alpha1.Nexus{}, client.MergeFrom(&v1alpha1.Nexus{}))
-	got := c.Patch(ctx.TODO(), &v1alpha1.Nexus{}, client.MergeFrom(&v1alpha1.Nexus{}))
+	want := c.Patch(ctx.TODO(), &appsv1.Deployment{}, client.MergeFrom(&appsv1.Deployment{}))
+	got := c.Patch(ctx.TODO(), &appsv1.Deployment{}, client.MergeFrom(&appsv1.Deployment{}))
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }
@@ -120,11 +120,11 @@ func TestFakeClient_DeleteAllOf(t *testing.T) {
 	c := NewFakeClient()
 	mockErr := fmt.Errorf(testErrorMsg)
 	c.SetMockErrorForOneRequest(mockErr)
-	err := c.DeleteAllOf(ctx.TODO(), &v1alpha1.Nexus{})
+	err := c.DeleteAllOf(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, mockErr, err)
 
-	want := c.client.DeleteAllOf(ctx.TODO(), &v1alpha1.Nexus{})
-	got := c.DeleteAllOf(ctx.TODO(), &v1alpha1.Nexus{})
+	want := c.client.DeleteAllOf(ctx.TODO(), &appsv1.Deployment{})
+	got := c.DeleteAllOf(ctx.TODO(), &appsv1.Deployment{})
 	assert.Equal(t, want, got)
 	assert.NotEqual(t, got, mockErr)
 }

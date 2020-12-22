@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package framework
+package client
 
 import (
 	ctx "context"
@@ -22,7 +22,11 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
+
+var log = logger.GetLogger("client")
 
 // FetchDeployedResources fetches deployed resources whose Kind is present in "managedObjectsRef"
 func FetchDeployedResources(managedObjectsRef map[string]resource.KubernetesResource, key types.NamespacedName, cli client.Client) ([]resource.KubernetesResource, error) {

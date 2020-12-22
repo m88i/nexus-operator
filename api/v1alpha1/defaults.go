@@ -55,12 +55,6 @@ var (
 		FailureThreshold:    probeDefaultFailureThreshold,
 	}
 
-	DefaultPersistence = NexusPersistence{
-		Persistent:   false,
-		VolumeSize:   DefaultVolumeSize,
-		StorageClass: "",
-	}
-
 	DefaultNetworking = NexusNetworking{
 		Expose: false,
 		TLS:    DefaultTLS,
@@ -84,7 +78,6 @@ var (
 			ImagePullPolicy:             "",
 			AutomaticUpdate:             DefaultUpdate,
 			Resources:                   DefaultResources,
-			Persistence:                 DefaultPersistence,
 			UseRedHatImage:              false,
 			GenerateRandomAdminPassword: false,
 			Networking:                  DefaultNetworking,

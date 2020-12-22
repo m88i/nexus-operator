@@ -20,16 +20,16 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/m88i/nexus-operator/pkg/framework/kind"
-	"github.com/m88i/nexus-operator/pkg/logger"
-
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/framework/kind"
+	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
 
@@ -39,12 +39,12 @@ func TestNewManager(t *testing.T) {
 	// default-setting logic is tested elsewhere
 	// so here we just check if the resulting manager took in the arguments correctly
 	nexus := baseNexus
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	want := &Manager{
 		nexus:  nexus,
-		client: client,
+		client: cli,
 	}
-	got := NewManager(nexus, client)
+	got := NewManager(nexus, cli)
 	assert.Equal(t, want.nexus, got.nexus)
 	assert.Equal(t, want.client, got.client)
 }
@@ -54,7 +54,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// here we just want to check if they have been created and returned
 	mgr := &Manager{
 		nexus:  baseNexus.DeepCopy(),
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 		log:    logger.GetLoggerWithResource("test", baseNexus),
 	}
 
@@ -69,7 +69,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first with no deployed resources
-	fakeClient := test.NewFakeClientBuilder().Build()
+	fakeClient := client.NewFakeClient()
 	mgr := &Manager{
 		nexus:  baseNexus,
 		client: fakeClient,
@@ -99,17 +99,17 @@ func TestManager_GetDeployedResources(t *testing.T) {
 func TestManager_getDeployedSvcAccnt(t *testing.T) {
 	mgr := &Manager{
 		nexus:  baseNexus,
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 	}
 
 	// first, test without creating the svcAccnt
-	err := framework.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef[kind.SvcAccountKind], kind.SvcAccountKind)
+	err := client.Fetch(mgr.client, framework.Key(mgr.nexus), managedObjectsRef[kind.SvcAccountKind], kind.SvcAccountKind)
 	assert.True(t, errors.IsNotFound(err))
 
 	// now test after creating the svcAccnt
 	svcAccnt := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: mgr.nexus.Name, Namespace: mgr.nexus.Namespace}}
 	assert.NoError(t, mgr.client.Create(ctx.TODO(), svcAccnt))
-	err = framework.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt, kind.SvcAccountKind)
+	err = client.Fetch(mgr.client, framework.Key(svcAccnt), svcAccnt, kind.SvcAccountKind)
 	assert.NotNil(t, svcAccnt)
 	assert.NoError(t, err)
 }

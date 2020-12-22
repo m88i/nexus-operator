@@ -32,22 +32,16 @@ func newMutator(nexus *Nexus) *mutator {
 		log.Error(err, "Unable to determine if Routes are available. Will assume they're not.")
 	}
 
-	ingressAvailable, err := discovery.IsIngressAvailable()
+	ingressAvailable, err := discovery.IsAnyIngressAvailable()
 	if err != nil {
-		log.Error(err, "Unable to determine if v1 Ingresses are available. Will assume they're not.")
-	}
-
-	legacyIngressAvailable, err := discovery.IsLegacyIngressAvailable()
-	if err != nil {
-		log.Error(err, "Unable to determine if v1beta1 Ingresses are available. Will assume they're not.")
+		log.Error(err, "Unable to determine if Ingresses are available. Will assume they're not.")
 	}
 
 	return &mutator{
-		nexus:          nexus,
-		log:            log,
-		routeAvailable: routeAvailable,
-		// TODO: create a IsAnyIngressAvailable function in discovery, we don't care about which one in admission
-		ingressAvailable: ingressAvailable || legacyIngressAvailable,
+		nexus:            nexus,
+		log:              log,
+		routeAvailable:   routeAvailable,
+		ingressAvailable: ingressAvailable,
 	}
 }
 

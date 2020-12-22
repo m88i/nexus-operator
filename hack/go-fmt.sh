@@ -19,5 +19,5 @@ go mod tidy
 
 gofmt -s -l -w .
 # get the goimports binary
-command -v goimports >/dev/null || go build -o "${GOPATH}"/bin/goimports golang.org/x/tools/cmd/goimports
-goimports -local github.com/m88i/nexus-operator -l -w .
+command -v ./bin/goimports >/dev/null || go build -o ./bin/goimports golang.org/x/tools/cmd/goimports
+./bin/goimports -local github.com/m88i/nexus-operator -l -w .

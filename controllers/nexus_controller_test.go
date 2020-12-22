@@ -55,6 +55,7 @@ var _ = Describe("Nexus Controller", func() {
 			Spec: v1alpha1.NexusSpec{
 				Replicas:       1,
 				UseRedHatImage: false,
+				Image:          v1alpha1.NexusCommunityImage,
 				Resources: v1.ResourceRequirements{
 					Limits: map[v1.ResourceName]resource.Quantity{
 						v1.ResourceCPU:    resource.MustParse(cpu),
@@ -67,6 +68,8 @@ var _ = Describe("Nexus Controller", func() {
 					ExposeAs: v1alpha1.NodePortExposeType,
 					NodePort: exposedPort,
 				},
+				LivenessProbe:  v1alpha1.DefaultProbe,
+				ReadinessProbe: v1alpha1.DefaultProbe,
 			},
 		}
 	)

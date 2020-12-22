@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package test
+package client
 
 import (
 	"context"
@@ -32,12 +32,14 @@ type FakeClient struct {
 	client           client.Client
 	mockErr          error
 	shouldClearError bool
+	scheme           *runtime.Scheme
 }
 
 // NewFakeClient returns a FakeClient.
 // You may initialize it with a slice of runtime.Object.
 func NewFakeClient(initObjs ...runtime.Object) *FakeClient {
-	return &FakeClient{client: fake.NewFakeClientWithScheme(scheme(), initObjs...)}
+	s := scheme()
+	return &FakeClient{client: fake.NewFakeClientWithScheme(s, initObjs...), scheme: s}
 }
 
 func scheme() *runtime.Scheme {
@@ -140,4 +142,8 @@ func (c *FakeClient) DeleteAllOf(ctx context.Context, obj runtime.Object, opts .
 
 func (c FakeClient) Status() client.StatusWriter {
 	return c.client.Status()
+}
+
+func (c FakeClient) Scheme() *runtime.Scheme {
+	return c.scheme
 }

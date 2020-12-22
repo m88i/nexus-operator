@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
@@ -49,12 +50,12 @@ func TestNewManager(t *testing.T) {
 	// default-setting logic is tested elsewhere
 	// so here we just check if the resulting manager took in the arguments correctly
 	nexus := allDefaultsCommunityNexus
-	client := test.NewFakeClientBuilder().Build()
+	c := client.NewFakeClient()
 	want := &Manager{
 		nexus:  nexus,
-		client: client,
+		client: c,
 	}
-	got := NewManager(nexus, client)
+	got := NewManager(nexus, c)
 	assert.Equal(t, want.nexus, got.nexus)
 	assert.Equal(t, want.client, got.client)
 }
@@ -64,7 +65,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// here we just want to check if they have been created and returned
 	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 		log:    logger.GetLoggerWithResource("test", allDefaultsCommunityNexus),
 	}
 	resources, err := mgr.GetRequiredResources()
@@ -77,7 +78,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first no deployed resources
-	fakeClient := test.NewFakeClientBuilder().Build()
+	fakeClient := client.NewFakeClient()
 	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
 		client: fakeClient,

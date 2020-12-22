@@ -21,6 +21,8 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/m88i/nexus-operator/pkg/client"
 )
 
 func TestContainsType(t *testing.T) {
@@ -32,7 +34,7 @@ func TestContainsType(t *testing.T) {
 func TestEventExists(t *testing.T) {
 	testReason := "reason"
 	testEvent := &corev1.Event{Reason: testReason}
-	c := NewFakeClient(testEvent)
+	c := client.NewFakeClient(testEvent)
 
 	assert.False(t, EventExists(c, "some other reason"))
 	assert.True(t, EventExists(c, testReason))

@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	operatorclient "github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
@@ -69,7 +70,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	for resType, resRef := range managedObjectsRef {
-		if err := framework.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
+		if err := operatorclient.Fetch(m.client, framework.Key(m.nexus), resRef, resType); err == nil {
 			resources = append(resources, resRef)
 		} else if !errors.IsNotFound(err) {
 			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resType, m.nexus.Namespace, m.nexus.Name, err)

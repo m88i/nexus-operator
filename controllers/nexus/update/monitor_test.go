@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
 
@@ -43,7 +44,7 @@ func TestMonitorUpdate(t *testing.T) {
 		Status:     v1alpha1.NexusStatus{},
 		Spec:       v1alpha1.NexusSpec{Image: image},
 	}
-	c := test.NewFakeClientBuilder(nexus).Build()
+	c := client.NewFakeClient(nexus)
 
 	// Not in an update and will not start one
 	deployedDep := baseDeployment.DeepCopy()
