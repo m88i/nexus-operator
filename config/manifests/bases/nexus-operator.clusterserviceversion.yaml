@@ -38,7 +38,7 @@ metadata:
     containerImage: quay.io/m88i/nexus-operator:0.5.0
     createdAt: "2019-11-16T13:12:22Z"
     description: Nexus Operator to deploy and manage Nexus 3.x servers
-    operators.operatorframework.io/builder: operator-sdk-v1.0.1
+    operators.operatorframework.io/builder: operator-sdk-v1.2.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
     repository: https://github.com/m88i/nexus-operator
     support: m88i Labs
