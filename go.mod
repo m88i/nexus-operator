@@ -1,6 +1,6 @@
 module github.com/m88i/nexus-operator
 
-go 1.14
+go 1.15
 
 require (
 	github.com/RHsyseng/operator-utils v1.4.4
