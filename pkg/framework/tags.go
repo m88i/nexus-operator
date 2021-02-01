@@ -41,6 +41,11 @@ var (
 	latestMicros = make(map[int]string)
 )
 
+func init() {
+	// fetch the tags once during startup to improve responsiveness of the mutation webhook's first run
+	fetchUpdates()
+}
+
 // HigherVersion checks if thisTag is of a higher version than otherTag
 func HigherVersion(thisTag, otherTag string) (bool, error) {
 	thisMinor, err := GetMinor(thisTag)

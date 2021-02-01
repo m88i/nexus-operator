@@ -11,12 +11,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-apps-m88i-io-m88i-io-v1alpha1-nexus
+      path: /mutate-apps-m88i-io-v1alpha1-nexus
   failurePolicy: Fail
   name: mnexus.kb.io
   rules:
   - apiGroups:
-    - apps.m88i.io.m88i.io
+    - apps.m88i.io
     apiVersions:
     - v1alpha1
     operations:
@@ -37,12 +37,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-apps-m88i-io-m88i-io-v1alpha1-nexus
+      path: /validate-apps-m88i-io-v1alpha1-nexus
   failurePolicy: Fail
   name: vnexus.kb.io
   rules:
   - apiGroups:
-    - apps.m88i.io.m88i.io
+    - apps.m88i.io
     apiVersions:
     - v1alpha1
     operations:

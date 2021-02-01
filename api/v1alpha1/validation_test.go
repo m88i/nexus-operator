@@ -175,7 +175,34 @@ func TestValidator_validate_Networking(t *testing.T) {
 
 	for _, tt := range tests {
 		discovery.SetClient(tt.disc)
-		err := newValidator(tt.input).validate()
+		err := newValidator(tt.input).validateNetworking()
+		if (err != nil) != tt.wantErr {
+			t.Errorf("%s\nnexus: %#v\nwantErr: %v\terr: %#v\n", tt.name, tt.input, tt.wantErr, err)
+		}
+	}
+}
+
+func TestValidator_validate_Persistence(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   *Nexus
+		wantErr bool
+	}{
+		{
+			"Invalid volume size",
+			&Nexus{Spec: NexusSpec{Persistence: NexusPersistence{VolumeSize: "not-a-quantity"}}},
+			true,
+		},
+		{
+			"Valid volume size",
+			&Nexus{Spec: NexusSpec{Persistence: NexusPersistence{VolumeSize: "10Gi"}}},
+			false,
+		},
+	}
+
+	discovery.SetClient(discovery.NewFakeDiscBuilder().Build())
+	for _, tt := range tests {
+		err := newValidator(tt.input).validatePersistence()
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%s\nnexus: %#v\nwantErr: %v\terr: %#v\n", tt.name, tt.input, tt.wantErr, err)
 		}

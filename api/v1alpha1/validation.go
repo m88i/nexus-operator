@@ -17,6 +17,8 @@ package v1alpha1
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
@@ -53,7 +55,17 @@ func newValidator(nexus *Nexus) *validator {
 
 // validate returns an error if the Nexus CR is invalid
 func (v *validator) validate() error {
-	return v.validateNetworking()
+	validatingFuncs := []func() error{
+		v.validateNetworking,
+		v.validatePersistence,
+	}
+
+	for _, fn := range validatingFuncs {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (v *validator) validateNetworking() error {
@@ -92,5 +104,14 @@ func (v *validator) validateNetworking() error {
 		return fmt.Errorf("tls set to mandatory, but using ingress")
 	}
 
+	return nil
+}
+
+func (v *validator) validatePersistence() error {
+	vSize := v.nexus.Spec.Persistence.VolumeSize
+	if _, err := resource.ParseQuantity(vSize); err != nil {
+		v.log.Warn("'spec.persistence.volumeSize invalid", "volumeSize", vSize)
+		return fmt.Errorf("'spec.persistence.volumeSize (%s) invalid: %v", vSize, err)
+	}
 	return nil
 }

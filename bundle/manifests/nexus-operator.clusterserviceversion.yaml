@@ -317,13 +317,15 @@ spec:
   replaces: nexus-operator.v0.4.0
   version: 0.5.0
   webhookdefinitions:
-  - admissionReviewVersions: null
+  - admissionReviewVersions:
+    - v1beta1
+    containerPort: 443
     deploymentName: nexus-operator-controller-manager
     failurePolicy: Fail
     generateName: vnexus.kb.io
     rules:
     - apiGroups:
-      - apps.m88i.io.m88i.io
+      - apps.m88i.io
       apiVersions:
       - v1alpha1
       operations:
@@ -331,16 +333,19 @@ spec:
       - UPDATE
       resources:
       - nexus
-    sideEffects: null
+    sideEffects: None
+    targetPort: 9443
     type: ValidatingAdmissionWebhook
-    webhookPath: /validate-apps-m88i-io-m88i-io-v1alpha1-nexus
-  - admissionReviewVersions: null
+    webhookPath: /validate-apps-m88i-io-v1alpha1-nexus
+  - admissionReviewVersions:
+    - v1beta1
+    containerPort: 443
     deploymentName: nexus-operator-controller-manager
     failurePolicy: Fail
     generateName: mnexus.kb.io
     rules:
     - apiGroups:
-      - apps.m88i.io.m88i.io
+      - apps.m88i.io
       apiVersions:
       - v1alpha1
       operations:
@@ -348,6 +353,7 @@ spec:
       - UPDATE
       resources:
       - nexus
-    sideEffects: null
+    sideEffects: None
+    targetPort: 9443
     type: MutatingAdmissionWebhook
-    webhookPath: /mutate-apps-m88i-io-m88i-io-v1alpha1-nexus
+    webhookPath: /mutate-apps-m88i-io-v1alpha1-nexus

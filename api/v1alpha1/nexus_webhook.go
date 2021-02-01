@@ -33,9 +33,7 @@ func (n *Nexus) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
-// +kubebuilder:webhook:path=/mutate-apps-m88i-io-m88i-io-v1alpha1-nexus,mutating=true,failurePolicy=fail,groups=apps.m88i.io.m88i.io,resources=nexus,verbs=create;update,versions=v1alpha1,name=mnexus.kb.io
+// +kubebuilder:webhook:path=/mutate-apps-m88i-io-v1alpha1-nexus,mutating=true,failurePolicy=fail,groups=apps.m88i.io,resources=nexus,verbs=create;update,versions=v1alpha1,name=mnexus.kb.io
 
 var _ webhook.Defaulter = &Nexus{}
 
@@ -49,7 +47,7 @@ func (n *Nexus) Default() {
 }
 
 // if we ever need validation upon delete requests change verbs to "verbs=create;update;delete".
-// +kubebuilder:webhook:verbs=create;update,path=/validate-apps-m88i-io-m88i-io-v1alpha1-nexus,mutating=false,failurePolicy=fail,groups=apps.m88i.io.m88i.io,resources=nexus,versions=v1alpha1,name=vnexus.kb.io
+// +kubebuilder:webhook:verbs=create;update,path=/validate-apps-m88i-io-v1alpha1-nexus,mutating=false,failurePolicy=fail,groups=apps.m88i.io,resources=nexus,versions=v1alpha1,name=vnexus.kb.io
 
 var _ webhook.Validator = &Nexus{}
 
