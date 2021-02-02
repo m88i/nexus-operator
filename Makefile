@@ -40,14 +40,14 @@ test: generate-installer fmt vet bundle test-only
 
 # just test without generating anything, use wisely
 test-only:
-	 mkdir -p ${ENVTEST_ASSETS_DIR}
+	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/master/hack/setup-envtest.sh
 	sed -i "s,#\!.*,#\!\/bin\/bash,g" ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
 	sed -i "/pipefail/d" ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; ENVTEST_K8S_VERSION=$(K8S_VERSION) fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
 
-generate-installer: generate manifests kustomize
+generate-installer: generate manifests kustomize generate-webhookless-installer
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG)
 	$(KUSTOMIZE) build config/default > nexus-operator.yaml
 
@@ -161,3 +161,10 @@ create_namespace=true
 run_with_image=true
 pr-prep:
 	CREATE_NAMESPACE=$(create_namespace) RUN_WITH_IMAGE=$(run_with_image) ./hack/pr-prep.sh
+
+generate-webhookless-installer:
+	# first, let's filter out all manifests we don't care about
+	# then delete the volumes which would contain the certs
+	# then finally insert the env var which disables webhooks
+	# TODO <lcaparelli>: find a way to make this more readable
+	kustomize build config/default/ | yq -Y 'select(.kind != "ValidatingWebhookConfiguration" and .kind != "Issuer" and .kind != "Certificate" and .kind != "MutatingWebhookConfiguration" and .metadata.name != "nexus-operator-webhook-service")' | yq -Y 'del(.. | .volumes?, .volumeMounts?)' | yq -Y 'if .kind=="Deployment" then .spec.template.spec.containers[1].env[0]={"name":"USE_WEBHOOKS", "value":"FALSE"} else . end' > webhookless-nexus-operator.yaml
