@@ -43,6 +43,7 @@ import (
 	"github.com/m88i/nexus-operator/pkg/cluster/kubernetes"
 	"github.com/m88i/nexus-operator/pkg/cluster/openshift"
 	"github.com/m88i/nexus-operator/pkg/framework"
+	"github.com/m88i/nexus-operator/pkg/util"
 )
 
 const (
@@ -89,11 +90,21 @@ func (r *NexusReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return result, nil
 		}
 		// Error reading the object - requeue the request.
+		result.Requeue = true
 		return result, err
 	}
 
 	// In case of any errors from here, we should update the Nexus CR and its status
 	defer r.updateNexus(nexus, &err)
+
+	// if we're not using webhooks let's validate during reconcile as a fallback strategy
+	if !util.ShouldUseWebhooks() {
+		nexus.Default()
+		// validation is the same for create and update, any would be ok
+		if err := nexus.ValidateCreate(); err != nil {
+			return result, err
+		}
+	}
 
 	// Initialize the resource managers
 	err = r.Supervisor.InitManagers(nexus)

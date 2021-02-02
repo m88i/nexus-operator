@@ -2,11 +2,13 @@
 
 ## Have found a bug or have a feature request?
 
-Please, open an issue for us. That will really help us improving the Operator and it would benefit other users such as yourself. There are templates ready for bug reporting and feature request to make things easier for you.
+Please, open an issue for us. That will really help us improving the Operator and it would benefit other users such as
+yourself. There are templates ready for bug reporting and feature request to make things easier for you.
 
 ## Have any questions?
 
-We're happy to answer! Either [open an issue](https://github.com/m88i/nexus-operator/issues) or send an email to our mailing list: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com).
+We're happy to answer! Either [open an issue](https://github.com/m88i/nexus-operator/issues) or send an email to our
+mailing list: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com).
 
 ## Are you willing to send a PR?
 
@@ -43,9 +45,11 @@ Pushing to origin/pr-prep
 # (output omitted)
 ```
 
-If you don't inform remote name and branch, it will use "origin" as the remote and your current branch (the defaults, which appear between "[]"). Double check if the information is correct.
+If you don't inform remote name and branch, it will use "origin" as the remote and your current branch (the defaults,
+which appear between "[]"). Double check if the information is correct.
 
-If you don't want to go over the interactive prompt every time, you can push with the defaults using the `PUSH_WITH_DEFAULTS` environment variable:
+If you don't want to go over the interactive prompt every time, you can push with the defaults using the
+`PUSH_WITH_DEFAULTS` environment variable:
 
 ```shell
 $ PUSH_WITH_DEFAULTS=TRUE make pr-prep
@@ -63,3 +67,6 @@ case to `controllers/nexus_controller_test.go`.
 All mutating (including default values) and validating logic lives in our admission webhooks, which are not in place
 when the e2e suite runs. Because of that, no changes or checks are performed against Nexus CRs being reconciled. Be sure
 to always write tests which use valid Nexus resources.
+
+In the future, after we migrate to operator-sdk v1.3.0 and kubebuilder plugin v3, scaffolding will create a separate
+suite for testing the webhooks.

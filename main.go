@@ -35,6 +35,7 @@ import (
 	"github.com/m88i/nexus-operator/controllers"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
+	"github.com/m88i/nexus-operator/pkg/util"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -97,9 +98,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Nexus")
 		os.Exit(1)
 	}
-	if err = (&appsm88iiov1alpha1.Nexus{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Nexus")
-		os.Exit(1)
+
+	if util.ShouldUseWebhooks() {
+		setupLog.Info("Setting up admission webhooks")
+		if err = (&appsm88iiov1alpha1.Nexus{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Nexus")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 
@@ -119,7 +124,7 @@ func getWatchNamespace() string {
 
 	ns, found := os.LookupEnv(watchNamespaceEnvVar)
 	if !found {
-		setupLog.Info("unable to get WatchNamespace, "+
+		setupLog.Info("Unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces",
 			"Env Var lookup", watchNamespaceEnvVar)
 		return ""
