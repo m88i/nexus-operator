@@ -11,6 +11,7 @@ Table of Contents
    * [Table of Contents](#table-of-contents)
    * [Nexus Operator](#nexus-operator)
       * [Pre Requisites](#pre-requisites)
+          * [Kubernetes API dependencies](#kubernetes-api-dependencies)
       * [Quick Install](#quick-install)
          * [Openshift](#openshift)
          * [Clean up](#clean-up)
@@ -20,8 +21,8 @@ Table of Contents
       * [Networking](#networking)
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
-         * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
-            * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
+         * [Network on Kubernetes 1.14+](#network-on-kubernetes-114)
+             * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
          * [TLS/SSL](#tlsssl)
       * [Persistence](#persistence)
          * [Minikube](#minikube)
@@ -41,9 +42,14 @@ Table of Contents
 
 A Nexus OSS Kubernetes Operator based on the [Operator SDK](https://github.com/operator-framework/operator-sdk).
 
-You can find us at [OperatorHub](https://operatorhub.io/operator/nexus-operator-m88i) or at the ["Operators" tab in your OpenShift 4.x web console](https://docs.openshift.com/container-platform/4.4/operators/olm-adding-operators-to-cluster.html), just search for "Nexus". If you don't have access to [OLM](https://github.com/operator-framework/operator-lifecycle-manager), try installing it manually [following our quick installation guide](#quick-install).
+You can find us at [OperatorHub](https://operatorhub.io/operator/nexus-operator-m88i) or at
+the ["Operators" tab in your OpenShift 4.x web console](https://docs.openshift.com/container-platform/4.4/operators/olm-adding-operators-to-cluster.html)
+, just search for "Nexus". If you don't have access
+to [OLM](https://github.com/operator-framework/operator-lifecycle-manager), try installing it
+manually [following our quick installation guide](#quick-install).
 
-If you have any questions please either [open an issue](https://github.com/m88i/nexus-operator/issues) or send an email to the mailing list: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com).
+If you have any questions please either [open an issue](https://github.com/m88i/nexus-operator/issues) or send an email
+to the mailing list: [nexus-operator@googlegroups.com](mailto:nexus-operator@googlegroups.com).
 
 ## Pre Requisites
 
@@ -51,9 +57,38 @@ If you have any questions please either [open an issue](https://github.com/m88i/
 - Kubernetes or OpenShift cluster available (minishift, minikube or crc also supported)
 - Cluster admin credentials to install the Operator
 
+### Kubernetes API dependencies
+
+Starting on v0.6.0, the Operator relies on [cert-manager](https://cert-manager.io/) for generating and injecting the TLS
+certificate for
+the [admission webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#admission-webhooks)
+we use. When installing the Operator via OLM (e.g., following instruction
+on [Operator Hub](https://operatorhub.io/operator/nexus-operator-m88i)), cert-manager will be automatically installed in
+your cluster. When installing using other methods, it's necessary
+to [manually install it](https://cert-manager.io/docs/installation/).
+
+However, if you simply want to try out the operator without webhooks, you may install it with:
+
+```bash
+VERSION=<version from GitHub releases page>
+
+kubectl apply -f https://github.com/m88i/nexus-operator/releases/download/${VERSION}/webhookless-nexus-operator.yaml
+```
+
+We strongly advise using webhooks as they significantly improve user experience by reporting validation errors
+instantly (which you would need to look for in the logs otherwise). They also persist any changes made to the Nexus
+resource (such as default values), which would otherwise only happen during runtime (opaque to users).
+
+Additionally, there is also a weak dependency on
+the [Prometheus Operator's](https://github.com/prometheus-operator/prometheus-operator) `ServiceMonitor` CRD. The
+Operator will run fine without it, but if this API is available it will be used to improve monitoring. For more
+information check their [CRDs doc](https://github.com/prometheus-operator/prometheus-operator#customresourcedefinitions)
+and [quickstart guide](https://github.com/prometheus-operator/prometheus-operator#quickstart).
+
 ## Quick Install
 
-The installation procedure will create a Namespace named `nexus-operator-system` and will install every resources needed for the operator to run:
+The installation procedure will create a Namespace named `nexus-operator-system` and will install every resources needed
+for the operator to run:
 
 ```bash
 # requires python and kubectl
