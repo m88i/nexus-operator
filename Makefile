@@ -162,9 +162,6 @@ run_with_image=true
 pr-prep:
 	CREATE_NAMESPACE=$(create_namespace) RUN_WITH_IMAGE=$(run_with_image) ./hack/pr-prep.sh
 
+# Generate the installer without webhook configs, secrets and what not
 generate-webhookless-installer:
-	# first, let's filter out all manifests we don't care about
-	# then delete the volumes which would contain the certs
-	# then finally insert the env var which disables webhooks
-	# TODO <lcaparelli>: find a way to make this more readable
-	kustomize build config/default/ | yq -Y 'select(.kind != "ValidatingWebhookConfiguration" and .kind != "Issuer" and .kind != "Certificate" and .kind != "MutatingWebhookConfiguration" and .metadata.name != "nexus-operator-webhook-service")' | yq -Y 'del(.. | .volumes?, .volumeMounts?)' | yq -Y 'if .kind=="Deployment" then .spec.template.spec.containers[1].env[0]={"name":"USE_WEBHOOKS", "value":"FALSE"} else . end' > webhookless-nexus-operator.yaml
+	./hack/generate-webhookless-installer.sh
