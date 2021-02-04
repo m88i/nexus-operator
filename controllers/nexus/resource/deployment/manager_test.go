@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/controllers/nexus/resource/validation"
+	"github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/logger"
 	"github.com/m88i/nexus-operator/pkg/test"
 )
@@ -38,10 +38,10 @@ var (
 		Spec: v1alpha1.NexusSpec{
 			AutomaticUpdate:    v1alpha1.NexusAutomaticUpdate{Disabled: true},
 			ServiceAccountName: "nexus-test",
-			Resources:          validation.DefaultResources,
-			Image:              validation.NexusCommunityImage,
-			LivenessProbe:      validation.DefaultProbe.DeepCopy(),
-			ReadinessProbe:     validation.DefaultProbe.DeepCopy(),
+			Resources:          v1alpha1.DefaultResources,
+			Image:              v1alpha1.NexusCommunityImage,
+			LivenessProbe:      v1alpha1.DefaultProbe.DeepCopy(),
+			ReadinessProbe:     v1alpha1.DefaultProbe.DeepCopy(),
 		},
 	}
 )
@@ -50,12 +50,12 @@ func TestNewManager(t *testing.T) {
 	// default-setting logic is tested elsewhere
 	// so here we just check if the resulting manager took in the arguments correctly
 	nexus := allDefaultsCommunityNexus
-	client := test.NewFakeClientBuilder().Build()
+	c := client.NewFakeClient()
 	want := &Manager{
 		nexus:  nexus,
-		client: client,
+		client: c,
 	}
-	got := NewManager(nexus, client)
+	got := NewManager(nexus, c)
 	assert.Equal(t, want.nexus, got.nexus)
 	assert.Equal(t, want.client, got.client)
 }
@@ -65,7 +65,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// here we just want to check if they have been created and returned
 	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 		log:    logger.GetLoggerWithResource("test", allDefaultsCommunityNexus),
 	}
 	resources, err := mgr.GetRequiredResources()
@@ -78,7 +78,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first no deployed resources
-	fakeClient := test.NewFakeClientBuilder().Build()
+	fakeClient := client.NewFakeClient()
 	mgr := &Manager{
 		nexus:  allDefaultsCommunityNexus,
 		client: fakeClient,
@@ -341,12 +341,12 @@ func Test_equalPullPolicies(t *testing.T) {
 
 	// now let's set the latest tag on the images so we can test for the PullAlways pull policy in that scenario as well
 	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
-	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityImage, "latest")
+	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", v1alpha1.NexusCommunityImage, "latest")
 	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
 
 	// now with an actual tag and empty pullPolicy on the required deployment
-	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityImage, "3.25.0")
-	depDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", validation.NexusCommunityImage, "3.25.0")
+	reqDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", v1alpha1.NexusCommunityImage, "3.25.0")
+	depDeployment.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:%s", v1alpha1.NexusCommunityImage, "3.25.0")
 	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 	assert.True(t, equalPullPolicies(depDeployment, reqDeployment))
 

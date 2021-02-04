@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
+	operatorclient "github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/framework"
 	"github.com/m88i/nexus-operator/pkg/framework/kind"
@@ -149,7 +150,7 @@ func (m *Manager) createIngress() resource.KubernetesResource {
 
 // GetDeployedResources returns the networking resources deployed on the cluster
 func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) {
-	return framework.FetchDeployedResources(m.managedObjectsRef, m.nexus, m.client)
+	return operatorclient.FetchDeployedResources(m.managedObjectsRef, framework.Key(m.nexus), m.client)
 }
 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.

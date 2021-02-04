@@ -19,9 +19,14 @@ import (
 	"strconv"
 )
 
+// ShouldUseWebhooks returns true if "USE_WEBHOOKS" value evaluates to true or if it isn't set
+func ShouldUseWebhooks() bool {
+	return GetBoolOSEnv("USE_WEBHOOKS", "true")
+}
+
 // GetBoolOSEnv gets a env variable as a boolean
-func GetBoolOSEnv(key string) bool {
-	val := GetOSEnv(key, "false")
+func GetBoolOSEnv(key, fallback string) bool {
+	val := GetOSEnv(key, fallback)
 	ret, err := strconv.ParseBool(val)
 	if err != nil {
 		return false

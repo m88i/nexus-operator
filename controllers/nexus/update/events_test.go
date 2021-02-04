@@ -24,24 +24,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/test"
+	"github.com/m88i/nexus-operator/pkg/client"
 )
 
 func TestCreateUpdateSuccessEvent(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus", Namespace: "test"}}
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	tag := "3.25.0"
 
 	// first, let's test a failure
-	client.SetMockErrorForOneRequest(fmt.Errorf("mock err"))
-	createUpdateSuccessEvent(nexus, client.Scheme(), client, tag)
+	cli.SetMockErrorForOneRequest(fmt.Errorf("mock err"))
+	createUpdateSuccessEvent(nexus, cli.Scheme(), cli, tag)
 	eventList := &corev1.EventList{}
-	_ = client.List(ctx.TODO(), eventList)
+	_ = cli.List(ctx.TODO(), eventList)
 	assert.Len(t, eventList.Items, 0)
 
 	// now a successful one
-	createUpdateSuccessEvent(nexus, client.Scheme(), client, tag)
-	_ = client.List(ctx.TODO(), eventList)
+	createUpdateSuccessEvent(nexus, cli.Scheme(), cli, tag)
+	_ = cli.List(ctx.TODO(), eventList)
 	assert.Len(t, eventList.Items, 1)
 	event := eventList.Items[0]
 	assert.Equal(t, successfulUpdateReason, event.Reason)
@@ -49,19 +49,19 @@ func TestCreateUpdateSuccessEvent(t *testing.T) {
 
 func TestCreateUpdateFailureEvent(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus", Namespace: "test"}}
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	tag := "3.25.0"
 
 	// first, let's test a failure
-	client.SetMockErrorForOneRequest(fmt.Errorf("mock err"))
-	createUpdateFailureEvent(nexus, client.Scheme(), client, tag)
+	cli.SetMockErrorForOneRequest(fmt.Errorf("mock err"))
+	createUpdateFailureEvent(nexus, cli.Scheme(), cli, tag)
 	eventList := &corev1.EventList{}
-	_ = client.List(ctx.TODO(), eventList)
+	_ = cli.List(ctx.TODO(), eventList)
 	assert.Len(t, eventList.Items, 0)
 
 	// now a successful one
-	createUpdateFailureEvent(nexus, client.Scheme(), client, tag)
-	_ = client.List(ctx.TODO(), eventList)
+	createUpdateFailureEvent(nexus, cli.Scheme(), cli, tag)
+	_ = cli.List(ctx.TODO(), eventList)
 	assert.Len(t, eventList.Items, 1)
 	event := eventList.Items[0]
 	assert.Equal(t, failedUpdateReason, event.Reason)

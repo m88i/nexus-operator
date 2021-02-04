@@ -30,3 +30,17 @@ func IsIngressAvailable() (bool, error) {
 func IsLegacyIngressAvailable() (bool, error) {
 	return hasGroupVersionKind(networkingv1beta1.SchemeGroupVersion.Group, networkingv1beta1.SchemeGroupVersion.Version, kind.IngressKind)
 }
+
+// IsAnyIngressAvailable checks if either v1 or v1beta1 ingresses are available
+func IsAnyIngressAvailable() (bool, error) {
+	legacyIngressAvailable, errLegacy := IsLegacyIngressAvailable()
+	ingressAvailable, err := IsIngressAvailable()
+
+	// both calls failed, let's error out
+	if errLegacy != nil && err != nil {
+		return false, errLegacy
+	}
+
+	// at least one call didn't fail
+	return legacyIngressAvailable || ingressAvailable, nil
+}

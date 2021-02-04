@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package update
+package framework
 
 import (
 	"testing"
@@ -151,11 +151,11 @@ func TestGetMinor(t *testing.T) {
 	validTag := "3.25.0"
 	invalidTag := "3..0"
 
-	minor, err := getMinor(validTag)
+	minor, err := GetMinor(validTag)
 	assert.Nil(t, err)
 	assert.Equal(t, 25, minor)
 
-	_, err = getMinor(invalidTag)
+	_, err = GetMinor(invalidTag)
 	assert.NotNil(t, err)
 }
 

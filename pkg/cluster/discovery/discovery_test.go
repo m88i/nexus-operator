@@ -18,12 +18,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 func TestSetDiscClient(t *testing.T) {
-	disc := test.NewFakeClientBuilder().Build()
+	disc := NewFakeDiscBuilder().Build()
 	SetClient(disc)
 	assert.Equal(t, disc, cli)
 }

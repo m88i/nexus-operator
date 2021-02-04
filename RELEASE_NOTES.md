@@ -1,8 +1,7 @@
-## Version 0.5.0
+## Version 0.6.0
 
 ### Enhancements
-- #198 - Upgrade to Go v1.15.6
-- #199 - Upgrade to operator-sdk v1.2.0
+
+- # 174 - Use Admission Webhooks to set default values and validate to Nexus CR
 
 ### Bug Fixes
-- #191 - Pod fails to start after modifying the Nexus resource

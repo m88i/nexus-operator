@@ -31,7 +31,7 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/meta"
-	"github.com/m88i/nexus-operator/pkg/test"
+	operatorclient "github.com/m88i/nexus-operator/pkg/client"
 )
 
 // createNewServerAndKubeCli creates a new fake server and kubernetes fake client to be used in tests for this package;
@@ -39,9 +39,7 @@ import (
 func createNewServerAndKubeCli(t *testing.T, objects ...runtime.Object) (*server, client.Client) {
 	nexusInstance := &v1alpha1.Nexus{ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()}}
 	objects = append(objects, nexusInstance)
-	cli := test.NewFakeClientBuilder(
-		objects...).
-		Build()
+	cli := operatorclient.NewFakeClient(objects...)
 	server := &server{
 		nexus:     nexusInstance,
 		k8sclient: cli,
@@ -78,7 +76,7 @@ func Test_server_getNexusEndpoint(t *testing.T) {
 			SessionAffinity: corev1.ServiceAffinityNone,
 		},
 	}
-	cli := test.NewFakeClientBuilder(instance, svc).Build()
+	cli := operatorclient.NewFakeClient(svc, instance)
 	s := server{
 		nexus:     instance,
 		k8sclient: cli,
@@ -96,7 +94,7 @@ func Test_server_getNexusEndpointNoURL(t *testing.T) {
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 	}
-	cli := test.NewFakeClientBuilder(instance).Build()
+	cli := operatorclient.NewFakeClient(instance)
 	s := server{
 		nexus:     instance,
 		k8sclient: cli,
@@ -135,7 +133,7 @@ func Test_HandleServerOperationsNoFake(t *testing.T) {
 		Spec:       v1alpha1.NexusSpec{},
 		ObjectMeta: v1.ObjectMeta{Name: "nexus3", Namespace: t.Name()},
 	}
-	cli := test.NewFakeClientBuilder(instance).Build()
+	cli := operatorclient.NewFakeClient(instance)
 
 	status, err := HandleServerOperations(instance, cli)
 	assert.NoError(t, err)
@@ -169,7 +167,7 @@ func Test_handleServerOperations(t *testing.T) {
 			SessionAffinity: corev1.ServiceAffinityNone,
 		},
 	}
-	cli := test.NewFakeClientBuilder(instance, svc, &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}}).Build()
+	cli := operatorclient.NewFakeClient(instance, svc, &corev1.Secret{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}})
 	status, err := handleServerOperations(instance, cli, nexusAPIFakeBuilder)
 	assert.NoError(t, err)
 	assert.NotNil(t, status)
@@ -190,7 +188,7 @@ func Test_handleServerOperationsNoEndpoint(t *testing.T) {
 			},
 		},
 	}
-	cli := test.NewFakeClientBuilder(instance).Build()
+	cli := operatorclient.NewFakeClient(instance)
 	status, err := handleServerOperations(instance, cli, nexusAPIFakeBuilder)
 	assert.NoError(t, err)
 	assert.NotNil(t, status)

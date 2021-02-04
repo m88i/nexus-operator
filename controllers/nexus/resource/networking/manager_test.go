@@ -31,6 +31,7 @@ import (
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
+	"github.com/m88i/nexus-operator/pkg/client"
 	"github.com/m88i/nexus-operator/pkg/cluster/discovery"
 	"github.com/m88i/nexus-operator/pkg/framework/kind"
 	"github.com/m88i/nexus-operator/pkg/logger"
@@ -45,17 +46,17 @@ var nodePortNexus = &v1alpha1.Nexus{
 }
 
 func TestNewManager(t *testing.T) {
-	k8sClient := test.NewFakeClientBuilder().Build()
-	k8sClientWithIngress := test.NewFakeClientBuilder().WithIngress().Build()
-	k8sClientWithLegacyIngress := test.NewFakeClientBuilder().WithLegacyIngress().Build()
-	ocpClient := test.NewFakeClientBuilder().OnOpenshift().Build()
+	k8sClient := discovery.NewFakeDiscBuilder().Build()
+	k8sClientWithIngress := discovery.NewFakeDiscBuilder().WithIngress().Build()
+	k8sClientWithLegacyIngress := discovery.NewFakeDiscBuilder().WithLegacyIngress().Build()
+	ocpClient := discovery.NewFakeDiscBuilder().OnOpenshift().Build()
 
 	//default-setting logic is tested elsewhere
 	//so here we just check if the resulting manager took in the arguments correctly
 	tests := []struct {
-		name       string
-		want       *Manager
-		wantClient *test.FakeClient
+		name string
+		want *Manager
+		disc *discovery.FakeDisc
 	}{
 		{
 			"On Kubernetes with v1 Ingresses available",
@@ -110,10 +111,11 @@ func TestNewManager(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		discovery.SetClient(tt.wantClient)
-		got, err := NewManager(nodePortNexus, tt.wantClient)
+		discovery.SetClient(tt.disc)
+		wantCli := client.NewFakeClient()
+		got, err := NewManager(nodePortNexus, wantCli)
 		assert.NoError(t, err)
-		assert.Equal(t, tt.wantClient, got.client)
+		assert.Equal(t, wantCli, got.client)
 		assert.Equal(t, tt.want.nexus, got.nexus)
 		assert.Equal(t, tt.want.routeAvailable, got.routeAvailable)
 		assert.Equal(t, tt.want.ingressAvailable, got.ingressAvailable)
@@ -125,7 +127,7 @@ func TestNewManager(t *testing.T) {
 	mockErrorMsg := "mock 500"
 	k8sClient.SetMockErrorForOneRequest(errors.NewInternalError(fmt.Errorf(mockErrorMsg)))
 	discovery.SetClient(k8sClient)
-	mgr, err := NewManager(nodePortNexus, k8sClient)
+	mgr, err := NewManager(nodePortNexus, client.NewFakeClient())
 	assert.Nil(t, mgr)
 	assert.Contains(t, err.Error(), mockErrorMsg)
 }
@@ -134,10 +136,11 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// correctness of the generated resources is tested elsewhere
 	// here we just want to check if they have been created and returned
 	// first, let's test a Nexus which does not expose
+	discovery.SetClient(discovery.NewFakeDiscBuilder().Build())
 	nexus := &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{Expose: false}}}
 	mgr := &Manager{
 		nexus:  nexus,
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 		log:    logger.GetLoggerWithResource("test", nexus),
 	}
 	resources, err := mgr.GetRequiredResources()
@@ -145,9 +148,10 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	assert.Nil(t, err)
 
 	// now, let's use a route
+	discovery.SetClient(discovery.NewFakeDiscBuilder().OnOpenshift().Build())
 	mgr = &Manager{
 		nexus:          routeNexus,
-		client:         test.NewFakeClientBuilder().OnOpenshift().Build(),
+		client:         client.NewFakeClient(),
 		log:            logger.GetLoggerWithResource("test", routeNexus),
 		routeAvailable: true,
 	}
@@ -157,19 +161,21 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&routev1.Route{})))
 
 	// still a route, but in a cluster without routes
+	discovery.SetClient(discovery.NewFakeDiscBuilder().Build())
 	mgr = &Manager{
 		nexus:  routeNexus,
 		log:    logger.GetLoggerWithResource("test", routeNexus),
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 	}
 	resources, err = mgr.GetRequiredResources()
 	assert.Nil(t, resources)
 	assert.EqualError(t, err, fmt.Sprintf(resUnavailableFormat, "routes"))
 
 	// now an ingress
+	discovery.SetClient(discovery.NewFakeDiscBuilder().WithIngress().Build())
 	mgr = &Manager{
 		nexus:            nexusIngress,
-		client:           test.NewFakeClientBuilder().WithLegacyIngress().Build(),
+		client:           client.NewFakeClient(),
 		log:              logger.GetLoggerWithResource("test", nexusIngress),
 		ingressAvailable: true,
 	}
@@ -179,10 +185,11 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&networkingv1.Ingress{})))
 
 	// still an ingress, but in a cluster without ingresses
+	discovery.SetClient(discovery.NewFakeDiscBuilder().Build())
 	mgr = &Manager{
 		nexus:  nexusIngress,
 		log:    logger.GetLoggerWithResource("test", nexusIngress),
-		client: test.NewFakeClientBuilder().Build(),
+		client: client.NewFakeClient(),
 	}
 	resources, err = mgr.GetRequiredResources()
 	assert.Nil(t, resources)
@@ -233,7 +240,7 @@ func TestManager_createIngress(t *testing.T) {
 
 func TestManager_GetDeployedResources(t *testing.T) {
 	// first with no deployed resources
-	fakeClient := test.NewFakeClientBuilder().WithIngress().OnOpenshift().Build()
+	fakeClient := client.NewFakeClient()
 	mgr := &Manager{
 		nexus:            nodePortNexus,
 		client:           fakeClient,

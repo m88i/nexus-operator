@@ -1,34 +1,49 @@
-
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: nexus-operator-system
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    cert-manager.io/inject-ca-from: nexus-operator-system/nexus-operator-serving-cert
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: nexus.apps.m88i.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .spec.networking.exposeAs
-    description: Type of networking access
-    name: Expose As
-    type: string
-  - JSONPath: .spec.automaticUpdate.disabled
-    description: Flag that indicates if automatic updates are disabled or not
-    name: Update Disabled
-    type: boolean
-  - JSONPath: .status.nexusStatus
-    description: Instance Status
-    name: Status
-    type: string
-  - JSONPath: .status.reason
-    description: Status reason
-    name: Reason
-    type: string
-  - JSONPath: .status.serverOperationsStatus.mavenPublicURL
-    description: Internal Group Maven Public URL
-    name: Maven Public URL
-    type: string
+    - JSONPath: .spec.networking.exposeAs
+      description: Type of networking access
+      name: Expose As
+      type: string
+    - JSONPath: .spec.automaticUpdate.disabled
+      description: Flag that indicates if automatic updates are disabled or not
+      name: Update Disabled
+      type: boolean
+    - JSONPath: .status.nexusStatus
+      description: Instance Status
+      name: Status
+      type: string
+    - JSONPath: .status.reason
+      description: Status reason
+      name: Reason
+      type: string
+    - JSONPath: .status.serverOperationsStatus.mavenPublicURL
+      description: Internal Group Maven Public URL
+      name: Maven Public URL
+      type: string
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: nexus-operator-webhook-service
+        namespace: nexus-operator-system
+        path: /convert
+        port: 443
   group: apps.m88i.io
   names:
     kind: Nexus
@@ -38,7 +53,7 @@ spec:
   preserveUnknownFields: false
   scope: Namespaced
   subresources:
-    status: {}
+    status: { }
   validation:
     openAPIV3Schema:
       properties:
@@ -93,9 +108,9 @@ spec:
                 and `IfNotPresent` otherwise). Possible values: `Always`, `IfNotPresent`
                 or `Never`.'
               enum:
-              - Always
-              - IfNotPresent
-              - Never
+                - Always
+                - IfNotPresent
+                - Never
               type: string
             livenessProbe:
               description: LivenessProbe describes how the Nexus container liveness
@@ -148,9 +163,9 @@ spec:
                     are only available on Openshift and Ingresses are only available
                     on Kubernetes.'
                   enum:
-                  - NodePort
-                  - Route
-                  - Ingress
+                    - NodePort
+                    - Route
+                    - Ingress
                   type: string
                 host:
                   description: Host where the Nexus service is exposed. This attribute
@@ -191,7 +206,7 @@ spec:
                   description: 'If persistent, the size of the Volume. Defaults: 10Gi'
                   type: string
               required:
-              - persistent
+                - persistent
               type: object
             readinessProbe:
               description: ReadinessProbe describes how the Nexus container readiness
@@ -243,8 +258,8 @@ spec:
                 limits:
                   additionalProperties:
                     anyOf:
-                    - type: integer
-                    - type: string
+                      - type: integer
+                      - type: string
                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                     x-kubernetes-int-or-string: true
                   description: 'Limits describes the maximum amount of compute resources
@@ -253,8 +268,8 @@ spec:
                 requests:
                   additionalProperties:
                     anyOf:
-                    - type: integer
-                    - type: string
+                      - type: integer
+                      - type: string
                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                     x-kubernetes-int-or-string: true
                   description: 'Requests describes the minimum amount of compute resources
@@ -296,9 +311,9 @@ spec:
                 to `false`
               type: boolean
           required:
-          - persistence
-          - replicas
-          - useRedHatImage
+            - persistence
+            - replicas
+            - useRedHatImage
           type: object
         status:
           description: NexusStatus defines the observed state of Nexus
@@ -348,8 +363,8 @@ spec:
                         description: Type of deployment condition.
                         type: string
                     required:
-                    - status
-                    - type
+                      - status
+                      - type
                     type: object
                   type: array
                 observedGeneration:
@@ -415,12 +430,311 @@ spec:
       type: object
   version: v1alpha1
   versions:
-  - name: v1alpha1
-    served: true
-    storage: true
+    - name: v1alpha1
+      served: true
+      storage: true
 status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: []
-  storedVersions: []
+  conditions: [ ]
+  storedVersions: [ ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nexus-operator-leader-election-role
+  namespace: nexus-operator-system
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: nexus-operator-manager-role
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+    verbs:
+      - get
+  - apiGroups:
+      - apps.m88i.io
+    resources:
+      - nexus
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps.m88i.io
+    resources:
+      - nexus/finalizers
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - apps.m88i.io
+    resources:
+      - nexus/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - events
+      - persistentvolumeclaims
+      - secrets
+      - serviceaccounts
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nexus-operator-proxy-role
+rules:
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: nexus-operator-metrics-reader
+rules:
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nexus-operator-leader-election-rolebinding
+  namespace: nexus-operator-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nexus-operator-leader-election-role
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: nexus-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nexus-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nexus-operator-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: nexus-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nexus-operator-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nexus-operator-proxy-role
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: nexus-operator-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: nexus-operator-controller-manager-metrics-service
+  namespace: nexus-operator-system
+spec:
+  ports:
+    - name: https
+      port: 8443
+      targetPort: https
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: nexus-operator-controller-manager
+  namespace: nexus-operator-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=10
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+        - args:
+            - --metrics-addr=127.0.0.1:8080
+            - --enable-leader-election
+          command:
+            - /manager
+          image: quay.io/m88i/nexus-operator:0.5.0
+          name: manager
+          ports:
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          env:
+            - name: USE_WEBHOOKS
+              value: 'FALSE'
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: nexus-operator-controller-manager-metrics-monitor
+  namespace: nexus-operator-system
+spec:
+  endpoints:
+    - path: /metrics
+      port: https
+  selector:
+    matchLabels:
+      control-plane: controller-manager

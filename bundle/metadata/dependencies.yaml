@@ -1,0 +1,20 @@
+# https://olm.operatorframework.io/docs/concepts/olm-architecture/dependency-resolution/
+dependencies:
+  # ideally, this would be an optional/weak dep, the operator still works fine without it
+  # doesn't look like it will be implemented any time soon though https://github.com/operator-framework/operator-lifecycle-manager/issues/819
+  # if this situation changes, just uncomment the following lines
+  # - type: olm.gvk
+  #   value:
+  #     group: monitoring.coreos.com
+  #     kind: ServiceMonitor
+  #     version: v1
+  - type: olm.gvk
+    value:
+      group: cert-manager.io
+      kind: Certificate
+      version: v1alpha2
+  - type: olm.gvk
+    value:
+      group: cert-manager.io
+      kind: Issuer
+      version: v1alpha2

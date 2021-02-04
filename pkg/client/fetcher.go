@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package framework
+package client
 
 import (
 	ctx "context"
@@ -23,18 +23,19 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/m88i/nexus-operator/api/v1alpha1"
+	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
+var log = logger.GetLogger("client")
+
 // FetchDeployedResources fetches deployed resources whose Kind is present in "managedObjectsRef"
-func FetchDeployedResources(managedObjectsRef map[string]resource.KubernetesResource, nexus *v1alpha1.Nexus, cli client.Client) ([]resource.KubernetesResource, error) {
+func FetchDeployedResources(managedObjectsRef map[string]resource.KubernetesResource, key types.NamespacedName, cli client.Client) ([]resource.KubernetesResource, error) {
 	var resources []resource.KubernetesResource
 	for resKind, resRef := range managedObjectsRef {
-		key := Key(nexus)
 		if err := Fetch(cli, key, resRef, resKind); err == nil {
 			resources = append(resources, resRef)
 		} else if !errors.IsNotFound(err) {
-			return nil, fmt.Errorf("could not fetch %s (%s/%s): %v", resKind, nexus.Namespace, nexus.Name, err)
+			return nil, fmt.Errorf("could not fetch %s (%s): %v", resKind, key.String(), err)
 		} else {
 			log.Debug("Unable to find resource", "kind", resKind, "namespacedName", key)
 		}

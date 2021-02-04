@@ -25,20 +25,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
-	"github.com/m88i/nexus-operator/pkg/test"
+	"github.com/m88i/nexus-operator/pkg/client"
 )
 
 func TestRaiseInfoEventf(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus", Namespace: "test"}}
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	reason := "test-reason"
 	format := "%s %s"
 	message := "test-message"
 	extraArg := "extra"
 
-	assert.NoError(t, RaiseInfoEventf(nexus, client.Scheme(), client, reason, format, message, extraArg))
+	assert.NoError(t, RaiseInfoEventf(nexus, cli.Scheme(), cli, reason, format, message, extraArg))
 	eventList := &corev1.EventList{}
-	assert.NoError(t, client.List(ctx.TODO(), eventList))
+	assert.NoError(t, cli.List(ctx.TODO(), eventList))
 	event := eventList.Items[0]
 	assert.Equal(t, nexus.Name, event.Source.Component)
 	assert.Equal(t, reason, event.Reason)
@@ -48,15 +48,15 @@ func TestRaiseInfoEventf(t *testing.T) {
 
 func TestRaiseWarnEventf(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus", Namespace: "test"}}
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	reason := "test-reason"
 	format := "%s %s"
 	message := "test-message"
 	extraArg := "extra"
 
-	assert.NoError(t, RaiseWarnEventf(nexus, client.Scheme(), client, reason, format, message, extraArg))
+	assert.NoError(t, RaiseWarnEventf(nexus, cli.Scheme(), cli, reason, format, message, extraArg))
 	eventList := &corev1.EventList{}
-	assert.NoError(t, client.List(ctx.TODO(), eventList))
+	assert.NoError(t, cli.List(ctx.TODO(), eventList))
 	event := eventList.Items[0]
 	assert.Equal(t, nexus.Name, event.Source.Component)
 	assert.Equal(t, reason, event.Reason)
@@ -66,20 +66,20 @@ func TestRaiseWarnEventf(t *testing.T) {
 
 func TestServerFailure(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus", Namespace: "test"}}
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	reason := "test-reason"
 	message := "test-message"
 
-	client.SetMockErrorForOneRequest(fmt.Errorf("mock-error"))
-	assert.Error(t, RaiseInfoEventf(nexus, client.Scheme(), client, reason, message))
+	cli.SetMockErrorForOneRequest(fmt.Errorf("mock-error"))
+	assert.Error(t, RaiseInfoEventf(nexus, cli.Scheme(), cli, reason, message))
 }
 
 func TestReferenceFailure(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Name: "nexus", Namespace: "test"}}
-	client := test.NewFakeClientBuilder().Build()
+	cli := client.NewFakeClient()
 	reason := "test-reason"
 	message := "test-message"
 
 	// let's pass in the default scheme
-	assert.Error(t, RaiseInfoEventf(nexus, runtime.NewScheme(), client, reason, message))
+	assert.Error(t, RaiseInfoEventf(nexus, runtime.NewScheme(), cli, reason, message))
 }

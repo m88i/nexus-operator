@@ -18,29 +18,27 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/m88i/nexus-operator/pkg/test"
 )
 
 func TestIsOpenShift(t *testing.T) {
-	cli = test.NewFakeClientBuilder().Build()
+	SetClient(NewFakeDiscBuilder().Build())
 	isOCP, err := IsOpenShift()
 	assert.Nil(t, err)
 	assert.False(t, isOCP)
 
-	cli = test.NewFakeClientBuilder().OnOpenshift().Build()
+	SetClient(NewFakeDiscBuilder().OnOpenshift().Build())
 	isOCP, err = IsOpenShift()
 	assert.Nil(t, err)
 	assert.True(t, isOCP)
 }
 
 func TestIsRouteAvailable(t *testing.T) {
-	cli = test.NewFakeClientBuilder().Build()
+	SetClient(NewFakeDiscBuilder().Build())
 	routeAvailable, err := IsRouteAvailable()
 	assert.Nil(t, err)
 	assert.False(t, routeAvailable)
 
-	cli = test.NewFakeClientBuilder().OnOpenshift().Build()
+	SetClient(NewFakeDiscBuilder().OnOpenshift().Build())
 	routeAvailable, err = IsRouteAvailable()
 	assert.Nil(t, err)
 	assert.True(t, routeAvailable)

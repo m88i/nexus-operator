@@ -21,10 +21,39 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/m88i/nexus-operator/pkg/client"
 )
 
 func TestContainsType(t *testing.T) {
 	resources := []resource.KubernetesResource{&corev1.ServiceAccount{}}
 	assert.True(t, ContainsType(resources, reflect.TypeOf(&corev1.ServiceAccount{})))
 	assert.False(t, ContainsType(resources, reflect.TypeOf(&corev1.Service{})))
+}
+
+func TestEventExists(t *testing.T) {
+	testReason := "reason"
+	testEvent := &corev1.Event{Reason: testReason}
+	c := client.NewFakeClient(testEvent)
+
+	assert.False(t, EventExists(c, "some other reason"))
+	assert.True(t, EventExists(c, testReason))
+}
+
+type foo interface {
+	bar()
+}
+type concrete struct{}
+
+func (*concrete) bar() {}
+func TestIsInterfaceValueNil(t *testing.T) {
+	var f foo
+	assert.True(t, IsInterfaceValueNil(f))
+
+	var c *concrete
+	f = c
+	assert.True(t, IsInterfaceValueNil(f))
+
+	f = &concrete{}
+	assert.False(t, IsInterfaceValueNil(f))
 }

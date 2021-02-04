@@ -24,6 +24,7 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 )
 
+// ContainsType returns true if the give resource slice contains an element of type t
 func ContainsType(resources []resource.KubernetesResource, t reflect.Type) bool {
 	for _, res := range resources {
 		if reflect.TypeOf(res) == t {
@@ -33,6 +34,7 @@ func ContainsType(resources []resource.KubernetesResource, t reflect.Type) bool 
 	return false
 }
 
+// EventExists returns true if an event with the given reason exists
 func EventExists(c client.Client, reason string) bool {
 	eventList := &v1.EventList{}
 	_ = c.List(context.Background(), eventList)
@@ -42,4 +44,10 @@ func EventExists(c client.Client, reason string) bool {
 		}
 	}
 	return false
+}
+
+// IsInterfaceValueNil returns true if the value stored by the interface is nil
+// See https://medium.com/@glucn/golang-an-interface-holding-a-nil-value-is-not-nil-bb151f472cc7
+func IsInterfaceValueNil(i interface{}) bool {
+	return i == nil || (reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil())
 }
