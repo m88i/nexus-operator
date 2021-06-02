@@ -181,6 +181,7 @@ func legacyIngressEqual(deployed resource.KubernetesResource, requested resource
 	pairs = append(pairs, [2]interface{}{ingress1.Name, ingress2.Name})
 	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
 	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
+	pairs = append(pairs, [2]interface{}{ingress1.Annotations, ingress2.Annotations})
 
 	equal := compare.EqualPairs(pairs)
 	if !equal {
@@ -196,6 +197,7 @@ func ingressEqual(deployed resource.KubernetesResource, requested resource.Kuber
 	pairs = append(pairs, [2]interface{}{ingress1.Name, ingress2.Name})
 	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
 	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
+	pairs = append(pairs, [2]interface{}{ingress1.Annotations, ingress2.Annotations})
 
 	equal := compare.EqualPairs(pairs)
 	if !equal {

@@ -32,7 +32,7 @@ type routeBuilder struct {
 
 func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
 	route := &v1.Route{
-		ObjectMeta: meta.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultNetworkingMeta(nexus),
 		Spec: v1.RouteSpec{
 			To: v1.RouteTargetReference{
 				Kind: serviceKind,

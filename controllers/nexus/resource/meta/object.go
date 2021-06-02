@@ -35,3 +35,9 @@ func GenerateLabels(nexus *v1alpha1.Nexus) map[string]string {
 	nexusAppLabels[AppLabel] = nexus.Name
 	return nexusAppLabels
 }
+
+func DefaultNetworkingMeta(nexus *v1alpha1.Nexus) v1.ObjectMeta {
+	meta := DefaultObjectMeta(nexus)
+	meta.Annotations = nexus.Spec.Networking.Annotations
+	return meta
+}

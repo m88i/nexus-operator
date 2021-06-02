@@ -137,6 +137,10 @@ const (
 
 // NexusNetworking is the base structure for Nexus networking information
 type NexusNetworking struct {
+	// Annotations that should be added to the Ingress/Route resource
+	// +optional
+	// +nullable
+	Annotations map[string]string `json:"annotations,omitempty"`
 	// Set to `true` to expose the Nexus application. Defaults to `false`.
 	Expose bool `json:"expose,omitempty"`
 	// Type of networking exposure: NodePort, Route or Ingress. Defaults to Route on OpenShift and Ingress on Kubernetes.
