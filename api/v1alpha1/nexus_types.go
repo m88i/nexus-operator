@@ -259,8 +259,11 @@ type OperationsStatus struct {
 type NexusStatusType string
 
 const (
-	NexusStatusOK      NexusStatusType = "OK"
+	// NexusStatusOK is the ok status
+	NexusStatusOK NexusStatusType = "OK"
+	// NexusStatusFailure is the failed status
 	NexusStatusFailure NexusStatusType = "Failure"
+	// NexusStatusPending is the failed status
 	NexusStatusPending NexusStatusType = "Pending"
 )
 
