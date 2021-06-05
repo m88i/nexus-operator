@@ -38,6 +38,18 @@ func GenerateLabels(nexus *v1alpha1.Nexus) map[string]string {
 
 func DefaultNetworkingMeta(nexus *v1alpha1.Nexus) v1.ObjectMeta {
 	meta := DefaultObjectMeta(nexus)
-	meta.Annotations = nexus.Spec.Networking.Annotations
+	meta.Annotations = appendStringMap(meta.Annotations, nexus.Spec.Networking.Annotations)
+	meta.Labels = appendStringMap(meta.Labels, nexus.Spec.Networking.Labels)
 	return meta
+}
+
+func appendStringMap(original map[string]string, elems map[string]string) map[string]string {
+	if original == nil {
+		return elems
+	}
+
+	for k, v := range elems {
+		original[k] = v
+	}
+	return original
 }
