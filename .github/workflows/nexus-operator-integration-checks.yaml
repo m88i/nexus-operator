@@ -12,8 +12,8 @@ on:
     branches:
       - main
 env:
-  OPERATOR_SDK_VERSION: v1.0.1
-  GO_VERSION: 1.14
+  OPERATOR_SDK_VERSION: v1.2.0
+  GO_VERSION: 1.15
 jobs:
   golint:
     name: Lint
