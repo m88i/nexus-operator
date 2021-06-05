@@ -41,7 +41,7 @@ var (
 				},
 				Expose:   true,
 				ExposeAs: v1alpha1.RouteExposeType,
-				Host:     "route.tls.test.com",
+				Host:     "route.test.com",
 				TLS: v1alpha1.NexusNetworkingTLS{
 					Mandatory: true,
 				},
@@ -82,6 +82,7 @@ func assertRouteBasic(t *testing.T, route *v1.Route) {
 
 	assert.NotNil(t, route.Spec)
 
+	assert.Equal(t, routeNexus.Spec.Networking.Host, route.Spec.Host)
 	assert.NotNil(t, route.Spec.To)
 	assert.Equal(t, serviceKind, route.Spec.To.Kind)
 	assert.Equal(t, routeService.Name, route.Spec.To.Name)
