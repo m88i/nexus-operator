@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -223,4 +224,54 @@ func Test_applyJVMArgs_withDefaultValues(t *testing.T) {
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgRandomPassword, "false"}, "="))
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXms, heapSizeDefault}, ""))
 	assert.Contains(t, deployment.Spec.Template.Spec.Containers[0].Env[0].Value, strings.Join([]string{jvmArgsXmx, heapSizeDefault}, ""))
+}
+
+func Test_newDeployment_WithExtraVolumes(t *testing.T) {
+	nexus := &v1alpha1.Nexus{
+		ObjectMeta: metav1.ObjectMeta{Name: "nexus-test", Namespace: t.Name()},
+		Spec: v1alpha1.NexusSpec{
+			// a valid Liveness Probe should have successThreshold == 1
+			// but we don't care about that here (this is tested on the manager's tests)
+			LivenessProbe:  validation.DefaultProbe,
+			ReadinessProbe: validation.DefaultProbe,
+			Persistence: v1alpha1.NexusPersistence{
+				ExtraVolumes: []v1alpha1.NexusVolume{
+					{
+						Volume:    corev1.Volume{Name: "volume-1"},
+						MountPath: "/some/path",
+					},
+					{
+						Volume:    corev1.Volume{Name: "volume-2"},
+						MountPath: "/some/other/path",
+					},
+				},
+			},
+		},
+	}
+
+	deployment := newDeployment(nexus)
+	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 2)
+	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+	assert.True(t, deploymentContainsNexusVolume(deployment, nexus.Spec.Persistence.ExtraVolumes[0]))
+	assert.True(t, deploymentContainsNexusVolume(deployment, nexus.Spec.Persistence.ExtraVolumes[1]))
+}
+
+func deploymentContainsNexusVolume(deployment *appsv1.Deployment, nexusVolume v1alpha1.NexusVolume) bool {
+	foundVolume := false
+	for _, volume := range deployment.Spec.Template.Spec.Volumes {
+		if volume == nexusVolume.Volume {
+			foundVolume = true
+			break
+		}
+	}
+	if !foundVolume {
+		return false
+	}
+
+	for _, mount := range deployment.Spec.Template.Spec.Containers[0].VolumeMounts {
+		if mount.Name == nexusVolume.Name && mount.MountPath == nexusVolume.MountPath {
+			return true
+		}
+	}
+	return false
 }
