@@ -154,9 +154,9 @@ spec:
                     are only available on Openshift and Ingresses are only available
                     on Kubernetes.'
                   enum:
-                    - NodePort
-                    - Route
-                    - Ingress
+                  - NodePort
+                  - Route
+                  - Ingress
                   type: string
                 host:
                   description: Host where the Nexus service is exposed. This attribute
