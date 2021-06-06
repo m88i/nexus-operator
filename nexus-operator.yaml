@@ -142,6 +142,13 @@ spec:
             networking:
               description: Networking definition
               properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: Annotations that should be added to the Ingress/Route
+                    resource
+                  nullable: true
+                  type: object
                 expose:
                   description: Set to `true` to expose the Nexus application. Defaults
                     to `false`.
@@ -698,7 +705,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: quay.io/m88i/nexus-operator:0.5.0
+        image: quay.io/m88i/nexus-operator:0.6.0
         name: manager
         resources:
           requests:

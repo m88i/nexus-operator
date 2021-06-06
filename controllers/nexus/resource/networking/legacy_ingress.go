@@ -30,7 +30,7 @@ type legacyIngressBuilder struct {
 
 func newLegacyIngressBuilder(nexus *v1alpha1.Nexus) *legacyIngressBuilder {
 	ingress := &v1beta1.Ingress{
-		ObjectMeta: meta.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultNetworkingMeta(nexus),
 		Spec: v1beta1.IngressSpec{
 			Rules: []v1beta1.IngressRule{
 				{
@@ -52,7 +52,7 @@ func newLegacyIngressBuilder(nexus *v1alpha1.Nexus) *legacyIngressBuilder {
 			},
 		},
 	}
-	addNginxAnnotations(ingress)
+	addNginxAnnotations(ingress.ObjectMeta)
 	return &legacyIngressBuilder{Ingress: ingress, nexus: nexus}
 }
 

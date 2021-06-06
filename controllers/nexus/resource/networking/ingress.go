@@ -15,8 +15,8 @@
 package networking
 
 import (
-	"github.com/RHsyseng/operator-utils/pkg/resource"
 	v1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
@@ -41,7 +41,7 @@ type ingressBuilder struct {
 
 func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 	ingress := &v1.Ingress{
-		ObjectMeta: meta.DefaultObjectMeta(nexus),
+		ObjectMeta: meta.DefaultNetworkingMeta(nexus),
 		Spec: v1.IngressSpec{
 			Rules: []v1.IngressRule{
 				{
@@ -66,7 +66,7 @@ func newIngressBuilder(nexus *v1alpha1.Nexus) *ingressBuilder {
 			},
 		},
 	}
-	addNginxAnnotations(ingress)
+	addNginxAnnotations(ingress.ObjectMeta)
 	return &ingressBuilder{Ingress: ingress, nexus: nexus}
 }
 
@@ -92,9 +92,11 @@ func hosts(rules []v1.IngressRule) []string {
 	return hosts
 }
 
-func addNginxAnnotations(resource resource.KubernetesResource) {
-	resource.SetAnnotations(map[string]string{
-		ingressClassKey: ingressClassNginx,
-		nginxRewriteKey: nginxRewriteValue,
-	})
+func addNginxAnnotations(meta metav1.ObjectMeta) {
+	if meta.Annotations == nil {
+		meta.Annotations = make(map[string]string)
+	}
+
+	meta.Annotations[ingressClassKey] = ingressClassNginx
+	meta.Annotations[nginxRewriteKey] = nginxRewriteValue
 }

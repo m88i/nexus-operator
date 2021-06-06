@@ -33,6 +33,9 @@ var (
 		},
 		Spec: v1alpha1.NexusSpec{
 			Networking: v1alpha1.NexusNetworking{
+				Annotations: map[string]string{
+					"test-annotation": "enabled",
+				},
 				Expose:   true,
 				ExposeAs: v1alpha1.IngressExposeType,
 				Host:     "ingress.tls.test.com",
@@ -81,6 +84,7 @@ func TestNewIngressWithSecretName(t *testing.T) {
 func assertIngressBasic(t *testing.T, ingress *v1.Ingress) {
 	assert.Equal(t, nexusIngress.Name, ingress.Name)
 	assert.Equal(t, nexusIngress.Namespace, ingress.Namespace)
+	assert.Equal(t, "enabled", ingress.Annotations["test-annotation"])
 
 	assert.NotNil(t, ingress.Spec)
 
