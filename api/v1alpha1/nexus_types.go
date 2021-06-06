@@ -114,13 +114,24 @@ type NexusSpec struct {
 // NexusPersistence is the structure for the data persistent
 // +k8s:openapi-gen=true
 type NexusPersistence struct {
-	// Flag to indicate if this instance will be persistent or not
+	// Flag to indicate if this instance installation will be persistent or not. If set to true a PVC is created for it.
 	Persistent bool `json:"persistent"`
 	// If persistent, the size of the Volume.
 	// Defaults: 10Gi
 	VolumeSize string `json:"volumeSize,omitempty"`
 	// StorageClass used by the managed PVC.
 	StorageClass string `json:"storageClass,omitempty"`
+	// ExtraVolumes which should be mounted when deploying Nexus.
+	// Updating this may lead to temporary unavailability while the new deployment with new volumes rolls out.
+	// +optional
+	ExtraVolumes []NexusVolume `json:"extraVolumes,omitempty"`
+}
+
+// NexusVolume embeds a Volume structure to represent a volume to be mounted in the Nexus pod at the specified MountPath
+type NexusVolume struct {
+	corev1.Volume `json:",inline"`
+	// MountPath is the path where this volume should be mounted
+	MountPath string `json:"mountPath"`
 }
 
 // NexusNetworkingExposeType defines how to expose Nexus service

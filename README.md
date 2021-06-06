@@ -25,7 +25,8 @@ Table of Contents
          * [TLS/SSL](#tlsssl)
          * [Annotations and Labels](#annotations-and-labels)
       * [Persistence](#persistence)
-         * [Minikube](#minikube)
+          * [Extra volumes](#extra-volumes)
+          * [Minikube](#minikube)
       * [Service Account](#service-account)
       * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
@@ -356,6 +357,50 @@ spec:
 ```
 
 ## Persistence
+
+### Extra volumes
+
+Starting at version 0.6.0 you may specify extra volumes to be mounted at the pod running Nexus, which comes in handy for
+migrating existing blob stores, for example. These volumes are controlled by the `spec.persistence.extraVolumes` field.
+
+For example, if you wanted to mount an AWS EBS volume, some PVC of yours and an EmptyDir volume:
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  persistence:
+    extraVolumes:
+      - name: "my-cool-ebs-vol"
+        mountPath: "/path/for/AWS-EBS/"
+        # This AWS EBS volume must already exist.
+        awsElasticBlockStore:
+          volumeID: "<volume id>"
+          fsType: ext4
+      - name: "my-cool-claim-vol"
+        mountPath: "/path/for/persistent-vol-claim/"
+        # This PVC must exist on the same namespace
+        persistentVolumeClaim:
+          claimName: "my-cool-claim"
+      - name: "my-cool-empty-dir-vol"
+        mountPath: "/path/for/emptyDir/"
+        emptyDir: { }
+```
+
+Each item of this `extraVolumes` array provides:
+
+- `mountPath`: a string representing the path at which this volume should be mounted
+- a Kubernetes `Volume` specification
+
+For more information about Kubernetes Volumes refer to
+their [documentation](https://kubernetes.io/docs/concepts/storage/volumes/)
+and each specific plugin documentation. For additional details about Persistent Volumes and using Claims as volumes
+refer to the [documentation](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#claims-as-volumes).
+
+> **Important**: updating the `spec.persistence.extraVolumes` field may lead to temporary unavailability while the new
+> deployment with the new volume configuration rolls out.
 
 ### Minikube
 

@@ -95,7 +95,7 @@ func newDeployment(nexus *v1alpha1.Nexus) *appsv1.Deployment {
 		},
 	}
 
-	addVolume(nexus, deployment)
+	addVolumes(nexus, deployment)
 	addProbes(nexus, deployment)
 	applyJVMArgs(nexus, deployment)
 	applySecurityContext(nexus, deployment)
@@ -149,25 +149,42 @@ func addProbes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = readinessProbe
 }
 
-func addVolume(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+func addVolumes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 	if nexus.Spec.Persistence.Persistent {
-		deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-			{
-				Name: fmt.Sprintf("%s-data", nexus.Name),
-				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: nexus.Name,
-						ReadOnly:  false,
-					},
+		addInstallationVolume(nexus, deployment)
+	}
+	addExtraVolumes(nexus, deployment)
+}
+
+func addInstallationVolume(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
+		{
+			Name: fmt.Sprintf("%s-data", nexus.Name),
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: nexus.Name,
+					ReadOnly:  false,
 				},
 			},
+		},
+	}
+	deployment.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      fmt.Sprintf("%s-data", nexus.Name),
+			MountPath: nexusDataDir,
+		},
+	}
+}
+
+func addExtraVolumes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+	for _, extraVolume := range nexus.Spec.Persistence.ExtraVolumes {
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, extraVolume.Volume)
+
+		vm := corev1.VolumeMount{
+			Name:      extraVolume.Name,
+			MountPath: extraVolume.MountPath,
 		}
-		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
-			{
-				Name:      fmt.Sprintf("%s-data", nexus.Name),
-				MountPath: nexusDataDir,
-			},
-		}
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, vm)
 	}
 }
 

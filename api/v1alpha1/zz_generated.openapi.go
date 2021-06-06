@@ -42,7 +42,7 @@ func schema__api_v1alpha1_NexusPersistence(ref common.ReferenceCallback) common.
 				Properties: map[string]spec.Schema{
 					"persistent": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Flag to indicate if this instance will be persistent or not",
+							Description: "Flag to indicate if this instance installation will be persistent or not. If set to true a PVC is created for it.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -61,10 +61,25 @@ func schema__api_v1alpha1_NexusPersistence(ref common.ReferenceCallback) common.
 							Format:      "",
 						},
 					},
+					"extraVolumes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExtraVolumes which should be mounted when deploying Nexus. Updating this may lead to temporary unavailability while the new deployment with new volumes rolls out.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("./api/v1alpha1.NexusVolume"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"persistent"},
 			},
 		},
+		Dependencies: []string{
+			"./api/v1alpha1.NexusVolume"},
 	}
 }
 
