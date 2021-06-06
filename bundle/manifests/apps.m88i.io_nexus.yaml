@@ -118,9 +118,9 @@ spec:
                 exposeAs:
                   description: 'Type of networking exposure: NodePort, Route or Ingress. Defaults to Route on OpenShift and Ingress on Kubernetes. Routes are only available on Openshift and Ingresses are only available on Kubernetes.'
                   enum:
-                    - NodePort
-                    - Route
-                    - Ingress
+                  - NodePort
+                  - Route
+                  - Ingress
                   type: string
                 host:
                   description: Host where the Nexus service is exposed. This attribute is required if the service is exposed via Ingress.
@@ -165,7 +165,7 @@ spec:
                             description: 'Unique ID of the persistent disk resource in AWS (Amazon EBS volume). More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore'
                             type: string
                         required:
-                          - volumeID
+                        - volumeID
                         type: object
                       azureDisk:
                         description: AzureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.
@@ -189,8 +189,8 @@ spec:
                             description: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
                             type: boolean
                         required:
-                          - diskName
-                          - diskURI
+                        - diskName
+                        - diskURI
                         type: object
                       azureFile:
                         description: AzureFile represents an Azure File Service mount on the host and bind mount to the pod.
@@ -205,8 +205,8 @@ spec:
                             description: Share Name
                             type: string
                         required:
-                          - secretName
-                          - shareName
+                        - secretName
+                        - shareName
                         type: object
                       cephfs:
                         description: CephFS represents a Ceph FS mount on the host that shares a pod's lifetime
@@ -236,7 +236,7 @@ spec:
                             description: 'Optional: User is the rados user name, default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it'
                             type: string
                         required:
-                          - monitors
+                        - monitors
                         type: object
                       cinder:
                         description: 'Cinder represents a cinder volume attached and mounted on kubelets host machine. More info: https://examples.k8s.io/mysql-cinder-pd/README.md'
@@ -258,7 +258,7 @@ spec:
                             description: 'volume id used to identify the volume in cinder. More info: https://examples.k8s.io/mysql-cinder-pd/README.md'
                             type: string
                         required:
-                          - volumeID
+                        - volumeID
                         type: object
                       configMap:
                         description: ConfigMap represents a configMap that should populate this volume
@@ -283,8 +283,8 @@ spec:
                                   description: The relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.
                                   type: string
                               required:
-                                - key
-                                - path
+                              - key
+                              - path
                               type: object
                             type: array
                           name:
@@ -319,7 +319,7 @@ spec:
                             description: VolumeAttributes stores driver-specific properties that are passed to the CSI driver. Consult your driver's documentation for supported values.
                             type: object
                         required:
-                          - driver
+                        - driver
                         type: object
                       downwardAPI:
                         description: DownwardAPI represents downward API about the pod that should populate this volume
@@ -343,7 +343,7 @@ spec:
                                       description: Path of the field to select in the specified API version.
                                       type: string
                                   required:
-                                    - fieldPath
+                                  - fieldPath
                                   type: object
                                 mode:
                                   description: 'Optional: mode bits used to set permissions on this file, must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.'
@@ -360,8 +360,8 @@ spec:
                                       type: string
                                     divisor:
                                       anyOf:
-                                        - type: integer
-                                        - type: string
+                                      - type: integer
+                                      - type: string
                                       description: Specifies the output format of the exposed resources, defaults to "1"
                                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                       x-kubernetes-int-or-string: true
@@ -369,10 +369,10 @@ spec:
                                       description: 'Required: resource to select'
                                       type: string
                                   required:
-                                    - resource
+                                  - resource
                                   type: object
                               required:
-                                - path
+                              - path
                               type: object
                             type: array
                         type: object
@@ -384,8 +384,8 @@ spec:
                             type: string
                           sizeLimit:
                             anyOf:
-                              - type: integer
-                              - type: string
+                            - type: integer
+                            - type: string
                             description: 'Total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: http://kubernetes.io/docs/user-guide/volumes#emptydir'
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
@@ -423,8 +423,8 @@ spec:
                                         description: Name is the name of resource being referenced
                                         type: string
                                     required:
-                                      - kind
-                                      - name
+                                    - kind
+                                    - name
                                     type: object
                                   resources:
                                     description: 'Resources represents the minimum resources the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
@@ -432,8 +432,8 @@ spec:
                                       limits:
                                         additionalProperties:
                                           anyOf:
-                                            - type: integer
-                                            - type: string
+                                          - type: integer
+                                          - type: string
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
@@ -441,8 +441,8 @@ spec:
                                       requests:
                                         additionalProperties:
                                           anyOf:
-                                            - type: integer
-                                            - type: string
+                                          - type: integer
+                                          - type: string
                                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                           x-kubernetes-int-or-string: true
                                         description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
@@ -468,8 +468,8 @@ spec:
                                                 type: string
                                               type: array
                                           required:
-                                            - key
-                                            - operator
+                                          - key
+                                          - operator
                                           type: object
                                         type: array
                                       matchLabels:
@@ -489,7 +489,7 @@ spec:
                                     type: string
                                 type: object
                             required:
-                              - spec
+                            - spec
                             type: object
                         type: object
                       fc:
@@ -541,7 +541,7 @@ spec:
                                 type: string
                             type: object
                         required:
-                          - driver
+                        - driver
                         type: object
                       flocker:
                         description: Flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running
@@ -570,7 +570,7 @@ spec:
                             description: 'ReadOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false. More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk'
                             type: boolean
                         required:
-                          - pdName
+                        - pdName
                         type: object
                       gitRepo:
                         description: 'GitRepo represents a git repository at a particular revision. DEPRECATED: GitRepo is deprecated. To provision a container with a git repo, mount an EmptyDir into an InitContainer that clones the repo using git, then mount the EmptyDir into the Pod''s container.'
@@ -585,7 +585,7 @@ spec:
                             description: Commit hash for the specified revision.
                             type: string
                         required:
-                          - repository
+                        - repository
                         type: object
                       glusterfs:
                         description: 'Glusterfs represents a Glusterfs mount on the host that shares a pod''s lifetime. More info: https://examples.k8s.io/volumes/glusterfs/README.md'
@@ -600,8 +600,8 @@ spec:
                             description: 'ReadOnly here will force the Glusterfs volume to be mounted with read-only permissions. Defaults to false. More info: https://examples.k8s.io/volumes/glusterfs/README.md#create-a-pod'
                             type: boolean
                         required:
-                          - endpoints
-                          - path
+                        - endpoints
+                        - path
                         type: object
                       hostPath:
                         description: 'HostPath represents a pre-existing file or directory on the host machine that is directly exposed to the container. This is generally used for system agents or other privileged things that are allowed to see the host machine. Most containers will NOT need this. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath --- TODO(jonesdl) We need to restrict who can use host directory mounts and who can/can not mount host directories as read/write.'
@@ -613,7 +613,7 @@ spec:
                             description: 'Type for HostPath Volume Defaults to "" More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath'
                             type: string
                         required:
-                          - path
+                        - path
                         type: object
                       iscsi:
                         description: 'ISCSI represents an ISCSI Disk resource that is attached to a kubelet''s host machine and then exposed to the pod. More info: https://examples.k8s.io/volumes/iscsi/README.md'
@@ -659,9 +659,9 @@ spec:
                             description: iSCSI Target Portal. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).
                             type: string
                         required:
-                          - iqn
-                          - lun
-                          - targetPortal
+                        - iqn
+                        - lun
+                        - targetPortal
                         type: object
                       mountPath:
                         description: MountPath is the path where this volume should be mounted
@@ -682,8 +682,8 @@ spec:
                             description: 'Server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
                             type: string
                         required:
-                          - path
-                          - server
+                        - path
+                        - server
                         type: object
                       persistentVolumeClaim:
                         description: 'PersistentVolumeClaimVolumeSource represents a reference to a PersistentVolumeClaim in the same namespace. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims'
@@ -695,7 +695,7 @@ spec:
                             description: Will force the ReadOnly setting in VolumeMounts. Default false.
                             type: boolean
                         required:
-                          - claimName
+                        - claimName
                         type: object
                       photonPersistentDisk:
                         description: PhotonPersistentDisk represents a PhotonController persistent disk attached and mounted on kubelets host machine
@@ -707,7 +707,7 @@ spec:
                             description: ID that identifies Photon Controller persistent disk
                             type: string
                         required:
-                          - pdID
+                        - pdID
                         type: object
                       portworxVolume:
                         description: PortworxVolume represents a portworx volume attached and mounted on kubelets host machine
@@ -722,7 +722,7 @@ spec:
                             description: VolumeID uniquely identifies a Portworx volume
                             type: string
                         required:
-                          - volumeID
+                        - volumeID
                         type: object
                       projected:
                         description: Items for all in one resources secrets, configmaps, and downward API
@@ -755,8 +755,8 @@ spec:
                                             description: The relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.
                                             type: string
                                         required:
-                                          - key
-                                          - path
+                                        - key
+                                        - path
                                         type: object
                                       type: array
                                     name:
@@ -784,7 +784,7 @@ spec:
                                                 description: Path of the field to select in the specified API version.
                                                 type: string
                                             required:
-                                              - fieldPath
+                                            - fieldPath
                                             type: object
                                           mode:
                                             description: 'Optional: mode bits used to set permissions on this file, must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.'
@@ -801,8 +801,8 @@ spec:
                                                 type: string
                                               divisor:
                                                 anyOf:
-                                                  - type: integer
-                                                  - type: string
+                                                - type: integer
+                                                - type: string
                                                 description: Specifies the output format of the exposed resources, defaults to "1"
                                                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                                 x-kubernetes-int-or-string: true
@@ -810,10 +810,10 @@ spec:
                                                 description: 'Required: resource to select'
                                                 type: string
                                             required:
-                                              - resource
+                                            - resource
                                             type: object
                                         required:
-                                          - path
+                                        - path
                                         type: object
                                       type: array
                                   type: object
@@ -836,8 +836,8 @@ spec:
                                             description: The relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.
                                             type: string
                                         required:
-                                          - key
-                                          - path
+                                        - key
+                                        - path
                                         type: object
                                       type: array
                                     name:
@@ -861,12 +861,12 @@ spec:
                                       description: Path is the path relative to the mount point of the file to project the token into.
                                       type: string
                                   required:
-                                    - path
+                                  - path
                                   type: object
                               type: object
                             type: array
                         required:
-                          - sources
+                        - sources
                         type: object
                       quobyte:
                         description: Quobyte represents a Quobyte mount on the host that shares a pod's lifetime
@@ -890,8 +890,8 @@ spec:
                             description: Volume is a string that references an already created Quobyte volume by name.
                             type: string
                         required:
-                          - registry
-                          - volume
+                        - registry
+                        - volume
                         type: object
                       rbd:
                         description: 'RBD represents a Rados Block Device mount on the host that shares a pod''s lifetime. More info: https://examples.k8s.io/volumes/rbd/README.md'
@@ -927,8 +927,8 @@ spec:
                             description: 'The rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it'
                             type: string
                         required:
-                          - image
-                          - monitors
+                        - image
+                        - monitors
                         type: object
                       scaleIO:
                         description: ScaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.
@@ -968,9 +968,9 @@ spec:
                             description: The name of a volume already created in the ScaleIO system that is associated with this volume source.
                             type: string
                         required:
-                          - gateway
-                          - secretRef
-                          - system
+                        - gateway
+                        - secretRef
+                        - system
                         type: object
                       secret:
                         description: 'Secret represents a secret that should populate this volume. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret'
@@ -995,8 +995,8 @@ spec:
                                   description: The relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.
                                   type: string
                               required:
-                                - key
-                                - path
+                              - key
+                              - path
                               type: object
                             type: array
                           optional:
@@ -1045,11 +1045,11 @@ spec:
                             description: Path that identifies vSphere volume vmdk
                             type: string
                         required:
-                          - volumePath
+                        - volumePath
                         type: object
                     required:
-                      - mountPath
-                      - name
+                    - mountPath
+                    - name
                     type: object
                   type: array
                 persistent:

@@ -286,13 +286,13 @@ spec:
   labels:
     name: nexus-operator
   links:
-    - name: Documentation
-      url: https://github.com/m88i/nexus-operator/blob/main/README.md
-    - name: Nexus Operator source code repository
-      url: https://github.com/m88i/nexus-operator
+  - name: Documentation
+    url: https://github.com/m88i/nexus-operator/blob/main/README.md
+  - name: Nexus Operator source code repository
+    url: https://github.com/m88i/nexus-operator
   maintainers:
-    - email: nexus-operator@googlegroups.com
-      name: m88i Labs
+  - email: nexus-operator@googlegroups.com
+    name: m88i Labs
   maturity: alpha
   provider:
     name: m88i Labs
