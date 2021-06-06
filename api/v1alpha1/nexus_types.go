@@ -152,6 +152,10 @@ type NexusNetworking struct {
 	// +optional
 	// +nullable
 	Annotations map[string]string `json:"annotations,omitempty"`
+	// Labels that should be added to the Ingress/Route resource
+	// +optional
+	// +nullable
+	Labels map[string]string `json:"labels,omitempty"`
 	// Set to `true` to expose the Nexus application. Defaults to `false`.
 	Expose bool `json:"expose,omitempty"`
 	// Type of networking exposure: NodePort, Route or Ingress. Defaults to Route on OpenShift and Ingress on Kubernetes.

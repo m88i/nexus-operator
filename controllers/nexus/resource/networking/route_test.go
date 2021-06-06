@@ -36,12 +36,15 @@ var (
 		},
 		Spec: v1alpha1.NexusSpec{
 			Networking: v1alpha1.NexusNetworking{
+				Labels: map[string]string{
+					"test-label": "enabled",
+				},
 				Annotations: map[string]string{
 					"test-annotation": "enabled",
 				},
 				Expose:   true,
 				ExposeAs: v1alpha1.RouteExposeType,
-				Host:     "route.tls.test.com",
+				Host:     "route.test.com",
 				TLS: v1alpha1.NexusNetworkingTLS{
 					Mandatory: true,
 				},
@@ -76,12 +79,14 @@ func TestNewRouteWithRedirection(t *testing.T) {
 func assertRouteBasic(t *testing.T, route *v1.Route) {
 	assert.Equal(t, routeNexus.Name, route.Name)
 	assert.Equal(t, routeNexus.Namespace, route.Namespace)
-	assert.Len(t, route.Labels, 1)
+	assert.Len(t, route.Labels, 2)
 	assert.Equal(t, nexusIngress.Name, route.Labels[meta.AppLabel])
+	assert.Equal(t, "enabled", route.Labels["test-label"])
 	assert.Equal(t, "enabled", route.Annotations["test-annotation"])
 
 	assert.NotNil(t, route.Spec)
 
+	assert.Equal(t, routeNexus.Spec.Networking.Host, route.Spec.Host)
 	assert.NotNil(t, route.Spec.To)
 	assert.Equal(t, serviceKind, route.Spec.To.Kind)
 	assert.Equal(t, routeService.Name, route.Spec.To.Name)

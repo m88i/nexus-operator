@@ -34,6 +34,7 @@ func newRouteBuilder(nexus *v1alpha1.Nexus) *routeBuilder {
 	route := &v1.Route{
 		ObjectMeta: meta.DefaultNetworkingMeta(nexus),
 		Spec: v1.RouteSpec{
+			Host: nexus.Spec.Networking.Host,
 			To: v1.RouteTargetReference{
 				Kind: serviceKind,
 				Name: nexus.Name,
