@@ -222,6 +222,11 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
                 image: controller:latest
                 name: manager
                 resources:

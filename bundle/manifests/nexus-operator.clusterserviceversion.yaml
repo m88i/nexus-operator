@@ -230,6 +230,11 @@ spec:
                 - --enable-leader-election
                 command:
                 - /manager
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
                 image: quay.io/m88i/nexus-operator:0.6.0
                 name: manager
                 resources:
