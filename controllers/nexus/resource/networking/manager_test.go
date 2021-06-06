@@ -286,7 +286,7 @@ func TestManager_GetCustomComparator(t *testing.T) {
 
 func TestManager_GetCustomComparator_shouldIgnoreUpdates(t *testing.T) {
 	// the custom comparator for all types when ignoring updates is the alwaysTrueComparator
-	mgr := &Manager{shouldIgnoreUpdates: true}
+	mgr := &Manager{shouldIgnoreUpdates: true, log: logger.GetLogger("test")}
 
 	routeComp := mgr.GetCustomComparator(reflect.TypeOf(&routev1.Route{}))
 	assert.NotNil(t, routeComp)
@@ -307,7 +307,7 @@ func TestManager_GetCustomComparators(t *testing.T) {
 }
 
 func TestManager_GetCustomComparators_shouldIgnoreUpdates(t *testing.T) {
-	mgr := &Manager{shouldIgnoreUpdates: true}
+	mgr := &Manager{shouldIgnoreUpdates: true, log: logger.GetLogger("test")}
 
 	// legacy ingress, ingress and route need alwaysTrueComparator when ignoring updates
 	comparators := mgr.GetCustomComparators()
