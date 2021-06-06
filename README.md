@@ -20,11 +20,12 @@ Table of Contents
       * [Networking](#networking)
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
-         * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
-            * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
+         * [Network on Kubernetes 1.14+](#network-on-kubernetes-114)
+             * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
          * [TLS/SSL](#tlsssl)
       * [Persistence](#persistence)
-         * [Minikube](#minikube)
+          * [Extra volumes](#extra-volumes)
+          * [Minikube](#minikube)
       * [Service Account](#service-account)
       * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
@@ -327,17 +328,60 @@ In the root of the opened yaml file add:
 data:
      proxy-body-size: 10m
 ```
+
 **Note**: If you want to have no limit for the data packet you can specify the `proxy-body-size: 0m`
 
 ### TLS/SSL
 
-For details about TLS configuration check out our [TLS guide](https://github.com/m88i/nexus-operator/tree/main/docs/TLS.md).
+For details about TLS configuration check out
+our [TLS guide](https://github.com/m88i/nexus-operator/tree/main/docs/TLS.md).
 
 ## Persistence
 
+### Extra volumes
+
+Starting at version 0.6.0 you may specify extra volumes to be mounted at the pod running Nexus, which comes in handy for
+migrating existing blob stores, for example. These volumes are controlled by the `spec.persistence.extraVolumes` field.
+
+For example, if you wanted to mount an AWS EBS volume and an EmptyDir volume:
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  persistence:
+    extraVolumes:
+      - name: "my-cool-ebs-vol"
+        mountPath: "/path/for/AWS-EBS/"
+        # This AWS EBS volume must already exist.
+        awsElasticBlockStore:
+          volumeID: "<volume id>"
+          fsType: ext4
+      - name: "my-cool-empty-dir-vol"
+        mountPath: "/path/for/emptyDir/"
+        emptyDir: {}
+```
+
+Each item of this `extraVolumes` array provides:
+
+- `mountPath`: a string representing the path at which this volume should be mounted
+- a Kubernetes `Volume` specification
+
+For more information about Kubernetes Volumes refer to
+their [documentation](https://kubernetes.io/docs/concepts/storage/volumes/)
+and each specific plugin documentation.
+
+> **Important**: updating the `spec.persistence.extraVolumes` field may lead to temporary unavailability while the new
+> deployment with the new volume configuration rolls out.
+
 ### Minikube
 
-On Minikube the dynamic PV [creation might fail](https://github.com/kubernetes/minikube/issues/7218). If this happens in your environment, **before creating the Nexus server**, create a PV with this template: [examples/pv-minikube.yaml](examples/pv-minikube.yaml). Then give the correct permissions to the directory in Minikube VM:
+On Minikube the dynamic PV [creation might fail](https://github.com/kubernetes/minikube/issues/7218). If this happens in
+your environment, **before creating the Nexus server**, create a PV with this
+template: [examples/pv-minikube.yaml](examples/pv-minikube.yaml). Then give the correct permissions to the directory in
+Minikube VM:
 
 ```sh
 $ minikube ssh

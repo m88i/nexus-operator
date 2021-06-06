@@ -181,7 +181,7 @@ func addExtraVolumes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, extraVolume.Volume)
 
 		vm := corev1.VolumeMount{
-			Name: extraVolume.Name,
+			Name:      extraVolume.Name,
 			MountPath: extraVolume.MountPath,
 		}
 		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, vm)

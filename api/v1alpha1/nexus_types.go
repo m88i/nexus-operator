@@ -111,7 +111,6 @@ type NexusSpec struct {
 	ServerOperations ServerOperationsOpts `json:"serverOperations,omitempty"`
 }
 
-
 // NexusPersistence is the structure for the data persistent
 // +k8s:openapi-gen=true
 type NexusPersistence struct {
