@@ -124,6 +124,7 @@ type NexusPersistence struct {
 	// ExtraVolumes which should be mounted when deploying Nexus.
 	// Updating this may lead to temporary unavailability while the new deployment with new volumes rolls out.
 	// +optional
+	// +listType=atomic
 	ExtraVolumes []NexusVolume `json:"extraVolumes,omitempty"`
 }
 
@@ -169,6 +170,11 @@ type NexusNetworking struct {
 	// TLS/SSL-related configuration
 	// +optional
 	TLS NexusNetworkingTLS `json:"tls,omitempty"`
+	// IgnoreUpdates controls whether the Operator monitors and undoes external changes to the Ingress/Route resources.
+	// Defaults to `false`, meaning the Operator will change the Ingress/Route specification to match its state as
+	// defined by this resource.
+	// Set to `true` in order to prevent the Operator from undoing external changes in the resources' configuration.
+	IgnoreUpdates bool `json:"ignoreUpdates,omitempty"`
 }
 
 // NexusProbe describes a health check to be performed against a container to determine whether it is

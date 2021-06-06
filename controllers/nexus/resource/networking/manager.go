@@ -37,18 +37,14 @@ const (
 	resUnavailableFormat = "%s are not available in this cluster"        // resource type
 )
 
-var (
-	legacyIngressType = reflect.TypeOf(&networkingv1beta1.Ingress{})
-	ingressType       = reflect.TypeOf(&networkingv1.Ingress{})
-)
-
 // Manager is responsible for creating networking resources, fetching deployed ones and comparing them
 // Use with zero values will result in a panic. Use the NewManager function to get a properly initialized manager
 type Manager struct {
-	nexus             *v1alpha1.Nexus
-	client            client.Client
-	log               logger.Logger
-	managedObjectsRef map[string]resource.KubernetesResource
+	nexus               *v1alpha1.Nexus
+	client              client.Client
+	log                 logger.Logger
+	managedObjectsRef   map[string]resource.KubernetesResource
+	shouldIgnoreUpdates bool
 
 	routeAvailable, ingressAvailable, legacyIngressAvailable bool
 }
@@ -91,6 +87,8 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
 		mgr.managedObjectsRef[kind.RouteKind] = &routev1.Route{}
 	}
 
+	mgr.shouldIgnoreUpdates = nexus.Spec.Networking.IgnoreUpdates
+
 	return mgr, nil
 }
 
@@ -132,7 +130,7 @@ func (m *Manager) createRoute() *routev1.Route {
 }
 
 func (m *Manager) createIngress() resource.KubernetesResource {
-	// we're only here if either ingress is available, no need to check legacy is
+	// we're only here if either ingress is available, no need to check if legacy is
 	if !m.ingressAvailable {
 		builder := newLegacyIngressBuilder(m.nexus)
 		if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
@@ -155,10 +153,15 @@ func (m *Manager) GetDeployedResources() ([]resource.KubernetesResource, error) 
 // GetCustomComparator returns the custom comp function used to compare a networking resource.
 // Returns nil if there is none
 func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	if m.shouldIgnoreUpdates {
+		m.log.Debug("Nexus configured to ignore Networking updates, won't compare current state and desired state for Ingress/Route")
+		return framework.AlwaysTrueComparator()
+	}
+
 	switch t {
-	case legacyIngressType:
+	case reflect.TypeOf(&networkingv1beta1.Ingress{}):
 		return legacyIngressEqual
-	case ingressType:
+	case reflect.TypeOf(&networkingv1.Ingress{}):
 		return ingressEqual
 	default:
 		return nil
@@ -168,9 +171,18 @@ func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.Kub
 // GetCustomComparators returns all custom comp functions in a map indexed by the resource type
 // Returns nil if there are none
 func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	if m.shouldIgnoreUpdates {
+		m.log.Debug("Nexus configured to ignore Networking updates, won't compare current state and desired state for Ingress/Route")
+		return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
+			reflect.TypeOf(networkingv1beta1.Ingress{}): framework.AlwaysTrueComparator(),
+			reflect.TypeOf(networkingv1.Ingress{}):      framework.AlwaysTrueComparator(),
+			reflect.TypeOf(routev1.Route{}):             framework.AlwaysTrueComparator(),
+		}
+	}
+
 	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
-		legacyIngressType: legacyIngressEqual,
-		ingressType:       ingressEqual,
+		reflect.TypeOf(networkingv1beta1.Ingress{}): legacyIngressEqual,
+		reflect.TypeOf(networkingv1.Ingress{}):      ingressEqual,
 	}
 }
 

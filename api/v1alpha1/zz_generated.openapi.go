@@ -62,6 +62,11 @@ func schema__api_v1alpha1_NexusPersistence(ref common.ReferenceCallback) common.
 						},
 					},
 					"extraVolumes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "ExtraVolumes which should be mounted when deploying Nexus. Updating this may lead to temporary unavailability while the new deployment with new volumes rolls out.",
 							Type:        []string{"array"},
