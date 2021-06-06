@@ -21,12 +21,13 @@ Table of Contents
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
          * [Network on Kubernetes 1.14+](#network-on-kubernetes-114)
-             * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
+            * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
+         * [Ignoring external changes to Ingress/Route resources](#ignoring-external-changes-to-ingressroute-resources)
          * [TLS/SSL](#tlsssl)
          * [Annotations and Labels](#annotations-and-labels)
       * [Persistence](#persistence)
-          * [Extra volumes](#extra-volumes)
-          * [Minikube](#minikube)
+         * [Extra volumes](#extra-volumes)
+         * [Minikube](#minikube)
       * [Service Account](#service-account)
       * [Control Random Admin Password Generation](#control-random-admin-password-generation)
       * [Red Hat Certified Images](#red-hat-certified-images)
@@ -321,7 +322,7 @@ $ kubectl get deploy/ingress-nginx-controller -o yaml -n kube-system | grep "\--
 
 Now you would need to edit the config map:
 
-`$  kubectl edit configmaps nginx-load-balancer-conf -n kube-system `
+`$ kubectl edit configmaps nginx-load-balancer-conf -n kube-system `
 
 In the root of the opened yaml file add:
 
@@ -331,6 +332,26 @@ data:
 ```
 
 **Note**: If you want to have no limit for the data packet you can specify the `proxy-body-size: 0m`
+
+### Ignoring external changes to Ingress/Route resources
+
+Route and Ingress resources are highly configurable, and often the need to change them arises. For example, further
+configuration can be performed by webhooks, but these changes get undone by the Operator as soon as it detects them.
+
+Starting at version 0.6.0 you may specify that the Operator should ignore external changes made to Ingress and Route
+resources. This is controlled by the `spec.networking.ignoreUpdates` boolean field in the Nexus resource. It defaults to
+`false`, meaning the Operator will change the Ingress/Route specification to match its state as defined by this
+resource. Set to `true` in order to prevent the Operator from undoing external changes in the resources' configuration.
+
+```yaml
+apiVersion: apps.m88i.io/v1alpha1
+kind: Nexus
+metadata:
+  name: nexus3
+spec:
+  networking:
+    ignoreUpdates: true
+```
 
 ### TLS/SSL
 

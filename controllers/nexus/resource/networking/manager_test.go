@@ -271,8 +271,6 @@ func TestManager_GetDeployedResources(t *testing.T) {
 }
 
 func TestManager_GetCustomComparator(t *testing.T) {
-	// the nexus and the client should have no effect on the
-	// comparator functions offered by the manager
 	mgr := &Manager{}
 
 	// there is no custom comparator function for routes
@@ -286,14 +284,34 @@ func TestManager_GetCustomComparator(t *testing.T) {
 	assert.NotNil(t, ingressComp)
 }
 
+func TestManager_GetCustomComparator_shouldIgnoreUpdates(t *testing.T) {
+	// the custom comparator for all types when ignoring updates is the alwaysTrueComparator
+	mgr := &Manager{shouldIgnoreUpdates: true, log: logger.GetLogger("test")}
+
+	routeComp := mgr.GetCustomComparator(reflect.TypeOf(&routev1.Route{}))
+	assert.NotNil(t, routeComp)
+	// there is a custom comparator function for v1beta1 ingresses
+	legacyIngressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1beta1.Ingress{}))
+	assert.NotNil(t, legacyIngressComp)
+	// there is a custom comparator function for v1 ingresses
+	ingressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1.Ingress{}))
+	assert.NotNil(t, ingressComp)
+}
+
 func TestManager_GetCustomComparators(t *testing.T) {
-	// the nexus and the client should have no effect on the
-	// comparator functions offered by the manager
 	mgr := &Manager{}
 
 	// there are two custom comparators (v1 and v1beta1 ingresses)
 	comparators := mgr.GetCustomComparators()
 	assert.Len(t, comparators, 2)
+}
+
+func TestManager_GetCustomComparators_shouldIgnoreUpdates(t *testing.T) {
+	mgr := &Manager{shouldIgnoreUpdates: true, log: logger.GetLogger("test")}
+
+	// legacy ingress, ingress and route need alwaysTrueComparator when ignoring updates
+	comparators := mgr.GetCustomComparators()
+	assert.Len(t, comparators, 3)
 }
 
 func Test_legacyIngressEqual(t *testing.T) {

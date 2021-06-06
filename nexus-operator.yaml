@@ -167,6 +167,14 @@ spec:
                   description: Host where the Nexus service is exposed. This attribute
                     is required if the service is exposed via Ingress.
                   type: string
+                ignoreUpdates:
+                  description: IgnoreUpdates controls whether the Operator monitors
+                    and undoes external changes to the Ingress/Route resources. Defaults
+                    to `false`, meaning the Operator will change the Ingress/Route
+                    specification to match its state as defined by this resource.
+                    Set to `true` in order to prevent the Operator from undoing external
+                    changes in the resources' configuration.
+                  type: boolean
                 labels:
                   additionalProperties:
                     type: string
@@ -1669,6 +1677,7 @@ spec:
                     - name
                     type: object
                   type: array
+                  x-kubernetes-list-type: atomic
                 persistent:
                   description: Flag to indicate if this instance installation will
                     be persistent or not. If set to true a PVC is created for it.
