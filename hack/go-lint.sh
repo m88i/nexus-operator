@@ -19,4 +19,4 @@ source ./hack/go-path.sh
 # The command in or will fetch the latest tag available for golangci-lint and install in $GOPATH/bin/
 command -v golangci-lint >/dev/null || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}"/bin
 
-golangci-lint run --enable=golint
+golangci-lint run --enable=revive --skip-files=pkg/test/client.go,pkg/framework/kind/kinds.go,controllers/nexus/resource/validation/defaults.go

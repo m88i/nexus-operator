@@ -12,8 +12,8 @@ on:
     branches:
       - main
 env:
-  OPERATOR_SDK_VERSION: v1.0.1
-  GO_VERSION: 1.14
+  OPERATOR_SDK_VERSION: v1.2.0
+  GO_VERSION: 1.15
 jobs:
   golint:
     name: Lint
@@ -25,7 +25,7 @@ jobs:
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: latest
-          args: --enable=golint --timeout=2m
+          args: --enable=revive --timeout=2m --skip-files=pkg/test/client.go,pkg/framework/kind/kinds.go,controllers/nexus/resource/validation/defaults.go
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
         with:

@@ -117,10 +117,7 @@ func (u *userOperation) storeOperatorUserCredentials(user *nexus.User) error {
 	secret.StringData[SecretKeyPassword] = user.Password
 	secret.StringData[SecretKeyUsername] = user.UserID
 	log.Debug("Updating Secret with user credentials")
-	if err := u.k8sclient.Update(context.TODO(), secret); err != nil {
-		return err
-	}
-	return nil
+	return u.k8sclient.Update(context.TODO(), secret)
 }
 
 func (u *userOperation) getOperatorUserCredentials() (user, password string, err error) {

@@ -137,6 +137,13 @@ spec:
             networking:
               description: Networking definition
               properties:
+                annotations:
+                  additionalProperties:
+                    type: string
+                  description: Annotations that should be added to the Ingress/Route
+                    resource
+                  nullable: true
+                  type: object
                 expose:
                   description: Set to `true` to expose the Nexus application. Defaults
                     to `false`.

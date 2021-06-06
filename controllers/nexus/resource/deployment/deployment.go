@@ -31,6 +31,7 @@ import (
 )
 
 const (
+	// JvmArgsEnvKey is they env var for JVM args
 	JvmArgsEnvKey = "INSTALL4J_ADD_VM_PARAMS"
 	/*
 		1. Xms
