@@ -1,4 +1,4 @@
-// Copyright 2020 Nexus Operator and/or its authors
+// Copyright 2021 Nexus Operator and/or its authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kind
+package framework
 
-const (
-	ConfigMapKind  = "ConfigMap"
-	DeploymentKind = "Deployment"
-	IngressKind    = "Ingress"
-	PVCKind        = "Persistent Volume Claim"
-	RouteKind      = "Route"
-	SecretKind     = "Secret"
-	ServiceKind    = "Service"
-	SvcAccountKind = "Service Account"
-)
+// ReadWritePermission 666 filesystem permission to be used with a mount path
+var ReadWritePermission = int32(0666)

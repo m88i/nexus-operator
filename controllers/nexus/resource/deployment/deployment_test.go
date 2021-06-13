@@ -58,8 +58,9 @@ func Test_newDeployment_WithoutPersistence(t *testing.T) {
 	assert.Equal(t, int32(nexusContainerPort), deployment.Spec.Template.Spec.Containers[0].LivenessProbe.HTTPGet.Port.IntVal)
 	assert.Equal(t, int32(nexusContainerPort), deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.HTTPGet.Port.IntVal)
 
-	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 0)
-	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 0)
+	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
+	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 1)
+	assert.Equal(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath, nexusConfigFileMountPath)
 
 	assert.Equal(t, appName, deployment.Labels[meta.AppLabel])
 	assert.Equal(t, appName, deployment.Spec.Template.Labels[meta.AppLabel])
@@ -88,8 +89,8 @@ func Test_newDeployment_WithPersistence(t *testing.T) {
 	deployment := newDeployment(nexus)
 
 	assert.Len(t, deployment.Spec.Template.Spec.Containers, 1)
-	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
-	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 1)
+	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 2)
 	assert.Equal(t, nexusDataDir, deployment.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath)
 }
 
@@ -250,8 +251,8 @@ func Test_newDeployment_WithExtraVolumes(t *testing.T) {
 	}
 
 	deployment := newDeployment(nexus)
-	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 2)
-	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 2)
+	assert.Len(t, deployment.Spec.Template.Spec.Volumes, 3)
+	assert.Len(t, deployment.Spec.Template.Spec.Containers[0].VolumeMounts, 3)
 	assert.True(t, deploymentContainsNexusVolume(deployment, nexus.Spec.Persistence.ExtraVolumes[0]))
 	assert.True(t, deploymentContainsNexusVolume(deployment, nexus.Spec.Persistence.ExtraVolumes[1]))
 }
