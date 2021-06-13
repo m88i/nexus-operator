@@ -16,7 +16,7 @@
 
 set -e
 
-default_operator_sdk_version=v1.0.1
+default_operator_sdk_version=v1.4.2
 
 if [[ -z ${OPERATOR_SDK_VERSION} ]]; then
   OPERATOR_SDK_VERSION=$default_operator_sdk_version
@@ -28,8 +28,11 @@ if [[ $(command -v operator-sdk) ]]; then
   echo "---> operator-sdk is already installed. Please make sure it is the required ${OPERATOR_SDK_VERSION} version before proceeding"
 else
   echo "---> operator-sdk not found, installing it in \$GOPATH/bin/"
-  curl -L https://github.com/operator-framework/operator-sdk/releases/download/$OPERATOR_SDK_VERSION/operator-sdk-$OPERATOR_SDK_VERSION-x86_64-linux-gnu -o "$GOPATH"/bin/operator-sdk
-  chmod +x "$GOPATH"/bin/operator-sdk
+  ARCH=$(case $(uname -m) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n "$(uname -m)" ;; esac)
+  OS=$(uname | awk '{print tolower($0)}')
+  OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}
+  curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_"${OS}"_"${ARCH}"
+  chmod +x "${GOPATH}"/bin/operator-sdk
 fi
 
 ##For verification
