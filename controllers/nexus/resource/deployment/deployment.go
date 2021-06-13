@@ -20,6 +20,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/m88i/nexus-operator/pkg/framework"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -46,7 +48,9 @@ const (
 	heapSizeDefault            = "1718m"
 	maxDirectMemorySizeDefault = "2148m"
 	nexusDataDir               = "/nexus-data"
-	nexusContainerName         = "nexus-server"
+	// see: https://help.sonatype.com/repomanager3/installation/configuring-the-runtime-environment
+	nexusConfigFileMountPath = nexusDataDir + "/etc/" + nexusPropertiesFilename
+	nexusContainerName       = "nexus-server"
 )
 
 var (
@@ -154,6 +158,7 @@ func addVolumes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 		addInstallationVolume(nexus, deployment)
 	}
 	addExtraVolumes(nexus, deployment)
+	addConfigMapVolume(nexus, deployment)
 }
 
 func addInstallationVolume(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
@@ -186,6 +191,35 @@ func addExtraVolumes(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
 		}
 		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, vm)
 	}
+}
+
+func addConfigMapVolume(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {
+	volumeName := fmt.Sprintf("%s-config", nexus.Name)
+	deployment.Spec.Template.Spec.Volumes =
+		append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: nexus.Name,
+					},
+					Items: []corev1.KeyToPath{
+						{
+							Key:  nexusPropertiesFilename,
+							Path: nexusPropertiesFilename,
+						},
+					},
+					DefaultMode: &framework.ReadWritePermission,
+				},
+			},
+		})
+	deployment.Spec.Template.Spec.Containers[0].VolumeMounts =
+		append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: nexusConfigFileMountPath,
+			ReadOnly:  false,
+			SubPath:   nexusPropertiesFilename,
+		})
 }
 
 func applyJVMArgs(nexus *v1alpha1.Nexus, deployment *appsv1.Deployment) {

@@ -17,10 +17,11 @@ Table of Contents
       * [Automatic Updates](#automatic-updates)
          * [Successful Updates](#successful-updates)
          * [Failed Updates](#failed-updates)
+      * [Custom Configuration](#custom-configuration)
       * [Networking](#networking)
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
-         * [Network on Kubernetes 1.14+](#network-on-kubernetes-114)
+         * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
             * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
          * [Ignoring external changes to Ingress/Route resources](#ignoring-external-changes-to-ingressroute-resources)
          * [TLS/SSL](#tlsssl)
@@ -235,6 +236,17 @@ $ kubectl get events
   9m45s       Warning   UpdateFailed        nexus/nexus3                   Failed to update to 3.26.1. Human intervention may be required
 # (output omitted)
 ```
+## Custom Configuration
+
+Starting on version 0.6.0, now the operator mounts a [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/) with
+the contents of the [`nexus.properties`](https://help.sonatype.com/repomanager3/installation/configuring-the-runtime-environment) file
+in the path `$NEXUS_DATA/etc/nexus.properties`. The `ConfigMap` has the same name as your Nexus CR.
+
+The Nexus Operator mount this file with empty contents, but you can update it anytime with the desired configuration. 
+The operator will deploy a new pod _immediately_ to reflect the changes applied in the `ConfigMap`. 
+
+*Beware!* Since we don't support HA yet, the server will be unavailable until the next pod comes up. T
+ry to update the configuration when you can afford to have the server unavailable.
 
 ## Networking
 

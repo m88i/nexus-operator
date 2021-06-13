@@ -118,9 +118,9 @@ spec:
                 exposeAs:
                   description: 'Type of networking exposure: NodePort, Route or Ingress. Defaults to Route on OpenShift and Ingress on Kubernetes. Routes are only available on Openshift and Ingresses are only available on Kubernetes.'
                   enum:
-                    - NodePort
-                    - Route
-                    - Ingress
+                  - NodePort
+                  - Route
+                  - Ingress
                   type: string
                 host:
                   description: Host where the Nexus service is exposed. This attribute is required if the service is exposed via Ingress.

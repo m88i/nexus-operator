@@ -39,8 +39,6 @@ K8S_VERSION=1.19.0
 test: generate-installer fmt vet bundle
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.6.3/hack/setup-envtest.sh # this is a workaround while we don't upgrade the sdk
-	#sed -i "s,#\!.*,#\!\/bin\/bash,g" ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
-	#sed -i "/pipefail/d" ${ENVTEST_ASSETS_DIR}/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; ENVTEST_K8S_VERSION=$(K8S_VERSION) fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
 generate-installer: generate manifests kustomize
