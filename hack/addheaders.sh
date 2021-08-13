@@ -15,7 +15,8 @@
 
 source ./hack/go-path.sh
 
-command -v addlicense >/dev/null || go build -o "${GOPATH}"/bin/addlicense github.com/google/addlicense
+# Uses the only version that works with go 1.15
+command -v addlicense >/dev/null || go get -modfile=go.tools.mod -u github.com/google/addlicense@99ebc9c9db7bceb8623073e894533b978d7b7c8a
 
 # https://github.com/google/addlicense
 

@@ -136,9 +136,7 @@ func (r *repositoryOperation) setMavenPublicURL(repository *nexus.MavenGroupRepo
 	if err != nil {
 		return err
 	}
-	if strings.HasSuffix(serverEndpoint, "/") {
-		serverEndpoint = strings.TrimSuffix(serverEndpoint, "/")
-	}
+	serverEndpoint = strings.TrimSuffix(serverEndpoint, "/")
 	URL, err := url.Parse(repositoryURL)
 	if err != nil {
 		return err
