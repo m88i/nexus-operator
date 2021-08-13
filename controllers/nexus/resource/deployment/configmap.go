@@ -17,6 +17,8 @@ package deployment
 import (
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/m88i/nexus-operator/pkg/util"
+
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/meta"
 )
@@ -27,7 +29,7 @@ func newConfigMap(nexus *v1alpha1.Nexus) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: meta.DefaultObjectMeta(nexus),
 		Data: map[string]string{
-			nexusPropertiesFilename: "",
+			nexusPropertiesFilename: util.FromMapToJavaProperties(nexus.Spec.Properties),
 		},
 	}
 }

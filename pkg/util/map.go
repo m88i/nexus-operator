@@ -14,6 +14,11 @@
 
 package util
 
+import (
+	"bytes"
+	"fmt"
+)
+
 // AppendToStringMap adds the given key and value to the map. If map is nil, create it first
 func AppendToStringMap(stringMap map[string]string, key, value string) map[string]string {
 	if stringMap == nil {
@@ -21,4 +26,21 @@ func AppendToStringMap(stringMap map[string]string, key, value string) map[strin
 	}
 	stringMap[key] = value
 	return stringMap
+}
+
+// FromMapToJavaProperties converts a given map to a Java properties file string.
+// Example:
+// # given myMap[string]string = { "key1": "value1", "key2": "value2" }
+// # you got back:
+//   key1: value1
+//   key2: value2
+func FromMapToJavaProperties(theMap map[string]string) string {
+	if len(theMap) == 0 {
+		return ""
+	}
+	b := new(bytes.Buffer)
+	for key, value := range theMap {
+		_, _ = fmt.Fprintf(b, "%s: \"%s\"\n", key, value)
+	}
+	return b.String()
 }

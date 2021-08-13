@@ -94,9 +94,8 @@ func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.Kub
 	if t == reflect.TypeOf(&appsv1.Deployment{}) {
 		return deploymentEqual
 	}
-	// we ignore configMap updates
 	if t == reflect.TypeOf(&corev1.ConfigMap{}) {
-		return framework.AlwaysTrueComparator()
+		return configMapEqual
 	}
 	return nil
 }
@@ -108,8 +107,23 @@ func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource
 	configMapType := reflect.TypeOf(corev1.ConfigMap{})
 	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
 		deploymentType: deploymentEqual,
-		configMapType:  framework.AlwaysTrueComparator(),
+		configMapType:  configMapEqual,
 	}
+}
+
+func configMapEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	cmDeployed := deployed.(*corev1.ConfigMap)
+	cmRequested := requested.(*corev1.ConfigMap)
+
+	var pairs [][2]interface{}
+	pairs = append(pairs, [2]interface{}{cmDeployed.Labels, cmRequested.Labels})
+	pairs = append(pairs, [2]interface{}{cmDeployed.Data, cmRequested.Data})
+
+	equal := compare.EqualPairs(pairs)
+	if !equal {
+		logger.GetLogger("deployment_manager").Info("ConfigMaps are not equal", "deployed", cmDeployed.Data, "requested", cmRequested.Data)
+	}
+	return equal
 }
 
 func deploymentEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {

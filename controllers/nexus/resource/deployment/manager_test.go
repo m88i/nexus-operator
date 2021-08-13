@@ -361,15 +361,23 @@ func Test_equalPullPolicies(t *testing.T) {
 }
 
 func Test_configMapHash(t *testing.T) {
+	nexus := allDefaultsCommunityNexus
+	nexus.Spec.Properties = map[string]string{
+		"nexus.property": "value1",
+	}
+	fakeClient := test.NewFakeClientBuilder(nexus).Build()
 	mgr := &Manager{
-		nexus:  allDefaultsCommunityNexus,
-		client: test.NewFakeClientBuilder().Build(),
+		nexus:  nexus,
+		client: fakeClient,
 		log:    logger.GetLoggerWithResource("test", allDefaultsCommunityNexus),
 	}
+	// verify the required resources
 	resources, err := mgr.GetRequiredResources()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	deployment := resources[1].(*appsv1.Deployment)
 	assert.NotEmpty(t, deployment.Spec.Template.Annotations)
 	assert.NotEmpty(t, deployment.Spec.Template.Annotations[configMapHashAnnotationKey])
+	configMap := resources[0].(*corev1.ConfigMap)
+	assert.NotEmpty(t, configMap.Data[nexusPropertiesFilename])
 }

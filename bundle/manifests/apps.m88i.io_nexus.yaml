@@ -1074,6 +1074,11 @@ spec:
               required:
               - persistent
               type: object
+            properties:
+              additionalProperties:
+                type: string
+              description: 'Properties describes the configuration properties in the Java properties format that will be included in the nexus.properties file mounted with the Nexus server deployment. For example: nexus.conan.hosted.enabled: true'
+              type: object
             readinessProbe:
               description: ReadinessProbe describes how the Nexus container readiness probe should work
               properties:
