@@ -1,5 +1,6 @@
 # Build the manager binary
-FROM golang:1.15 as builder
+# See Red Hat catalog: https://catalog.redhat.com/software/containers/ubi8/go-toolset/5ce8713aac3db925c03774d1?container-tabs=overview
+FROM registry.access.redhat.com/ubi8/go-toolset:1.15.14 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -15,12 +16,14 @@ COPY api/ api/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
 
+USER root
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 WORKDIR /
 COPY --from=builder /workspace/manager .
+RUN chown -R 1001 manager
 USER 1001
 
 ENTRYPOINT ["/manager"]
