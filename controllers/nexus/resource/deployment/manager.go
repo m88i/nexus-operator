@@ -15,9 +15,14 @@
 package deployment
 
 import (
+	"crypto/md5"
 	"fmt"
 	"reflect"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/m88i/nexus-operator/pkg/util"
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
@@ -32,9 +37,12 @@ import (
 	"github.com/m88i/nexus-operator/pkg/logger"
 )
 
+const configMapHashAnnotationKey = "config-map-property-hash"
+
 var managedObjectsRef = map[string]resource.KubernetesResource{
 	kind.DeploymentKind: &appsv1.Deployment{},
 	kind.ServiceKind:    &corev1.Service{},
+	kind.ConfigMapKind:  &corev1.ConfigMap{},
 }
 
 // Manager is responsible for creating deployment-related resources, fetching deployed ones and comparing them
@@ -59,7 +67,12 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) *Manager {
 func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) {
 	m.log.Debug("Generating required resource", "kind", kind.DeploymentKind)
 	m.log.Debug("Generating required resource", "kind", kind.ServiceKind)
-	return []resource.KubernetesResource{newDeployment(m.nexus), newService(m.nexus)}, nil
+	m.log.Debug("Generating required resource", "kind", kind.ConfigMapKind)
+	deployment := newDeployment(m.nexus)
+	if err := m.applyConfigMapPropertiesHash(deployment); err != nil {
+		return nil, err
+	}
+	return []resource.KubernetesResource{newConfigMap(m.nexus), deployment, newService(m.nexus)}, nil
 }
 
 // GetDeployedResources returns the deployment-related resources deployed on the cluster
@@ -81,6 +94,9 @@ func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.Kub
 	if t == reflect.TypeOf(&appsv1.Deployment{}) {
 		return deploymentEqual
 	}
+	if t == reflect.TypeOf(&corev1.ConfigMap{}) {
+		return configMapEqual
+	}
 	return nil
 }
 
@@ -88,9 +104,26 @@ func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.Kub
 // Returns nil if there are none
 func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
 	deploymentType := reflect.TypeOf(appsv1.Deployment{})
+	configMapType := reflect.TypeOf(corev1.ConfigMap{})
 	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
 		deploymentType: deploymentEqual,
+		configMapType:  configMapEqual,
 	}
+}
+
+func configMapEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
+	cmDeployed := deployed.(*corev1.ConfigMap)
+	cmRequested := requested.(*corev1.ConfigMap)
+
+	var pairs [][2]interface{}
+	pairs = append(pairs, [2]interface{}{cmDeployed.Labels, cmRequested.Labels})
+	pairs = append(pairs, [2]interface{}{cmDeployed.Data, cmRequested.Data})
+
+	equal := compare.EqualPairs(pairs)
+	if !equal {
+		logger.GetLogger("deployment_manager").Info("ConfigMaps are not equal", "deployed", cmDeployed.Data, "requested", cmRequested.Data)
+	}
+	return equal
 }
 
 func deploymentEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
@@ -147,4 +180,15 @@ func normalizeSecurityContext(depDeployment, reqDeployment *appsv1.Deployment) {
 	if reqDeployment.Spec.Template.Spec.SecurityContext == nil {
 		depDeployment.Spec.Template.Spec.SecurityContext = nil
 	}
+}
+
+func (m *Manager) applyConfigMapPropertiesHash(deployment *appsv1.Deployment) error {
+	// fetch the deployed configMap
+	configMap := &corev1.ConfigMap{}
+	if err := framework.Fetch(m.client, types.NamespacedName{Namespace: m.nexus.Namespace, Name: m.nexus.Name}, configMap, kind.ConfigMapKind); err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+	contentHash := fmt.Sprintf("%x", md5.Sum([]byte(configMap.Data[nexusPropertiesFilename])))
+	deployment.Spec.Template.Annotations = util.AppendToStringMap(deployment.Spec.Template.Annotations, configMapHashAnnotationKey, contentHash)
+	return nil
 }

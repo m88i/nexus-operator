@@ -109,6 +109,12 @@ type NexusSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +optional
 	ServerOperations ServerOperationsOpts `json:"serverOperations,omitempty"`
+
+	// Properties describes the configuration properties in the Java properties format that will be included in the nexus.properties file mounted with the Nexus server deployment.
+	// For example: nexus.conan.hosted.enabled: true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +optional
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NexusPersistence is the structure for the data persistent

@@ -71,9 +71,10 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	resources, err := mgr.GetRequiredResources()
 	assert.Nil(t, err)
 	// a deployment and a service are _always_ created, so both should always be present
-	assert.Len(t, resources, 2)
+	assert.Len(t, resources, 3)
 	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.Service{})))
 	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&appsv1.Deployment{})))
+	assert.True(t, test.ContainsType(resources, reflect.TypeOf(&corev1.ConfigMap{})))
 }
 
 func TestManager_GetDeployedResources(t *testing.T) {
@@ -130,7 +131,7 @@ func TestManager_GetCustomComparators(t *testing.T) {
 
 	// there is a custom comparator for deployments
 	comparators := mgr.GetCustomComparators()
-	assert.Len(t, comparators, 1)
+	assert.Len(t, comparators, 2)
 }
 
 func Test_deploymentEqual(t *testing.T) {
@@ -357,4 +358,26 @@ func Test_equalPullPolicies(t *testing.T) {
 	// with different pull policies
 	depDeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy = corev1.PullAlways
 	assert.False(t, equalPullPolicies(depDeployment, reqDeployment))
+}
+
+func Test_configMapHash(t *testing.T) {
+	nexus := allDefaultsCommunityNexus
+	nexus.Spec.Properties = map[string]string{
+		"nexus.property": "value1",
+	}
+	fakeClient := test.NewFakeClientBuilder(nexus).Build()
+	mgr := &Manager{
+		nexus:  nexus,
+		client: fakeClient,
+		log:    logger.GetLoggerWithResource("test", allDefaultsCommunityNexus),
+	}
+	// verify the required resources
+	resources, err := mgr.GetRequiredResources()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, resources)
+	deployment := resources[1].(*appsv1.Deployment)
+	assert.NotEmpty(t, deployment.Spec.Template.Annotations)
+	assert.NotEmpty(t, deployment.Spec.Template.Annotations[configMapHashAnnotationKey])
+	configMap := resources[0].(*corev1.ConfigMap)
+	assert.NotEmpty(t, configMap.Data[nexusPropertiesFilename])
 }

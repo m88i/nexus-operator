@@ -227,6 +227,21 @@ func schema__api_v1alpha1_NexusSpec(ref common.ReferenceCallback) common.OpenAPI
 							Ref:         ref("./api/v1alpha1.ServerOperationsOpts"),
 						},
 					},
+					"properties": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Properties describes the configuration properties in the Java properties format that will be included in the nexus.properties file mounted with the Nexus server deployment. For example: nexus.conan.hosted.enabled: true",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"replicas", "persistence", "useRedHatImage"},
 			},

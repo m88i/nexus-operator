@@ -17,10 +17,11 @@ Table of Contents
       * [Automatic Updates](#automatic-updates)
          * [Successful Updates](#successful-updates)
          * [Failed Updates](#failed-updates)
+      * [Custom Configuration](#custom-configuration)
       * [Networking](#networking)
          * [Use NodePort](#use-nodeport)
          * [Network on OpenShift](#network-on-openshift)
-         * [Network on Kubernetes 1.14+](#network-on-kubernetes-114)
+         * [Network on Kubernetes 1.14 ](#network-on-kubernetes-114)
             * [NGINX Ingress troubleshooting](#nginx-ingress-troubleshooting)
          * [Ignoring external changes to Ingress/Route resources](#ignoring-external-changes-to-ingressroute-resources)
          * [TLS/SSL](#tlsssl)
@@ -235,6 +236,21 @@ $ kubectl get events
   9m45s       Warning   UpdateFailed        nexus/nexus3                   Failed to update to 3.26.1. Human intervention may be required
 # (output omitted)
 ```
+## Custom Configuration
+
+Starting on version 0.6.0, the operator now mounts a [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/) with
+the contents of the [`nexus.properties`](https://help.sonatype.com/repomanager3/installation/configuring-the-runtime-environment) file
+in the path `$NEXUS_DATA/etc/nexus.properties`.
+
+The Nexus Operator mount this file with the contents of the field `Spec.Properties` using [the Java properties format](https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-). 
+If you change this field, the operator will deploy a new pod _immediately_ to reflect the changes applied in the `ConfigMap`.
+
+**Don't update** the managed `ConfigMap` directly, otherwise the operator will replace its contents with `Spec.Properties` field.
+Always use the Nexus CR as the only source of truth. See this [example](examples/nexus3-centos-no-volume-custom-properties.yaml) to
+learn how to properly set your properties directly in the CR.
+
+> **Beware!** Since we don't support HA yet, the server will be unavailable until the next pod comes up. Try to update the configuration only 
+> when you can afford to have the server unavailable.
 
 ## Networking
 

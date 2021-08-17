@@ -64,7 +64,7 @@ type NexusReconciler struct {
 // +kubebuilder:rbac:groups=apps.m88i.io,resources=nexus/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps.m88i.io,resources=nexus/finalizers,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=services;persistentvolumeclaims;events;secrets;serviceaccounts,verbs=create;delete;get;list;patch;update;watch
-// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;create
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=create;delete;get;list;patch;update;watch
 // +kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get
@@ -168,7 +168,8 @@ func (r *NexusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
-		Owns(&corev1.ServiceAccount{})
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.ConfigMap{})
 
 	ocp, err := discovery.IsOpenShift()
 	if err != nil {

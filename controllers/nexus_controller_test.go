@@ -67,6 +67,10 @@ var _ = Describe("Nexus Controller", func() {
 					ExposeAs: v1alpha1.NodePortExposeType,
 					NodePort: exposedPort,
 				},
+				Properties: map[string]string{
+					"nexus.properties.1": "value1",
+					"nexus.properties.2": "value2",
+				},
 			},
 		}
 	)
@@ -84,7 +88,13 @@ var _ = Describe("Nexus Controller", func() {
 				return err == nil
 			}, timeout, interval).Should(BeTrue())
 
-			// there's no controllers deployed in this environment, so the Deployment would never hava a pod deployed,
+			configMap := &v1.ConfigMap{}
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, types.NamespacedName{Name: NexusName, Namespace: NexusNamespace}, configMap)
+				return err == nil
+			}, timeout, interval).Should(BeTrue())
+
+			// there's no controllers deployed in this environment, so the Deployment would never have a pod deployed,
 			// status would never change to "OK".
 			// We basically verify if the controller is reconciling correct, status will be always Pending
 			createdNexus := &v1alpha1.Nexus{}
