@@ -53,11 +53,6 @@ func NewValidator(client client.Client, scheme *runtime.Scheme) (*Validator, err
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
 
-	legacyIngressAvailable, err := discovery.IsLegacyIngressAvailable()
-	if err != nil {
-		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
-	}
-
 	ocp, err := discovery.IsOpenShift()
 	if err != nil {
 		return nil, fmt.Errorf(discOCPFailureFormat, err)
@@ -67,7 +62,7 @@ func NewValidator(client client.Client, scheme *runtime.Scheme) (*Validator, err
 		client:           client,
 		scheme:           scheme,
 		routeAvailable:   routeAvailable,
-		ingressAvailable: ingressAvailable || legacyIngressAvailable,
+		ingressAvailable: ingressAvailable,
 		ocp:              ocp,
 	}, nil
 }

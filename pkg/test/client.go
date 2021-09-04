@@ -20,7 +20,6 @@ import (
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/version"
@@ -79,13 +78,6 @@ func (b *FakeClientBuilder) WithIngress() *FakeClientBuilder {
 	return b
 }
 
-// WithLegacyIngress makes the fake client aware of v1beta1 Ingresses
-func (b *FakeClientBuilder) WithLegacyIngress() *FakeClientBuilder {
-	util.Must(schemeBuilderWithLegacyIngress().AddToScheme(b.scheme))
-	b.resources = append(b.resources, &metav1.APIResourceList{GroupVersion: networkingv1beta1.SchemeGroupVersion.String(), APIResources: []metav1.APIResource{{Kind: kind.IngressKind}}})
-	return b
-}
-
 // Build returns the fake discovery client
 func (b *FakeClientBuilder) Build() *FakeClient {
 	return &FakeClient{
@@ -109,10 +101,6 @@ func schemeBuilderOnOCP() *runtime.SchemeBuilder {
 
 func schemeBuilderWithIngress() *runtime.SchemeBuilder {
 	return &runtime.SchemeBuilder{networkingv1.AddToScheme}
-}
-
-func schemeBuilderWithLegacyIngress() *runtime.SchemeBuilder {
-	return &runtime.SchemeBuilder{networkingv1beta1.AddToScheme}
 }
 
 // FakeClient wraps an API fake client to allow mocked error responses

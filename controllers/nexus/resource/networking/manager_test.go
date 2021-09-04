@@ -24,10 +24,8 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
 	"github.com/m88i/nexus-operator/controllers/nexus/resource/deployment"
@@ -47,7 +45,6 @@ var nodePortNexus = &v1alpha1.Nexus{
 func TestNewManager(t *testing.T) {
 	k8sClient := test.NewFakeClientBuilder().Build()
 	k8sClientWithIngress := test.NewFakeClientBuilder().WithIngress().Build()
-	k8sClientWithLegacyIngress := test.NewFakeClientBuilder().WithLegacyIngress().Build()
 	ocpClient := test.NewFakeClientBuilder().OnOpenshift().Build()
 
 	//default-setting logic is tested elsewhere
@@ -60,10 +57,9 @@ func TestNewManager(t *testing.T) {
 		{
 			"On Kubernetes with v1 Ingresses available",
 			&Manager{
-				nexus:                  nodePortNexus,
-				routeAvailable:         false,
-				ingressAvailable:       true,
-				legacyIngressAvailable: false,
+				nexus:            nodePortNexus,
+				routeAvailable:   false,
+				ingressAvailable: true,
 				managedObjectsRef: map[string]resource.KubernetesResource{
 					kind.IngressKind: &networkingv1.Ingress{},
 				},
@@ -71,36 +67,21 @@ func TestNewManager(t *testing.T) {
 			k8sClientWithIngress,
 		},
 		{
-			"On Kubernetes with v1beta1 Ingresses available",
-			&Manager{
-				nexus:                  nodePortNexus,
-				routeAvailable:         false,
-				ingressAvailable:       false,
-				legacyIngressAvailable: true,
-				managedObjectsRef: map[string]resource.KubernetesResource{
-					kind.IngressKind: &networkingv1beta1.Ingress{},
-				},
-			},
-			k8sClientWithLegacyIngress,
-		},
-		{
 			"On Kubernetes without Ingresses",
 			&Manager{
-				nexus:                  nodePortNexus,
-				routeAvailable:         false,
-				ingressAvailable:       false,
-				legacyIngressAvailable: false,
-				managedObjectsRef:      make(map[string]resource.KubernetesResource),
+				nexus:             nodePortNexus,
+				routeAvailable:    false,
+				ingressAvailable:  false,
+				managedObjectsRef: make(map[string]resource.KubernetesResource),
 			},
 			k8sClient,
 		},
 		{
 			"On Openshift",
 			&Manager{
-				nexus:                  nodePortNexus,
-				routeAvailable:         true,
-				ingressAvailable:       false,
-				legacyIngressAvailable: false,
+				nexus:            nodePortNexus,
+				routeAvailable:   true,
+				ingressAvailable: false,
 				managedObjectsRef: map[string]resource.KubernetesResource{
 					kind.RouteKind: &routev1.Route{},
 				},
@@ -117,7 +98,6 @@ func TestNewManager(t *testing.T) {
 		assert.Equal(t, tt.want.nexus, got.nexus)
 		assert.Equal(t, tt.want.routeAvailable, got.routeAvailable)
 		assert.Equal(t, tt.want.ingressAvailable, got.ingressAvailable)
-		assert.Equal(t, tt.want.legacyIngressAvailable, got.legacyIngressAvailable)
 		assert.Equal(t, tt.want.managedObjectsRef, got.managedObjectsRef)
 	}
 
@@ -169,7 +149,7 @@ func TestManager_GetRequiredResources(t *testing.T) {
 	// now an ingress
 	mgr = &Manager{
 		nexus:            nexusIngress,
-		client:           test.NewFakeClientBuilder().WithLegacyIngress().Build(),
+		client:           test.NewFakeClientBuilder().WithIngress().Build(),
 		log:              logger.GetLoggerWithResource("test", nexusIngress),
 		ingressAvailable: true,
 	}
@@ -205,19 +185,6 @@ func TestManager_createRoute(t *testing.T) {
 func TestManager_createIngress(t *testing.T) {
 	mgr := &Manager{nexus: &v1alpha1.Nexus{Spec: v1alpha1.NexusSpec{Networking: v1alpha1.NexusNetworking{TLS: v1alpha1.NexusNetworkingTLS{}}}}}
 
-	// Let's test out everything with v1beta1 ingresses
-	mgr.legacyIngressAvailable = true
-
-	// first without TLS
-	legacyIngress := mgr.createIngress().(*networkingv1beta1.Ingress)
-	assert.Empty(t, legacyIngress.Spec.TLS)
-
-	// now with TLS
-	mgr.nexus.Spec.Networking.TLS.SecretName = "test-secret"
-	legacyIngress = mgr.createIngress().(*networkingv1beta1.Ingress)
-	assert.Len(t, legacyIngress.Spec.TLS, 1)
-
-	// Now repeat, but with networkingv1 ingresses
 	mgr.nexus.Spec.Networking.TLS = v1alpha1.NexusNetworkingTLS{}
 	mgr.ingressAvailable = true
 
@@ -276,9 +243,6 @@ func TestManager_GetCustomComparator(t *testing.T) {
 	// there is no custom comparator function for routes
 	routeComp := mgr.GetCustomComparator(reflect.TypeOf(&routev1.Route{}))
 	assert.Nil(t, routeComp)
-	// there is a custom comparator function for v1beta1 ingresses
-	legacyIngressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1beta1.Ingress{}))
-	assert.NotNil(t, legacyIngressComp)
 	// there is a custom comparator function for v1 ingresses
 	ingressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1.Ingress{}))
 	assert.NotNil(t, ingressComp)
@@ -290,9 +254,6 @@ func TestManager_GetCustomComparator_shouldIgnoreUpdates(t *testing.T) {
 
 	routeComp := mgr.GetCustomComparator(reflect.TypeOf(&routev1.Route{}))
 	assert.NotNil(t, routeComp)
-	// there is a custom comparator function for v1beta1 ingresses
-	legacyIngressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1beta1.Ingress{}))
-	assert.NotNil(t, legacyIngressComp)
 	// there is a custom comparator function for v1 ingresses
 	ingressComp := mgr.GetCustomComparator(reflect.TypeOf(&networkingv1.Ingress{}))
 	assert.NotNil(t, ingressComp)
@@ -301,94 +262,17 @@ func TestManager_GetCustomComparator_shouldIgnoreUpdates(t *testing.T) {
 func TestManager_GetCustomComparators(t *testing.T) {
 	mgr := &Manager{}
 
-	// there are two custom comparators (v1 and v1beta1 ingresses)
+	// there are two custom comparators (v1 ingress)
 	comparators := mgr.GetCustomComparators()
-	assert.Len(t, comparators, 2)
+	assert.Len(t, comparators, 1)
 }
 
 func TestManager_GetCustomComparators_shouldIgnoreUpdates(t *testing.T) {
 	mgr := &Manager{shouldIgnoreUpdates: true, log: logger.GetLogger("test")}
 
-	// legacy ingress, ingress and route need alwaysTrueComparator when ignoring updates
+	// ingress and route need alwaysTrueComparator when ignoring updates
 	comparators := mgr.GetCustomComparators()
-	assert.Len(t, comparators, 3)
-}
-
-func Test_legacyIngressEqual(t *testing.T) {
-	// base ingress which will be used in all comparisons
-	baseIngress := &networkingv1beta1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test", UID: "base UID"},
-		Spec: networkingv1beta1.IngressSpec{
-			Rules: []networkingv1beta1.IngressRule{
-				{
-					Host: "test.example.com",
-					IngressRuleValue: networkingv1beta1.IngressRuleValue{
-						HTTP: &networkingv1beta1.HTTPIngressRuleValue{
-							Paths: []networkingv1beta1.HTTPIngressPath{
-								{
-									Path: ingressBasePath,
-									Backend: networkingv1beta1.IngressBackend{
-										ServiceName: "test",
-										ServicePort: intstr.FromInt(deployment.DefaultHTTPPort),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testCases := []struct {
-		name            string
-		modifiedIngress *networkingv1beta1.Ingress
-		wantEqual       bool
-	}{
-		{
-			"Two ingresses that are equal where it matters and different where it doesn't",
-			func() *networkingv1beta1.Ingress {
-				ingress := baseIngress.DeepCopy()
-				// simulates a field that would be different in runtime
-				ingress.UID = "a different UID"
-				return ingress
-			}(),
-			true,
-		},
-		{
-			"All equal except name",
-			func() *networkingv1beta1.Ingress {
-				ingress := baseIngress.DeepCopy()
-				ingress.Name = "a different name"
-				return ingress
-			}(),
-			false,
-		},
-		{
-			"All equal except namespace",
-			func() *networkingv1beta1.Ingress {
-				ingress := baseIngress.DeepCopy()
-				ingress.Namespace = "a different namespace"
-				return ingress
-			}(),
-			false,
-		},
-		{
-			"All equal except the service name",
-			func() *networkingv1beta1.Ingress {
-				ingress := baseIngress.DeepCopy()
-				ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.ServiceName = "a different service"
-				return ingress
-			}(),
-			false,
-		},
-	}
-
-	for _, testCase := range testCases {
-		if legacyIngressEqual(baseIngress, testCase.modifiedIngress) != testCase.wantEqual {
-			assert.Failf(t, "%s\nbase: %+v\nmodified: %+v\nwantedEqual: %v", testCase.name, baseIngress, testCase.modifiedIngress, testCase.wantEqual)
-		}
-	}
+	assert.Len(t, comparators, 2)
 }
 
 func Test_ingressEqual(t *testing.T) {

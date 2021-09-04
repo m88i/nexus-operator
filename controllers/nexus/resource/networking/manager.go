@@ -22,7 +22,6 @@ import (
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
 	routev1 "github.com/openshift/api/route/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/m88i/nexus-operator/api/v1alpha1"
@@ -46,7 +45,7 @@ type Manager struct {
 	managedObjectsRef   map[string]resource.KubernetesResource
 	shouldIgnoreUpdates bool
 
-	routeAvailable, ingressAvailable, legacyIngressAvailable bool
+	routeAvailable, ingressAvailable bool
 }
 
 // NewManager creates a networking resources manager
@@ -69,17 +68,9 @@ func NewManager(nexus *v1alpha1.Nexus, client client.Client) (*Manager, error) {
 		return nil, fmt.Errorf(discFailureFormat, "ingresses", err)
 	}
 
-	legacyIngressAvailable, err := discovery.IsLegacyIngressAvailable()
-	if err != nil {
-		return nil, fmt.Errorf(discFailureFormat, "v1beta1 ingresses", err)
-	}
-
 	if ingressAvailable {
 		mgr.ingressAvailable = true
 		mgr.managedObjectsRef[kind.IngressKind] = &networkingv1.Ingress{}
-	} else if legacyIngressAvailable {
-		mgr.legacyIngressAvailable = true
-		mgr.managedObjectsRef[kind.IngressKind] = &networkingv1beta1.Ingress{}
 	}
 
 	if routeAvailable {
@@ -110,7 +101,7 @@ func (m *Manager) GetRequiredResources() ([]resource.KubernetesResource, error) 
 		resources = append(resources, route)
 
 	case v1alpha1.IngressExposeType:
-		if !m.ingressAvailable && !m.legacyIngressAvailable {
+		if !m.ingressAvailable {
 			return nil, fmt.Errorf(resUnavailableFormat, "ingresses")
 		}
 
@@ -130,14 +121,6 @@ func (m *Manager) createRoute() *routev1.Route {
 }
 
 func (m *Manager) createIngress() resource.KubernetesResource {
-	// we're only here if either ingress is available, no need to check if legacy is
-	if !m.ingressAvailable {
-		builder := newLegacyIngressBuilder(m.nexus)
-		if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
-			builder = builder.withCustomTLS()
-		}
-		return builder.build()
-	}
 	builder := newIngressBuilder(m.nexus)
 	if len(m.nexus.Spec.Networking.TLS.SecretName) > 0 {
 		builder = builder.withCustomTLS()
@@ -159,8 +142,6 @@ func (m *Manager) GetCustomComparator(t reflect.Type) func(deployed resource.Kub
 	}
 
 	switch t {
-	case reflect.TypeOf(&networkingv1beta1.Ingress{}):
-		return legacyIngressEqual
 	case reflect.TypeOf(&networkingv1.Ingress{}):
 		return ingressEqual
 	default:
@@ -174,32 +155,14 @@ func (m *Manager) GetCustomComparators() map[reflect.Type]func(deployed resource
 	if m.shouldIgnoreUpdates {
 		m.log.Debug("Nexus configured to ignore Networking updates, won't compare current state and desired state for Ingress/Route")
 		return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
-			reflect.TypeOf(networkingv1beta1.Ingress{}): framework.AlwaysTrueComparator(),
-			reflect.TypeOf(networkingv1.Ingress{}):      framework.AlwaysTrueComparator(),
-			reflect.TypeOf(routev1.Route{}):             framework.AlwaysTrueComparator(),
+			reflect.TypeOf(networkingv1.Ingress{}): framework.AlwaysTrueComparator(),
+			reflect.TypeOf(routev1.Route{}):        framework.AlwaysTrueComparator(),
 		}
 	}
 
 	return map[reflect.Type]func(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool{
-		reflect.TypeOf(networkingv1beta1.Ingress{}): legacyIngressEqual,
-		reflect.TypeOf(networkingv1.Ingress{}):      ingressEqual,
+		reflect.TypeOf(networkingv1.Ingress{}): ingressEqual,
 	}
-}
-
-func legacyIngressEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
-	ingress1 := deployed.(*networkingv1beta1.Ingress)
-	ingress2 := requested.(*networkingv1beta1.Ingress)
-	var pairs [][2]interface{}
-	pairs = append(pairs, [2]interface{}{ingress1.Name, ingress2.Name})
-	pairs = append(pairs, [2]interface{}{ingress1.Namespace, ingress2.Namespace})
-	pairs = append(pairs, [2]interface{}{ingress1.Spec, ingress2.Spec})
-	pairs = append(pairs, [2]interface{}{ingress1.Annotations, ingress2.Annotations})
-
-	equal := compare.EqualPairs(pairs)
-	if !equal {
-		logger.GetLogger("networking_manager").Info("Resources are not equal", "deployed", deployed, "requested", requested)
-	}
-	return equal
 }
 
 func ingressEqual(deployed resource.KubernetesResource, requested resource.KubernetesResource) bool {
