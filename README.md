@@ -52,7 +52,7 @@ If you have any questions please either [open an issue](https://github.com/m88i/
 ## Pre Requisites
 
 - [`kubectl` installed](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- Kubernetes (1.12+) or OpenShift (4.5+) cluster available (minikube or crc also supported)
+- Kubernetes (1.16+) or OpenShift (4.5+) cluster available (minikube or crc also supported)
 - Cluster admin credentials to install the Operator
 
 > Note: since version 0.6.0 we do not support OpenShift 3.11 or Kubernetes 1.11 anymore.
