@@ -33,15 +33,3 @@ func TestIsIngressAvailable(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, ingressAvailable)
 }
-
-func TestIsLegacyIngressAvailable(t *testing.T) {
-	cli = test.NewFakeClientBuilder().Build()
-	ingressAvailable, err := IsLegacyIngressAvailable()
-	assert.Nil(t, err)
-	assert.False(t, ingressAvailable)
-
-	cli = test.NewFakeClientBuilder().WithLegacyIngress().Build()
-	ingressAvailable, err = IsLegacyIngressAvailable()
-	assert.Nil(t, err)
-	assert.True(t, ingressAvailable)
-}

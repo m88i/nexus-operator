@@ -24,7 +24,6 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -76,22 +75,10 @@ func TestFakeClientBuilder_WithIngress(t *testing.T) {
 	assert.True(t, resourceListsContainsGroupVersion(b.resources, networkingv1.SchemeGroupVersion.String()))
 }
 
-func TestFakeClientBuilder_WithLegacyIngress(t *testing.T) {
-	b := NewFakeClientBuilder().WithLegacyIngress()
-
-	// client.Client
-	assert.Len(t, b.scheme.KnownTypes(networkingv1beta1.SchemeGroupVersion), 12)
-	assert.Contains(t, b.scheme.KnownTypes(networkingv1beta1.SchemeGroupVersion), strings.Split(reflect.TypeOf(&networkingv1beta1.Ingress{}).String(), ".")[1])
-	assert.Contains(t, b.scheme.KnownTypes(networkingv1beta1.SchemeGroupVersion), strings.Split(reflect.TypeOf(&networkingv1beta1.IngressList{}).String(), ".")[1])
-
-	// discovery.DiscoveryInterface
-	assert.True(t, resourceListsContainsGroupVersion(b.resources, networkingv1beta1.SchemeGroupVersion.String()))
-}
-
 func TestFakeClientBuilder_Build(t *testing.T) {
 	nexus := &v1alpha1.Nexus{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "nexus"}}
 	route := &routev1.Route{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "route"}}
-	ingress := &networkingv1beta1.Ingress{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "ingress"}}
+	ingress := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Namespace: "test", Name: "ingress"}}
 
 	b := NewFakeClientBuilder(nexus)
 	c := b.Build()
@@ -108,8 +95,6 @@ func TestFakeClientBuilder_Build(t *testing.T) {
 	assert.False(t, withRoute)
 	withIngress, _ := discovery.IsIngressAvailable()
 	assert.False(t, withIngress)
-	withLegacyIngress, _ := discovery.IsLegacyIngressAvailable()
-	assert.False(t, withLegacyIngress)
 
 	// on Openshift
 	b = NewFakeClientBuilder(nexus, route).OnOpenshift()
@@ -125,8 +110,6 @@ func TestFakeClientBuilder_Build(t *testing.T) {
 	assert.True(t, withRoute)
 	withIngress, _ = discovery.IsIngressAvailable()
 	assert.False(t, withIngress)
-	withLegacyIngress, _ = discovery.IsLegacyIngressAvailable()
-	assert.False(t, withLegacyIngress)
 
 	// with Ingress
 	b = NewFakeClientBuilder(nexus, ingress).WithIngress()
@@ -142,25 +125,6 @@ func TestFakeClientBuilder_Build(t *testing.T) {
 	assert.False(t, withRoute)
 	withIngress, _ = discovery.IsIngressAvailable()
 	assert.True(t, withIngress)
-	withLegacyIngress, _ = discovery.IsLegacyIngressAvailable()
-	assert.False(t, withLegacyIngress)
-
-	// with v1beta1 Ingress
-	b = NewFakeClientBuilder(nexus, ingress).WithLegacyIngress()
-	c = b.Build()
-	discovery.SetClient(c)
-	assert.NoError(t, c.client.Get(ctx.TODO(), client.ObjectKey{
-		Namespace: ingress.Namespace,
-		Name:      ingress.Name,
-	}, ingress))
-	ocp, _ = discovery.IsOpenShift()
-	assert.False(t, ocp)
-	withRoute, _ = discovery.IsRouteAvailable()
-	assert.False(t, withRoute)
-	withIngress, _ = discovery.IsIngressAvailable()
-	assert.False(t, withIngress)
-	withLegacyIngress, _ = discovery.IsLegacyIngressAvailable()
-	assert.True(t, withLegacyIngress)
 }
 
 func resourceListsContainsGroupVersion(lists []*metav1.APIResourceList, gv string) bool {

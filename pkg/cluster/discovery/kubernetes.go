@@ -16,7 +16,6 @@ package discovery
 
 import (
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 
 	"github.com/m88i/nexus-operator/pkg/framework/kind"
 )
@@ -24,9 +23,4 @@ import (
 // IsIngressAvailable checks if the cluster supports Ingresses from k8s.io/api/networking/v1
 func IsIngressAvailable() (bool, error) {
 	return hasGroupVersionKind(networkingv1.SchemeGroupVersion.Group, networkingv1.SchemeGroupVersion.Version, kind.IngressKind)
-}
-
-// IsLegacyIngressAvailable checks if the cluster supports Ingresses from k8s.io/api/networking/v1beta1
-func IsLegacyIngressAvailable() (bool, error) {
-	return hasGroupVersionKind(networkingv1beta1.SchemeGroupVersion.Group, networkingv1beta1.SchemeGroupVersion.Version, kind.IngressKind)
 }

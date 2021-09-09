@@ -52,8 +52,11 @@ If you have any questions please either [open an issue](https://github.com/m88i/
 ## Pre Requisites
 
 - [`kubectl` installed](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- Kubernetes or OpenShift cluster available (minishift, minikube or crc also supported)
+- Kubernetes (1.16+) or OpenShift (4.5+) cluster available (minikube or crc also supported)
 - Cluster admin credentials to install the Operator
+
+> Note: since version 0.6.0 we do not support OpenShift 3.11 or Kubernetes 1.11 anymore.
+> If you need to install in these clusters, please use version [0.5.0](https://github.com/m88i/nexus-operator/releases/tag/v0.5.0) instead.
 
 ## Quick Install
 
@@ -77,7 +80,7 @@ Use these examples as a starting point to customize the server to meet your requ
 
 ### Openshift
 
-If you're running the Operator on Openshift (3.11 or 4.x+) and **you're not using Red Hat image with persistence enabled**, that's anything other than `spec.useRedHatImage: true` and `spec.persistence.persistent: true`,
+If you're running the Operator on Openshift (4.5+) and **you're not using Red Hat image with persistence enabled**, that's anything other than `spec.useRedHatImage: true` and `spec.persistence.persistent: true`,
 it's also necessary to configure a [Security Context Constraints](https://docs.openshift.com/container-platform/3.11/admin_guide/manage_scc.html) (SCC) resource.
 
 This is necessary because the Nexus image requires its container to be ran as UID 200. 
