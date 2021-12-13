@@ -101,6 +101,7 @@ $ oc apply -f examples/scc-volatile.yaml
 ```
 
 > **Note**: you must choose one or the other, applying both will result in using the one applied last.
+> **Note**: These have changed with the introduction of Nexus Operator version 0.6.0 to include `configMap` volumes.
 
 Once the SCC has been created, run:
 
