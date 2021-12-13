@@ -18,4 +18,5 @@ supplementalGroups:
       min: 200
   type: MustRunAs
 volumes:
+  - configMap
   - secret
