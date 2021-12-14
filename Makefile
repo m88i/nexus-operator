@@ -35,7 +35,7 @@ all: manager
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 # Needed to support k8s.io/api/networking/v1 Ingress
-K8S_VERSION=1.19.0
+K8S_VERSION=1.22.0
 test: generate-installer fmt vet bundle
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.6.3/hack/setup-envtest.sh # this is a workaround while we don't upgrade the sdk
@@ -84,7 +84,8 @@ vet:
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	./hack/openapi.sh
+	# new versions of the SDK won't require this anymore
+	# ./hack/openapi.sh
 
 # Build the docker image
 docker-build: test

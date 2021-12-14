@@ -13,12 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# shellcheck disable=SC2155
 declare readme_changed=$(git status -s | grep  'README.md' || :)
 if [ -z "${readme_changed}" ]; then
   exit 0
 fi
 
+# enforce bin directory
+mkdir bin
+
 command -v bin/gh-md-toc > /dev/null || curl https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc -o bin/gh-md-toc && chmod +x bin/gh-md-toc
 
 bin/gh-md-toc --no-backup README.md
-sed -i '/^<!-- Added by:/d' README.md 
+sed -i'' -e '/^<!-- Added by:/d' README.md
